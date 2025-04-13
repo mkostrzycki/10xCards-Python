@@ -66,8 +66,8 @@ _(Note: The specific contents within domain/application/infrastructure for each 
 ## Testing Structure (`tests/`)
 
 -   Mirror the `src/` structure, separating tests by context and then by layer (unit) or type (integration, behavioral).
-    -   `tests/UserProfile/unit/domain/`
-    -   `tests/DeckManagement/integration/`
+    -   `tests/unit/UserProfile/domain/`
+    -   `tests/integration/DeckManagement/`
     -   `tests/behavioral/`
 
 ## Configuration

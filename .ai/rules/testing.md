@@ -1,7 +1,7 @@
 # Testing Rules
 
 -   **Frameworks:** Use `pytest` for unit and integration tests. Use `behave` for behavioral (BDD) tests.
--   **Structure:** Organize tests in the `tests/` directory, mirroring the `src/` structure by context and layer (e.g., `tests/UserProfile/unit/domain/`). Behavioral tests reside in `tests/behavioral/` (`features/`, `steps/`).
+-   **Structure:** Organize tests in the `tests/` directory, mirroring the `src/` structure by context and layer (e.g., `tests/unit/UserProfile/domain/`). Behavioral tests reside in `tests/behavioral/` (`features/`, `steps/`).
 -   **Unit Tests (`pytest`):**
     -   Focus on testing individual classes/functions in isolation.
     -   Use `pytest` fixtures for setup/teardown.
