@@ -3,7 +3,7 @@ Frontend
 - ttkbootstrap
 
 Backend
-- Python
+- Python 3
 - SQLite
 
 Testowanie
