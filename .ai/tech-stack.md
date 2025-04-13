@@ -19,6 +19,7 @@ Development
 
 AI
 - Komunikacja z modelami przez usługę Openrouter.ai
+- litellm
 
 CI/CD i Hosting
 - Github Actions do tworzenia pipeline’ów CI/CD
