@@ -33,6 +33,7 @@ The application aims to solve the time-consuming problem of manually creating hi
 
 **AI Integration:**
 *   Openrouter.ai (for GPT-4o mini access)
+*   litellm (communication with Openrouter.ai)
 
 **Development & Testing:**
 *   `pytest` (Unit/Integration Testing)
