@@ -1,0 +1,11 @@
+[flake8]
+# musi być spójne z black
+max-line-length = 120
+# przykładowe ignorowane błędy, E203 często konfliktuje z black
+extend-ignore = E203, E501
+exclude =
+    # No need to traverse our git directory
+    .git,
+    # There's no value in checking cache directories
+    __pycache__
+max-complexity = 10
