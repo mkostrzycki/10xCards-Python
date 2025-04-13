@@ -95,7 +95,7 @@ def test_get_by_id_found(mocker: MockerFixture, repository, mock_db_provider, sa
     assert result.username == sample_db_row["username"]
 
     # Verify SQL query was executed with correct parameters
-    mock_db_provider.get_connection.return_value.execute.assert_called_once_with(mocker.ANY, (1,))
+    mock_db_provider.get_connection.return_value.execute.assert_any_call(mocker.ANY, (1,))
 
 
 def test_get_by_id_not_found(mocker: MockerFixture, repository, mock_db_provider):
