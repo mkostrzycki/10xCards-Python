@@ -13,11 +13,11 @@ class TestDbProvider:
     """Test database provider that uses an in-memory SQLite database."""
 
     def __init__(self):
-        self.conn = sqlite3.connect(":memory:")
-        self.conn.row_factory = sqlite3.Row
+        self._conn: sqlite3.Connection = sqlite3.connect(":memory:")
+        self._conn.row_factory = sqlite3.Row
 
         # Create the Users table
-        self.conn.executescript(
+        self._conn.executescript(
             """
             CREATE TABLE Users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,24 +38,24 @@ class TestDbProvider:
         )
 
     def get_connection(self) -> sqlite3.Connection:
-        return self.conn
+        return self._conn
 
 
 @given("the database is empty")
-def step_impl(context):
+def setup_empty_database(context):
     context.db_provider = TestDbProvider()
     context.repository = UserRepositoryImpl(context.db_provider)
     # Database is already empty as it's a new in-memory database
 
 
 @given('there is a user with username "{username}"')
-def step_impl(context, username):
+def create_initial_user(context, username):
     user = User(id=None, username=username, hashed_password="dummyhash", hashed_api_key="dummykey")
     context.current_user = context.repository.add(user)
 
 
 @when("I create a user profile with")
-def step_impl(context):
+def create_user_profile(context):
     # Get data from the first row of the table (excluding header)
     row = context.table[0]
     user = User(
@@ -72,7 +72,7 @@ def step_impl(context):
 
 
 @when("I update the user profile with")
-def step_impl(context):
+def update_user_profile(context):
     row = context.table[0]
     user = User(
         id=context.current_user.id,
@@ -88,7 +88,7 @@ def step_impl(context):
 
 
 @when("I delete the user profile")
-def step_impl(context):
+def delete_user_profile(context):
     try:
         context.repository.delete(context.current_user.id)
         context.error = None
@@ -97,34 +97,34 @@ def step_impl(context):
 
 
 @then("the user profile should be created successfully")
-def step_impl(context):
+def verify_user_created(context):
     assert_that(context.error, is_(none()))
     assert_that(context.current_user.id, is_not(none()))
 
 
 @then("I should get a username already exists error")
-def step_impl(context):
+def verify_duplicate_username_error(context):
     assert_that(context.error, instance_of(UsernameAlreadyExistsError))
 
 
 @then("the user profile should be updated successfully")
-def step_impl(context):
+def verify_user_updated(context):
     assert_that(context.error, is_(none()))
 
 
 @then("the user profile should be deleted successfully")
-def step_impl(context):
+def verify_user_deleted(context):
     assert_that(context.error, is_(none()))
 
 
 @then('I should be able to find the user by username "{username}"')
-def step_impl(context, username):
+def verify_user_exists(context, username):
     user = context.repository.get_by_username(username)
     assert_that(user, is_not(none()))
     assert_that(user.username, is_(username))
 
 
 @then('I should not be able to find the user by username "{username}"')
-def step_impl(context, username):
+def verify_user_not_exists(context, username):
     user = context.repository.get_by_username(username)
     assert_that(user, is_(none()))
