@@ -55,4 +55,4 @@ clean:
 	@echo "Cleaning up..."
 	find . -type f -name '*.py[co]' -delete
 	find . -type d -name '__pycache__' -delete
-	@echo "Cleanup complete." 
+	@echo "Cleanup complete."
