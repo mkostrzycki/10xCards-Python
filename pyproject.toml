@@ -1,0 +1,16 @@
+    [tool.black]
+    line-length = 88 # lub inny standard
+
+    [tool.flake8]
+    max-line-length = 88 # musi być spójne z black
+    extend-ignore = "E203, E501" # przykładowe ignorowane błędy, E203 często konfliktuje z black
+
+    [tool.mypy]
+    python_version = "3.13" # lub Twoja wersja Pythona
+    warn_return_any = true
+    ignore_missing_imports = true # Może być potrzebne na początku
+    # disallow_untyped_defs = true # Warto włączyć później
+
+    [tool.pytest.ini_options]
+    pythonpath = ["src"]
+    testpaths = ["tests"]
