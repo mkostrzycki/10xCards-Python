@@ -9,6 +9,6 @@
 -   **Connection Management:** Implement a **Singleton** pattern for managing the SQLite database connection (`sqlite3.Connection`). This can reside in `Shared/infrastructure/persistence/sqlite/` or a similar shared location. Ensure proper connection closing on application exit.
 -   **Migrations:**
     -   Place migration SQL scripts in `infrastructure/persistence/sqlite/migrations/`.
-    -   Use a simple naming convention, e.g., `001_initial_schema.sql`, `002_add_deck_description.sql`.
+    -   Follow this naming convention: `YYYYMMDDHHmmss_short_description.sql` where YYYY, MM, DD, HH, mm and ss are year, month, day, hour, minutes and seconds.
     -   Implement a mechanism (e.g., in `main.py` or a dedicated script) to apply pending migrations sequentially on application startup by tracking the current schema version (e.g., using `PRAGMA user_version`).
--   **Transactions:** Use transactions (`connection.commit()`, `connection.rollback()`) for operations involving multiple database writes to ensure atomicity. 
+-   **Transactions:** Use transactions (`connection.commit()`, `connection.rollback()`) for operations involving multiple database writes to ensure atomicity.
