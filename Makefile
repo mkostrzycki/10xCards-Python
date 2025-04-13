@@ -10,10 +10,10 @@ SRC_DIR = src
 TEST_DIR = tests
 
 # Phony targets don't represent files
-.PHONY: all install format lint check test clean
+.PHONY: all install format lint check test test-bdd clean
 
 # Default target
-all: lint check test
+all: lint check test test-bdd
 
 # Install dependencies
 install: requirements-dev.txt
@@ -47,8 +47,15 @@ check:
 test:
 	@echo "Running tests with pytest..."
 	source .venv/bin/activate && \
-	pytest $(TEST_DIR)
+	pytest $(TEST_DIR)/unit
 	@echo "Tests complete."
+
+# Run behavioral tests
+test-bdd:
+	@echo "Running behavioral tests with behave..."
+	source .venv/bin/activate && \
+	behave $(TEST_DIR)/behavioral
+	@echo "Behavioral tests complete."
 
 # Clean up temporary files
 clean:
