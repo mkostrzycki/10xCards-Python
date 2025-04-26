@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Type, Callable
+from typing import Optional, Dict, Callable
 import tkinter as tk
 from tkinter import ttk
 

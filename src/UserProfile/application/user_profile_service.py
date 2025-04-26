@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 import bcrypt
 
 from ..domain.repositories.IUserRepository import IUserRepository
 from ..domain.models.user import User
-from ..domain.repositories.exceptions import UsernameAlreadyExistsError, UserNotFoundError
+from ..domain.repositories.exceptions import UserNotFoundError
 
 
 @dataclass

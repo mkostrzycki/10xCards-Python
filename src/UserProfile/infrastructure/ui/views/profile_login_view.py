@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, Callable, Protocol
 import tkinter as tk
-from tkinter import ttk
 import ttkbootstrap as ttk
 
 from ....application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
@@ -130,7 +129,7 @@ class ProfileLoginView(ttk.Frame):
             self._router.show_profile_list()
         except RepositoryError:
             self._show_toast("Błąd", "Wystąpił błąd bazy danych podczas logowania.")
-        except Exception as e:
+        except Exception:
             self._show_toast("Błąd", "Wystąpił nieoczekiwany błąd podczas logowania.")
         finally:
             self._state.is_logging_in = False

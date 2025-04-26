@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Protocol, Callable
 import tkinter as tk
-from tkinter import ttk
 import ttkbootstrap as ttk
 
 from ....application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
@@ -95,7 +94,7 @@ class ProfileListView(ttk.Frame):
             self._state.profiles = self._profile_service.get_all_profiles_summary()
             self._populate_profile_list()
             self._state.error_message = None
-        except RepositoryError as e:
+        except RepositoryError:
             self._state.error_message = "Nie można załadować profili. Błąd bazy danych."
             self._show_toast("Błąd", self._state.error_message)
         finally:
@@ -128,12 +127,12 @@ class ProfileListView(ttk.Frame):
             username: Username for the new profile
         """
         try:
-            profile = self._profile_service.create_profile(username)
+            self._profile_service.create_profile(username)
             self._show_toast("Sukces", f"Profil {username} został utworzony.")
             self._load_profiles()  # Refresh the list
         except UsernameAlreadyExistsError:
             self._show_toast("Błąd", f"Nazwa profilu {username} już istnieje.")
-        except Exception as e:
+        except Exception:
             self._show_toast("Błąd", "Wystąpił nieoczekiwany błąd podczas tworzenia profilu.")
 
     def _on_profile_selected(self, event: tk.Event) -> None:

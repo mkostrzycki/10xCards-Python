@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, Dict, List
 import tkinter as tk
-from tkinter import ttk
 import ttkbootstrap as ttk
 import time
 import threading

@@ -1,6 +1,4 @@
 import pytest
-import tkinter as tk
-import ttkbootstrap as ttk
 
 from src.UserProfile.infrastructure.ui.views.create_profile_dialog import CreateProfileDialog
 
@@ -17,10 +15,11 @@ def mock_on_create(mocker):
 
 @pytest.fixture
 def dialog(mocker, mock_parent, mock_on_create):
-    mock_entry = mocker.patch("tkinter.ttk.Entry", autospec=True)
-    mock_label = mocker.patch("tkinter.ttk.Label", autospec=True)
-    mock_frame = mocker.patch("tkinter.ttk.Frame", autospec=True)
-    mock_button = mocker.patch("tkinter.ttk.Button", autospec=True)
+    # Mock the necessary Tkinter widgets
+    mocker.patch("tkinter.ttk.Entry", autospec=True)
+    mocker.patch("tkinter.ttk.Label", autospec=True)
+    mocker.patch("tkinter.ttk.Frame", autospec=True)
+    mocker.patch("tkinter.ttk.Button", autospec=True)
 
     dialog = CreateProfileDialog(mock_parent, mock_on_create)
     # Mock the Entry widget's get() method
