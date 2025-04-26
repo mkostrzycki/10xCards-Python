@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from typing import Optional, Callable
+from typing import Optional, Callable, cast
 import tkinter as tk
 import ttkbootstrap as ttk
+from tkinter import Wm
 
 
 @dataclass
@@ -25,7 +26,7 @@ class CreateProfileDialog(tk.Toplevel):
         self._state = CreateProfileDialogState()
 
         self.title("Nowy profil")
-        self.transient(parent)
+        self.transient(cast(Wm, parent))  # Cast parent to Wm type for transient
         self.grab_set()  # Make dialog modal
 
         # Center the dialog

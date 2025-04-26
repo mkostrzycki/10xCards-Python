@@ -37,7 +37,9 @@ class UserProfileService:
         users = self._user_repository.list_all()
         return [
             UserProfileSummaryViewModel(
-                id=user.id, username=user.username, is_password_protected=user.hashed_password is not None
+                id=user.id if user.id is not None else 0,  # This should never happen in practice
+                username=user.username,
+                is_password_protected=user.hashed_password is not None,
             )
             for user in users
         ]
@@ -57,8 +59,11 @@ class UserProfileService:
             RepositoryError: If there's an error accessing the database
         """
         # Create new user without password
-        user = User(username=username)
+        user = User(id=None, username=username, hashed_password=None, hashed_api_key=None)
         created_user = self._user_repository.add(user)
+
+        # created_user should always have an id at this point
+        assert created_user.id is not None, "Repository must assign an ID to created user"
 
         return UserProfileSummaryViewModel(
             id=created_user.id, username=created_user.username, is_password_protected=False
@@ -80,7 +85,7 @@ class UserProfileService:
         """
         user = self._user_repository.get_by_id(user_id)
         if not user:
-            raise UserNotFoundError(f"User with ID {user_id} not found")
+            raise UserNotFoundError(user_id)  # Pass just the ID
 
         if not user.hashed_password:
             return False
