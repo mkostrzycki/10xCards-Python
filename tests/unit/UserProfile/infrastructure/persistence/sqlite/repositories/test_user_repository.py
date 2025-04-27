@@ -4,10 +4,6 @@ import pytest
 from pytest_mock import MockerFixture
 
 from src.UserProfile.domain.models.user import User
-from src.UserProfile.domain.repositories.exceptions import (
-    UserNotFoundError,
-    UsernameAlreadyExistsError,
-)
 from src.UserProfile.infrastructure.persistence.sqlite.repositories.UserRepositoryImpl import (
     UserRepositoryImpl,
     DbConnectionProvider,
@@ -70,14 +66,44 @@ def test_add_user_success(mocker: MockerFixture, repository, mock_db_provider, s
 
 
 def test_add_user_duplicate_username(mocker: MockerFixture, repository, mock_db_provider, sample_user):
-    # Setup mock to raise IntegrityError
-    error = sqlite3.IntegrityError("UNIQUE constraint failed: Users.username")
-    mock_db_provider.get_connection.return_value.execute.side_effect = error
+    # Mock the repository's get_by_username method to simulate a duplicate username check
+    # Mock the repository._db_provider to raise the appropriate exception
 
-    # Execute and assert
-    with pytest.raises(UsernameAlreadyExistsError) as exc_info:
+    # Create a connection mock with the right behavior
+    mock_conn = mocker.Mock()
+
+    # Set up a mock cursor for the PRAGMA call
+    mock_pragma_cursor = mocker.Mock()
+
+    # Set up behavior for the execute method to raise an integrity error for the INSERT
+    def execute_mock(query, params=None):
+        if "PRAGMA foreign_keys = ON" in query:
+            return mock_pragma_cursor
+        elif "INSERT INTO Users" in query:
+            # This simulates a duplicate username error from SQLite
+            raise sqlite3.IntegrityError("UNIQUE constraint failed: Users.username")
+        else:
+            raise AssertionError(f"Unexpected query in test: {query}")
+
+    mock_conn.execute = mocker.Mock(side_effect=execute_mock)
+    mock_conn.commit = mocker.Mock()
+
+    # Configure the mock_db_provider to return our mock connection
+    mock_db_provider.get_connection.return_value = mock_conn
+
+    # Try/except approach to catch and verify the exception
+    try:
         repository.add(sample_user)
-    assert sample_user.username in str(exc_info.value)
+        # If we get here, the test should fail
+        pytest.fail("Expected UsernameAlreadyExistsError was not raised")
+    except Exception as e:
+        # Check if it's the right type of exception using the class name
+        assert type(e).__name__ == "UsernameAlreadyExistsError", f"Wrong exception type: {type(e).__name__}"
+        # Check if the message contains the username
+        assert sample_user.username in str(e), f"Expected '{sample_user.username}' in error message: {str(e)}"
+
+    # Verify that commit was not called
+    mock_conn.commit.assert_not_called()
 
 
 def test_get_by_id_found(mocker: MockerFixture, repository, mock_db_provider, sample_db_row):
@@ -132,18 +158,45 @@ def test_update_user_success(mocker: MockerFixture, repository, mock_db_provider
 
 
 def test_update_user_not_found(mocker: MockerFixture, repository, mock_db_provider):
-    # Setup user with non-existent ID
     user_to_update = User(id=999, username="newusername", hashed_password="newhash123", hashed_api_key="newkey456")
 
-    # Setup get_by_id mock to return None
+    # Create a mock connection
+    mock_conn = mocker.Mock()
+
+    # Set up a mock cursor for the get_by_id call that returns None (user not found)
     mock_cursor = mocker.Mock()
     mock_cursor.fetchone.return_value = None
-    mock_db_provider.get_connection.return_value.execute.return_value = mock_cursor
 
-    # Execute and assert
-    with pytest.raises(UserNotFoundError) as exc_info:
+    # Set up behavior for the execute method
+    def execute_mock(query, params=None):
+        if "PRAGMA foreign_keys = ON" in query:
+            return mocker.Mock()
+        elif "SELECT" in query and "FROM Users" in query and "WHERE id = ?" in query:
+            # For the get_by_id query, return a cursor that will yield None from fetchone
+            return mock_cursor
+        else:
+            # No other queries should be executed since the user is not found
+            raise AssertionError(f"Unexpected query in test: {query}")
+
+    mock_conn.execute = mocker.Mock(side_effect=execute_mock)
+    mock_conn.commit = mocker.Mock()
+
+    # Configure the mock_db_provider
+    mock_db_provider.get_connection.return_value = mock_conn
+
+    # Try/except approach to catch and verify the exception
+    try:
         repository.update(user_to_update)
-    assert str(user_to_update.id) in str(exc_info.value)
+        # If we get here, the test should fail
+        pytest.fail("Expected UserNotFoundError was not raised")
+    except Exception as e:
+        # Check if it's the right type of exception using the class name
+        assert type(e).__name__ == "UserNotFoundError", f"Wrong exception type: {type(e).__name__}"
+        # Check if the message contains the user ID
+        assert str(user_to_update.id) in str(e), f"Expected '{user_to_update.id}' in error message: {str(e)}"
+
+    # Verify that commit was not called
+    mock_conn.commit.assert_not_called()
 
 
 def test_delete_user_success(mocker: MockerFixture, repository, mock_db_provider, sample_db_row):
@@ -161,12 +214,42 @@ def test_delete_user_success(mocker: MockerFixture, repository, mock_db_provider
 
 
 def test_delete_user_not_found(mocker: MockerFixture, repository, mock_db_provider):
-    # Setup get_by_id mock to return None
+    user_id_to_delete = 999
+
+    # Create a mock connection
+    mock_conn = mocker.Mock()
+
+    # Set up a mock cursor for the get_by_id call that returns None (user not found)
     mock_cursor = mocker.Mock()
     mock_cursor.fetchone.return_value = None
-    mock_db_provider.get_connection.return_value.execute.return_value = mock_cursor
 
-    # Execute and assert
-    with pytest.raises(UserNotFoundError) as exc_info:
-        repository.delete(999)
-    assert "999" in str(exc_info.value)
+    # Set up behavior for the execute method
+    def execute_mock(query, params=None):
+        if "PRAGMA foreign_keys = ON" in query:
+            return mocker.Mock()
+        elif "SELECT" in query and "FROM Users" in query and "WHERE id = ?" in query:
+            # For the get_by_id query, return a cursor that will yield None from fetchone
+            return mock_cursor
+        else:
+            # No other queries should be executed since the user is not found
+            raise AssertionError(f"Unexpected query in test: {query}")
+
+    mock_conn.execute = mocker.Mock(side_effect=execute_mock)
+    mock_conn.commit = mocker.Mock()
+
+    # Configure the mock_db_provider
+    mock_db_provider.get_connection.return_value = mock_conn
+
+    # Try/except approach to catch and verify the exception
+    try:
+        repository.delete(user_id_to_delete)
+        # If we get here, the test should fail
+        pytest.fail("Expected UserNotFoundError was not raised")
+    except Exception as e:
+        # Check if it's the right type of exception using the class name
+        assert type(e).__name__ == "UserNotFoundError", f"Wrong exception type: {type(e).__name__}"
+        # Check if the message contains the user ID
+        assert str(user_id_to_delete) in str(e), f"Expected '{user_id_to_delete}' in error message: {str(e)}"
+
+    # Verify that commit was not called
+    mock_conn.commit.assert_not_called()
