@@ -3,9 +3,9 @@ import logging
 from datetime import datetime
 from typing import List, Optional, Protocol
 
-from ......UserProfile.domain.models.user import User
-from ......UserProfile.domain.repositories.IUserRepository import IUserRepository
-from ......UserProfile.domain.repositories.exceptions import (
+from UserProfile.domain.models.user import User
+from UserProfile.domain.repositories.IUserRepository import IUserRepository
+from UserProfile.domain.repositories.exceptions import (
     RepositoryError,
     DatabaseConnectionError,
     DatabaseIntegrityError,
