@@ -91,8 +91,5 @@ class DeckRepositoryImpl(IDeckRepository):
         # Helper to fetch created_at and updated_at after insert
         if deck_id is None:
             raise ValueError("deck_id cannot be None when fetching timestamps")
-        row = self.conn.execute(
-            "SELECT created_at, updated_at FROM Decks WHERE id = ?",
-            (int(deck_id),)
-        ).fetchone()
+        row = self.conn.execute("SELECT created_at, updated_at FROM Decks WHERE id = ?", (int(deck_id),)).fetchone()
         return row[0], row[1]  # type: ignore
