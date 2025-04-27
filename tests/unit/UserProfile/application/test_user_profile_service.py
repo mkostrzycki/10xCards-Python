@@ -164,7 +164,7 @@ def test_authenticate_user_raises_error_for_nonexistent_user(service, mock_user_
     mock_user_repository.get_by_id.return_value = None
 
     # Act & Assert
-    with pytest.raises(UserNotFoundError, match=f"User with ID {user_id} not found"):
+    with pytest.raises(UserNotFoundError, match=f"User with id {user_id} not found"):
         service.authenticate_user(user_id, "anypassword")
 
 

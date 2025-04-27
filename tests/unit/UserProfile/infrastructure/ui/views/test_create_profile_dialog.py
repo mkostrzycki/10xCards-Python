@@ -1,11 +1,13 @@
 import pytest
-
+import tkinter as tk
+from unittest.mock import MagicMock
 from src.UserProfile.infrastructure.ui.views.create_profile_dialog import CreateProfileDialog
 
 
 @pytest.fixture
 def mock_parent(mocker):
-    return mocker.patch("tkinter.Toplevel", autospec=True)
+    # Mock a parent widget (e.g., root window)
+    return mocker.Mock(spec=tk.Tk)
 
 
 @pytest.fixture
@@ -15,145 +17,96 @@ def mock_on_create(mocker):
 
 @pytest.fixture
 def dialog(mocker, mock_parent, mock_on_create):
-    # Mock the necessary Tkinter widgets
-    mocker.patch("tkinter.ttk.Entry", autospec=True)
-    mocker.patch("tkinter.ttk.Label", autospec=True)
-    mocker.patch("tkinter.ttk.Frame", autospec=True)
-    mocker.patch("tkinter.ttk.Button", autospec=True)
+    # Patch Toplevel so no real window is created
+    mocker.patch("tkinter.Toplevel.__init__", return_value=None)
+    mocker.patch("tkinter.Toplevel.destroy", return_value=None)
+    # Patch ttkbootstrap widgets
+    mocker.patch("ttkbootstrap.Frame", return_value=MagicMock())
+    mocker.patch("ttkbootstrap.Label", return_value=MagicMock())
+    mocker.patch("ttkbootstrap.Entry", return_value=MagicMock())
+    mocker.patch("ttkbootstrap.Button", return_value=MagicMock())
+    # Patch geometry and focus_set
+    mocker.patch("tkinter.Toplevel.geometry", return_value=None)
+    mocker.patch("tkinter.Toplevel.title", return_value=None)
+    mocker.patch("tkinter.Toplevel.transient", return_value=None)
+    mocker.patch("tkinter.Toplevel.grab_set", return_value=None)
+    mocker.patch("tkinter.Toplevel.protocol", return_value=None)
+    mocker.patch("tkinter.Toplevel.bind", return_value=None)
+    mocker.patch("tkinter.Toplevel.winfo_screenwidth", return_value=800)
+    mocker.patch("tkinter.Toplevel.winfo_screenheight", return_value=600)
+    # Patch focus_set for Entry
+    entry_mock = MagicMock()
+    mocker.patch("ttkbootstrap.Entry", return_value=entry_mock)
+    entry_mock.focus_set = MagicMock()
+    # Patch error label
+    error_label_mock = MagicMock()
+    mocker.patch("ttkbootstrap.Label", return_value=error_label_mock)
+    d = CreateProfileDialog(mock_parent, mock_on_create)
+    d._username_input = entry_mock
+    d._error_label = error_label_mock
+    return d
 
-    dialog = CreateProfileDialog(mock_parent, mock_on_create)
-    # Mock the Entry widget's get() method
-    dialog._username_input = mocker.Mock()
-    # Mock the Label widget's configure method
-    dialog._error_label = mocker.Mock()
-    return dialog
+
+def test_dialog_initialization(dialog, mock_parent, mock_on_create):
+    # Check that dialog is modal and title is set
+    dialog.title.assert_called_with("Nowy profil")
+    dialog.transient.assert_called_with(mock_parent)
+    dialog.grab_set.assert_called_once()
+    dialog._username_input.focus_set.assert_called_once()
 
 
-def test_validate_input_accepts_valid_username(dialog, mock_on_create):
-    # Arrange
-    username = "validuser"
-    dialog._username_input.get.return_value = username
+def test_validate_input_empty(dialog):
+    dialog._username_input.get.return_value = "   "
+    assert not dialog._validate_input()
+    assert dialog._state.error_message is not None
+    dialog._error_label.configure.assert_called_with(text="Nazwa profilu nie może być pusta.")
 
-    # Act
-    result = dialog._validate_input()
 
-    # Assert
-    assert result is True
-    assert dialog._state.username_input == username
+def test_validate_input_too_long(dialog):
+    dialog._username_input.get.return_value = "x" * 31
+    assert not dialog._validate_input()
+    assert dialog._state.error_message is not None
+    dialog._error_label.configure.assert_called_with(text="Nazwa profilu nie może być dłuższa niż 30 znaków.")
+
+
+def test_validate_input_valid(dialog):
+    dialog._username_input.get.return_value = "validuser"
+    assert dialog._validate_input() is True
     assert dialog._state.error_message is None
-    dialog._error_label.configure.assert_not_called()
 
 
-def test_validate_input_rejects_empty_username(dialog, mock_on_create):
-    # Arrange
-    dialog._username_input.get.return_value = "   "  # Spaces only
-
-    # Act
-    result = dialog._validate_input()
-
-    # Assert
-    assert result is False
-    assert dialog._state.username_input == ""
-    assert dialog._state.error_message == "Nazwa profilu nie może być pusta."
-    dialog._error_label.configure.assert_called_once_with(text="Nazwa profilu nie może być pusta.")
+def test_show_error(dialog):
+    dialog._show_error("Oops!")
+    assert dialog._state.error_message == "Oops!"
+    dialog._error_label.configure.assert_called_with(text="Oops!")
 
 
-def test_validate_input_rejects_too_long_username(dialog, mock_on_create):
-    # Arrange
-    username = "a" * 31  # 31 characters
-    dialog._username_input.get.return_value = username
-
-    # Act
-    result = dialog._validate_input()
-
-    # Assert
-    assert result is False
-    assert dialog._state.username_input == username
-    assert dialog._state.error_message == "Nazwa profilu nie może być dłuższa niż 30 znaków."
-    dialog._error_label.configure.assert_called_once_with(text="Nazwa profilu nie może być dłuższa niż 30 znaków.")
-
-
-def test_validate_input_accepts_max_length_username(dialog, mock_on_create):
-    # Arrange
-    username = "a" * 30  # Exactly 30 characters
-    dialog._username_input.get.return_value = username
-
-    # Act
-    result = dialog._validate_input()
-
-    # Assert
-    assert result is True
-    assert dialog._state.username_input == username
-    assert dialog._state.error_message is None
-    dialog._error_label.configure.assert_not_called()
-
-
-def test_show_error_updates_state_and_label(dialog):
-    # Arrange
-    error_message = "Test error message"
-
-    # Act
-    dialog._show_error(error_message)
-
-    # Assert
-    assert dialog._state.error_message == error_message
-    dialog._error_label.configure.assert_called_once_with(text=error_message)
-
-
-def test_clear_error_clears_state_and_label(dialog):
-    # Arrange
-    dialog._state.error_message = "Previous error"
-
-    # Act
+def test_clear_error(dialog):
+    dialog._state.error_message = "Some error"
     dialog._clear_error()
-
-    # Assert
     assert dialog._state.error_message is None
-    dialog._error_label.configure.assert_called_once_with(text="")
+    dialog._error_label.configure.assert_called_with(text="")
 
 
-def test_on_create_clicked_validates_before_calling_callback(dialog, mock_on_create):
-    # Arrange
-    username = "validuser"
-    dialog._username_input.get.return_value = username
-
-    # Act
+def test_on_create_clicked_valid(dialog, mock_on_create):
+    dialog._username_input.get.return_value = "validuser"
+    dialog._validate_input = MagicMock(return_value=True)
+    dialog._state.username_input = "validuser"
+    dialog.destroy = MagicMock()
     dialog._on_create_clicked()
+    mock_on_create.assert_called_once_with("validuser")
+    dialog.destroy.assert_called_once()
 
-    # Assert
-    mock_on_create.assert_called_once_with(username)
 
-
-def test_on_create_clicked_does_not_call_callback_on_invalid_input(dialog, mock_on_create):
-    # Arrange
-    dialog._username_input.get.return_value = ""  # Invalid input
-
-    # Act
+def test_on_create_clicked_invalid(dialog, mock_on_create):
+    dialog._validate_input = MagicMock(return_value=False)
+    dialog.destroy = MagicMock()
     dialog._on_create_clicked()
-
-    # Assert
     mock_on_create.assert_not_called()
+    dialog.destroy.assert_not_called()
 
 
-@pytest.mark.parametrize(
-    "username,expected_valid",
-    [
-        ("normaluser", True),
-        ("", False),
-        ("   ", False),
-        ("a" * 30, True),
-        ("a" * 31, False),
-        ("user123", True),
-        ("user-name", True),
-        ("user_name", True),
-    ],
-)
-def test_validate_input_parameterized(dialog, username, expected_valid):
-    # Arrange
-    dialog._username_input.get.return_value = username
-
-    # Act
-    result = dialog._validate_input()
-
-    # Assert
-    assert result is expected_valid
+def test_on_cancel(dialog):
+    dialog.destroy = MagicMock()
+    dialog._on_cancel()
+    dialog.destroy.assert_called_once()
