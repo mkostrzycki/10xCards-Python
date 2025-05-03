@@ -3,8 +3,9 @@ from typing import Optional, Callable, Protocol
 import tkinter as tk
 import ttkbootstrap as ttk
 
-from ....application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
-from ....domain.repositories.exceptions import UserNotFoundError, RepositoryError
+from src.UserProfile.application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
+from src.Shared.application.session_service import SessionService
+from src.Shared.domain.errors import AuthenticationError
 
 
 @dataclass
@@ -29,6 +30,7 @@ class ProfileLoginView(ttk.Frame):
         parent: tk.Widget,
         profile: UserProfileSummaryViewModel,
         profile_service: UserProfileService,
+        session_service: SessionService,
         router: Router,
         toast_callback: Callable[[str, str], None],
     ):
@@ -38,11 +40,13 @@ class ProfileLoginView(ttk.Frame):
             parent: Parent widget
             profile: Profile to log into
             profile_service: Service for profile operations
+            session_service: Service for session management
             router: Navigation router
             toast_callback: Callback for showing toast notifications
         """
         super().__init__(parent)
         self._profile_service = profile_service
+        self._session_service = session_service
         self._router = router
         self._show_toast = toast_callback
         self._state = ProfileLoginViewState(user_id=profile.id, username=profile.username)
@@ -116,21 +120,15 @@ class ProfileLoginView(ttk.Frame):
         self._state.is_logging_in = True
 
         try:
-            # Attempt authentication
-            is_authenticated = self._profile_service.authenticate_user(self._state.user_id, password)
-
-            if is_authenticated:
-                self._router.show_deck_list(self._state.user_id)
-            else:
-                self._show_error("Nieprawidłowe hasło.")
-                self._clear_password()
-        except UserNotFoundError:
-            self._show_toast("Błąd", "Wystąpił błąd podczas logowania. Profil nie istnieje.")
-            self._router.show_profile_list()
-        except RepositoryError:
-            self._show_toast("Błąd", "Wystąpił błąd bazy danych podczas logowania.")
-        except Exception:
+            # Attempt login through session service
+            self._session_service.login(self._state.username, password)
+            self._router.show_deck_list(self._state.user_id)
+        except AuthenticationError as e:
+            self._show_error(str(e))
+            self._clear_password()
+        except Exception as e:
             self._show_toast("Błąd", "Wystąpił nieoczekiwany błąd podczas logowania.")
+            self._router.show_profile_list()
         finally:
             self._state.is_logging_in = False
 

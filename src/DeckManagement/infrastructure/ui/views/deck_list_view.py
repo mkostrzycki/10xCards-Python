@@ -4,10 +4,11 @@ from typing import Callable, List, Optional
 from sqlite3 import IntegrityError
 
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import RIGHT
+from ttkbootstrap.constants import RIGHT, LEFT
 
 from src.DeckManagement.domain.models.Deck import Deck
 from src.DeckManagement.application.deck_service import DeckService
+from src.Shared.application.session_service import SessionService
 from src.Shared.ui.widgets.header_bar import HeaderBar
 from src.DeckManagement.infrastructure.ui.widgets.deck_table import DeckTable, DeckTableItem
 from src.DeckManagement.infrastructure.ui.widgets.create_deck_dialog import CreateDeckDialog
@@ -39,11 +40,13 @@ class DeckListView(ttk.Frame):
         self,
         parent: ttk.Widget,
         deck_service: DeckService,
+        session_service: SessionService,
         navigation_controller,
         show_toast: Callable[[str, str], None],
     ):
         super().__init__(parent)
         self.deck_service = deck_service
+        self.session_service = session_service
         self.navigation_controller = navigation_controller
         self.show_toast = show_toast
 
@@ -53,8 +56,15 @@ class DeckListView(ttk.Frame):
         self.dialog_open: bool = False
         self.deleting_deck_id: Optional[int] = None
 
+        # Check if user is authenticated
+        if not self.session_service.is_authenticated():
+            self.show_toast("Błąd", "Musisz być zalogowany aby przeglądać talie.")
+            self.navigation_controller.navigate("/profiles")
+            return
+
         self._init_ui()
         self._bind_events()
+        self.load_decks()
 
     def _init_ui(self) -> None:
         """Initialize the UI components"""
@@ -66,6 +76,18 @@ class DeckListView(ttk.Frame):
         self.header = HeaderBar(self, "Talie", show_back_button=True)
         self.header.grid(row=0, column=0, sticky="ew", padx=5, pady=(5, 0))
         self.header.set_back_command(self._on_back)
+
+        # Add logout button to header
+        user = self.session_service.get_current_user()
+        if user:
+            logout_frame = ttk.Frame(self.header)
+            logout_frame.pack(side=RIGHT, padx=5)
+
+            username_label = ttk.Label(logout_frame, text=f"Zalogowany jako: {user.username}", style="secondary.TLabel")
+            username_label.pack(side=LEFT, padx=(0, 10))
+
+            logout_btn = ttk.Button(logout_frame, text="Wyloguj", style="secondary.TButton", command=self._on_logout)
+            logout_btn.pack(side=RIGHT)
 
         # Button Bar
         self.button_bar = ttk.Frame(self)
@@ -94,13 +116,22 @@ class DeckListView(ttk.Frame):
         if self.dialog_open:
             return
 
+        if not self.session_service.is_authenticated():
+            self.show_toast("Błąd", "Musisz być zalogowany aby utworzyć talię.")
+            self.navigation_controller.navigate("/profiles")
+            return
+
         self.dialog_open = True
 
         def on_save(name: str) -> None:
             try:
-                # TODO: Get current user_id from session/auth service
-                user_id = 1  # Temporary hardcoded value
-                self.deck_service.create_deck(name, user_id)
+                user = self.session_service.get_current_user()
+                if not user:  # This should never happen due to earlier check
+                    self.show_toast("Błąd", "Musisz być zalogowany aby utworzyć talię.")
+                    self.navigation_controller.navigate("/profiles")
+                    return
+
+                self.deck_service.create_deck(name, user.id)
                 self.show_toast("Sukces", "Talia została utworzona")
                 self.load_decks()  # Refresh list
             except ValueError as e:
@@ -120,11 +151,21 @@ class DeckListView(ttk.Frame):
 
     def _on_deck_select(self, deck_id: int) -> None:
         """Handle deck selection"""
+        if not self.session_service.is_authenticated():
+            self.show_toast("Błąd", "Musisz być zalogowany aby przeglądać talie.")
+            self.navigation_controller.navigate("/profiles")
+            return
+
         self.navigation_controller.navigate(f"/decks/{deck_id}/cards")
 
     def _on_deck_delete(self, deck_id: int) -> None:
         """Handle deck deletion request"""
         if self.dialog_open or self.deleting_deck_id:
+            return
+
+        if not self.session_service.is_authenticated():
+            self.show_toast("Błąd", "Musisz być zalogowany aby usunąć talię.")
+            self.navigation_controller.navigate("/profiles")
             return
 
         # Find deck name
@@ -137,9 +178,13 @@ class DeckListView(ttk.Frame):
 
         def on_confirm() -> None:
             try:
-                # TODO: Get current user_id from session/auth service
-                user_id = 1  # Temporary hardcoded value
-                self.deck_service.delete_deck(deck_id, user_id)
+                user = self.session_service.get_current_user()
+                if not user:  # This should never happen due to earlier check
+                    self.show_toast("Błąd", "Musisz być zalogowany aby usunąć talię.")
+                    self.navigation_controller.navigate("/profiles")
+                    return
+
+                self.deck_service.delete_deck(deck_id, user.id)
                 self.show_toast("Sukces", "Talia została usunięta")
                 self.load_decks()  # Refresh list
             except ValueError as e:
@@ -157,16 +202,31 @@ class DeckListView(ttk.Frame):
 
         DeleteConfirmationDialog(self, deck_to_delete.name, on_confirm, on_cancel)
 
+    def _on_logout(self) -> None:
+        """Handle logout button click"""
+        self.session_service.logout()
+        self.show_toast("Info", "Wylogowano pomyślnie")
+        self.navigation_controller.navigate("/profiles")
+
     def load_decks(self) -> None:
         """Load decks from the service"""
         if self.is_loading:
             return
 
+        if not self.session_service.is_authenticated():
+            self.show_toast("Błąd", "Musisz być zalogowany aby przeglądać talie.")
+            self.navigation_controller.navigate("/profiles")
+            return
+
         self.is_loading = True
         try:
-            # TODO: Get current user_id from session/auth service
-            user_id = 1  # Temporary hardcoded value
-            decks = self.deck_service.list_decks(user_id)
+            user = self.session_service.get_current_user()
+            if not user:  # This should never happen due to earlier check
+                self.show_toast("Błąd", "Musisz być zalogowany aby przeglądać talie.")
+                self.navigation_controller.navigate("/profiles")
+                return
+
+            decks = self.deck_service.list_decks(user.id)
             self.decks = [DeckViewModel.from_deck(deck) for deck in decks]
             self.deck_table.set_items(self.decks)
         except Exception as e:

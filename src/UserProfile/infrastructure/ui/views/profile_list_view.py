@@ -2,10 +2,13 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Protocol, Callable
 import tkinter as tk
 import ttkbootstrap as ttk
+import logging
 
-from ....application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
-from ....domain.repositories.exceptions import UsernameAlreadyExistsError, RepositoryError
-from .create_profile_dialog import CreateProfileDialog
+from src.UserProfile.application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
+from src.UserProfile.domain.repositories.exceptions import UsernameAlreadyExistsError, RepositoryError
+from src.Shared.application.session_service import SessionService
+from src.Shared.domain.errors import AuthenticationError
+from src.UserProfile.infrastructure.ui.views.create_profile_dialog import CreateProfileDialog
 
 
 @dataclass
@@ -29,6 +32,7 @@ class ProfileListView(ttk.Frame):
         self,
         parent: tk.Widget,
         profile_service: UserProfileService,
+        session_service: SessionService,
         router: Router,
         toast_callback: Callable[[str, str], None],
     ):
@@ -37,11 +41,13 @@ class ProfileListView(ttk.Frame):
         Args:
             parent: Parent widget
             profile_service: Service for profile operations
+            session_service: Service for session management
             router: Navigation router
             toast_callback: Callback for showing toast notifications
         """
         super().__init__(parent)
         self._profile_service = profile_service
+        self._session_service = session_service
         self._router = router
         self._show_toast = toast_callback
         self._state = ProfileListViewState()
@@ -163,8 +169,17 @@ class ProfileListView(ttk.Frame):
         if not profile:
             return
 
-        # Navigate based on password protection
-        if profile.is_password_protected:
-            self._router.show_login(profile)
-        else:
-            self._router.show_deck_list(profile.id)
+        try:
+            if profile.is_password_protected:
+                self._router.show_login(profile)
+            else:
+                # For unprotected profiles, log in directly
+                self._session_service.login(profile.username)
+                self._router.show_deck_list(profile.id)
+        except AuthenticationError as e:
+            self._show_toast("Błąd", str(e))
+            self._router.show_profile_list()
+        except Exception as e:
+            self._show_toast("Błąd", "Wystąpił nieoczekiwany błąd podczas logowania.")
+            logging.error(f"Unexpected error during login: {str(e)}")
+            self._router.show_profile_list()
