@@ -8,6 +8,9 @@ from Shared.infrastructure.persistence.sqlite.connection import SqliteConnection
 from UserProfile.infrastructure.persistence.sqlite.repositories.UserRepositoryImpl import UserRepositoryImpl
 from UserProfile.application.user_profile_service import UserProfileService
 from UserProfile.infrastructure.ui.views.profile_list_view import ProfileListView
+from DeckManagement.infrastructure.persistence.sqlite.repositories.DeckRepositoryImpl import DeckRepositoryImpl
+from DeckManagement.application.deck_service import DeckService
+from DeckManagement.infrastructure.ui.views.deck_list_view import DeckListView
 from Shared.infrastructure.persistence.sqlite.migrations import run_initial_migration_if_needed
 
 
@@ -65,8 +68,11 @@ class TenXCardsApp(ttk.Window):
 
         # Repositories
         user_repo = UserRepositoryImpl(db_provider)
+        deck_repo = DeckRepositoryImpl(db_provider)
+
         # Services
         profile_service = UserProfileService(user_repo)
+        deck_service = DeckService(deck_repo)
 
         # Toast callback placeholder
         def show_toast(title: str, message: str):
@@ -77,9 +83,25 @@ class TenXCardsApp(ttk.Window):
         app_view.grid(row=0, column=0, sticky="nsew")
         navigation_controller = NavigationController(app_view)
         app_view.navigation_controller = navigation_controller
+
         # --- Views ---
-        profile_list_view = ProfileListView(app_view.main_content, profile_service, navigation_controller, show_toast)
+        profile_list_view = ProfileListView(
+            app_view.main_content,
+            profile_service,
+            navigation_controller,
+            show_toast
+        )
         navigation_controller.register_view("/profiles", profile_list_view)
+
+        deck_list_view = DeckListView(
+            app_view.main_content,
+            deck_service,
+            navigation_controller,
+            show_toast
+        )
+        navigation_controller.register_view("/decks", deck_list_view)
+
+        # Start with profiles view
         navigation_controller.navigate("/profiles")
 
 
