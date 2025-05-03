@@ -2,9 +2,10 @@ from typing import Optional, Dict, Callable
 import tkinter as tk
 from tkinter import ttk
 
-from ...application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
-from .views.profile_list_view import ProfileListView
-from .views.profile_login_view import ProfileLoginView
+from src.UserProfile.application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
+from src.Shared.application.session_service import SessionService
+from src.UserProfile.infrastructure.ui.views.profile_list_view import ProfileListView
+from src.UserProfile.infrastructure.ui.views.profile_login_view import ProfileLoginView
 
 
 class Router:
@@ -14,6 +15,7 @@ class Router:
         self,
         root: tk.Widget,
         profile_service: UserProfileService,
+        session_service: SessionService,
         main_content_area: ttk.Frame,
         toast_callback: Callable[[str, str], None],
     ):
@@ -22,11 +24,13 @@ class Router:
         Args:
             root: Root window
             profile_service: Service for profile operations
+            session_service: Service for session management
             main_content_area: Frame where views will be displayed
             toast_callback: Callback for showing toast notifications
         """
         self._root = root
         self._profile_service = profile_service
+        self._session_service = session_service
         self._main_content_area = main_content_area
         self._show_toast = toast_callback
 
@@ -52,7 +56,9 @@ class Router:
     def show_profile_list(self) -> None:
         """Show the profile list view."""
         # Create new instance each time to ensure fresh state
-        view = ProfileListView(self._main_content_area, self._profile_service, self, self._show_toast)
+        view = ProfileListView(
+            self._main_content_area, self._profile_service, self._session_service, self, self._show_toast
+        )
         self._show_view(view)
 
     def show_login(self, profile: UserProfileSummaryViewModel) -> None:
@@ -61,7 +67,9 @@ class Router:
         Args:
             profile: Profile to log into
         """
-        view = ProfileLoginView(self._main_content_area, profile, self._profile_service, self, self._show_toast)
+        view = ProfileLoginView(
+            self._main_content_area, profile, self._profile_service, self._session_service, self, self._show_toast
+        )
         self._show_view(view)
 
     def show_deck_list(self, user_id: int) -> None:
