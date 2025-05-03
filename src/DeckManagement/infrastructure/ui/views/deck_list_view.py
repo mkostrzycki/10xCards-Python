@@ -16,19 +16,16 @@ from src.DeckManagement.infrastructure.ui.widgets.delete_confirmation_dialog imp
 
 class DeckViewModel(DeckTableItem):
     """Data transfer object for deck display"""
+
     def __init__(self, id: int, name: str, created_at: datetime):
         self.id = id
         self.name = name
         self.created_at = created_at
 
     @classmethod
-    def from_deck(cls, deck: Deck) -> 'DeckViewModel':
+    def from_deck(cls, deck: Deck) -> "DeckViewModel":
         """Creates a ViewModel from a domain Deck model"""
-        return cls(
-            id=deck.id,
-            name=deck.name,
-            created_at=deck.created_at
-        )
+        return cls(id=deck.id, name=deck.name, created_at=deck.created_at)
 
 
 class DeckListView(ttk.Frame):
@@ -39,69 +36,62 @@ class DeckListView(ttk.Frame):
         parent: ttk.Widget,
         deck_service: DeckService,
         navigation_controller,
-        show_toast: Callable[[str, str], None]
+        show_toast: Callable[[str, str], None],
     ):
         super().__init__(parent)
         self.deck_service = deck_service
         self.navigation_controller = navigation_controller
         self.show_toast = show_toast
-        
+
         # State
         self.decks: List[DeckViewModel] = []
         self.is_loading: bool = False
         self.dialog_open: bool = False
         self.deleting_deck_id: Optional[int] = None
-        
+
         self._init_ui()
         self._bind_events()
-        
+
     def _init_ui(self) -> None:
         """Initialize the UI components"""
         # Configure grid
         self.grid_rowconfigure(1, weight=1)  # DeckTable row
         self.grid_columnconfigure(0, weight=1)
-        
+
         # Header
         self.header = HeaderBar(self, "Talie", show_back_button=True)
         self.header.grid(row=0, column=0, sticky="ew", padx=5, pady=(5, 0))
         self.header.set_back_command(self._on_back)
-        
+
         # Button Bar
         self.button_bar = ttk.Frame(self)
         self.button_bar.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
-        
+
         # Create New Deck button
         self.create_deck_btn = ttk.Button(
-            self.button_bar,
-            text="Utwórz nową talię",
-            style="primary.TButton",
-            command=self._on_create_deck_click
+            self.button_bar, text="Utwórz nową talię", style="primary.TButton", command=self._on_create_deck_click
         )
         self.create_deck_btn.pack(side=RIGHT, padx=5)
-        
+
         # Deck Table
-        self.deck_table = DeckTable(
-            self,
-            on_select=self._on_deck_select,
-            on_delete=self._on_deck_delete
-        )
+        self.deck_table = DeckTable(self, on_select=self._on_deck_select, on_delete=self._on_deck_delete)
         self.deck_table.grid(row=1, column=0, sticky="nsew", padx=5)
-        
+
     def _bind_events(self) -> None:
         """Bind keyboard shortcuts and events"""
         self.bind("<BackSpace>", lambda e: self._on_back())
-        
+
     def _on_back(self) -> None:
         """Handle back navigation"""
         self.navigation_controller.navigate("/profiles")
-        
+
     def _on_create_deck_click(self) -> None:
         """Handle create deck button click"""
         if self.dialog_open:
             return
-            
+
         self.dialog_open = True
-        
+
         def on_save(name: str) -> None:
             try:
                 # TODO: Get current user_id from session/auth service
@@ -118,29 +108,29 @@ class DeckListView(ttk.Frame):
                 logging.error(f"Failed to create deck: {str(e)}")
             finally:
                 self.dialog_open = False
-                
+
         def on_cancel() -> None:
             self.dialog_open = False
-            
+
         CreateDeckDialog(self, on_save, on_cancel)
-        
+
     def _on_deck_select(self, deck_id: int) -> None:
         """Handle deck selection"""
         self.navigation_controller.navigate(f"/decks/{deck_id}/cards")
-        
+
     def _on_deck_delete(self, deck_id: int) -> None:
         """Handle deck deletion request"""
         if self.dialog_open or self.deleting_deck_id:
             return
-            
+
         # Find deck name
         deck = next((d for d in self.decks if d.id == deck_id), None)
         if not deck:
             return
-            
+
         self.dialog_open = True
         self.deleting_deck_id = deck_id
-        
+
         def on_confirm() -> None:
             try:
                 # TODO: Get current user_id from session/auth service
@@ -156,18 +146,18 @@ class DeckListView(ttk.Frame):
             finally:
                 self.dialog_open = False
                 self.deleting_deck_id = None
-                
+
         def on_cancel() -> None:
             self.dialog_open = False
             self.deleting_deck_id = None
-            
+
         DeleteConfirmationDialog(self, deck.name, on_confirm, on_cancel)
-        
+
     def load_decks(self) -> None:
         """Load decks from the service"""
         if self.is_loading:
             return
-            
+
         self.is_loading = True
         try:
             # TODO: Get current user_id from session/auth service

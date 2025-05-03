@@ -17,14 +17,14 @@ class DeckService:
     def create_deck(self, name: str, user_id: int) -> Deck:
         """
         Creates a new deck for the user.
-        
+
         Args:
             name: The name of the deck (max 50 chars)
             user_id: The ID of the user creating the deck
-            
+
         Returns:
             The created Deck with ID and timestamps
-            
+
         Raises:
             ValueError: If name is empty or too long
             IntegrityError: If a deck with this name already exists for the user
@@ -47,9 +47,9 @@ class DeckService:
             user_id=user_id,
             name=name,
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
-        
+
         try:
             created_deck = self.deck_repository.add(deck)
             self.logger.info(f"Created deck '{name}' for user {user_id}")
@@ -61,11 +61,11 @@ class DeckService:
     def get_deck(self, deck_id: int, user_id: int) -> Optional[Deck]:
         """
         Retrieves a deck by ID for the given user.
-        
+
         Args:
             deck_id: The ID of the deck to retrieve
             user_id: The ID of the user who owns the deck
-            
+
         Returns:
             The Deck if found and owned by the user, None otherwise
         """
@@ -83,10 +83,10 @@ class DeckService:
     def list_decks(self, user_id: int) -> List[Deck]:
         """
         Lists all decks for the given user.
-        
+
         Args:
             user_id: The ID of the user whose decks to list
-            
+
         Returns:
             List of Deck objects owned by the user, ordered by name
         """
@@ -101,11 +101,11 @@ class DeckService:
     def delete_deck(self, deck_id: int, user_id: int) -> None:
         """
         Deletes a deck and all its flashcards.
-        
+
         Args:
             deck_id: The ID of the deck to delete
             user_id: The ID of the user who owns the deck
-            
+
         Raises:
             ValueError: If the deck doesn't exist or doesn't belong to the user
         """
@@ -124,12 +124,12 @@ class DeckService:
     def rename_deck(self, deck_id: int, user_id: int, new_name: str) -> None:
         """
         Renames an existing deck.
-        
+
         Args:
             deck_id: The ID of the deck to rename
             user_id: The ID of the user who owns the deck
             new_name: The new name for the deck (max 50 chars)
-            
+
         Raises:
             ValueError: If new_name is empty or too long, or if deck doesn't exist
             IntegrityError: If another deck with new_name exists for the user

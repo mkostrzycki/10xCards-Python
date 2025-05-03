@@ -85,20 +85,10 @@ class TenXCardsApp(ttk.Window):
         app_view.navigation_controller = navigation_controller
 
         # --- Views ---
-        profile_list_view = ProfileListView(
-            app_view.main_content,
-            profile_service,
-            navigation_controller,
-            show_toast
-        )
+        profile_list_view = ProfileListView(app_view.main_content, profile_service, navigation_controller, show_toast)
         navigation_controller.register_view("/profiles", profile_list_view)
 
-        deck_list_view = DeckListView(
-            app_view.main_content,
-            deck_service,
-            navigation_controller,
-            show_toast
-        )
+        deck_list_view = DeckListView(app_view.main_content, deck_service, navigation_controller, show_toast)
         navigation_controller.register_view("/decks", deck_list_view)
 
         # Start with profiles view
