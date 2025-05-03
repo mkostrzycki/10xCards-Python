@@ -127,7 +127,7 @@ class ProfileLoginView(ttk.Frame):
             self._show_error(str(e))
             self._clear_password()
         except Exception as e:
-            self._show_toast("Błąd", "Wystąpił nieoczekiwany błąd podczas logowania.")
+            self._show_toast("Błąd", str(e))
             self._router.show_profile_list()
         finally:
             self._state.is_logging_in = False
