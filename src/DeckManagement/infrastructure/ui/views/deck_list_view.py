@@ -154,7 +154,7 @@ class DeckListView(ttk.Frame):
             self.navigation_controller.navigate("/profiles")
             return None
 
-        return user.id
+        return int(user.id)
 
     def _handle_deck_creation(self, name: str) -> None:
         """Handle deck creation logic
@@ -217,7 +217,10 @@ class DeckListView(ttk.Frame):
         Returns:
             Optional[DeckViewModel]: The deck if found, None otherwise
         """
-        return next((d for d in self.decks if d.id == deck_id), None)
+        for deck in self.decks:
+            if deck.id == deck_id:
+                return deck
+        return None
 
     def _handle_deck_deletion(self) -> None:
         """Handle confirmed deck deletion"""
