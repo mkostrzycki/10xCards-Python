@@ -91,7 +91,7 @@ class DeckService:
             List of Deck objects owned by the user, ordered by name
         """
         try:
-            decks = self.deck_repository.list_all(user_id)
+            decks: List[Deck] = self.deck_repository.list_all(user_id)
             self.logger.debug(f"Listed {len(decks)} decks for user {user_id}")
             return decks
         except Exception as e:
