@@ -116,44 +116,77 @@ class DeckListView(ttk.Frame):
         if self.dialog_open:
             return
 
-        if not self.session_service.is_authenticated():
-            self.show_toast("Błąd", "Musisz być zalogowany aby utworzyć talię.")
-            self.navigation_controller.navigate("/profiles")
+        if not self._ensure_user_authenticated("utworzyć talię"):
             return
 
         self.dialog_open = True
+        CreateDeckDialog(self, self._handle_deck_creation, self._handle_dialog_cancel)
 
-        def on_save(name: str) -> None:
-            try:
-                user = self.session_service.get_current_user()
-                if not user:  # This should never happen due to earlier check
-                    self.show_toast("Błąd", "Musisz być zalogowany aby utworzyć talię.")
-                    self.navigation_controller.navigate("/profiles")
-                    return
+    def _ensure_user_authenticated(self, action_description: str) -> bool:
+        """Verify user is authenticated for the specified action
 
-                self.deck_service.create_deck(name, user.id)
-                self.show_toast("Sukces", "Talia została utworzona")
-                self.load_decks()  # Refresh list
-            except ValueError as e:
-                self.show_toast("Błąd", str(e))
-            except IntegrityError:
-                self.show_toast("Błąd", "Talia o tej nazwie już istnieje")
-            except Exception as e:
-                self.show_toast("Błąd", f"Nie udało się utworzyć talii: {str(e)}")
-                logging.error(f"Failed to create deck: {str(e)}")
-            finally:
-                self.dialog_open = False
+        Args:
+            action_description: Description of the action requiring authentication
 
-        def on_cancel() -> None:
+        Returns:
+            bool: True if user is authenticated, False otherwise
+        """
+        if not self.session_service.is_authenticated():
+            self.show_toast("Błąd", f"Musisz być zalogowany aby {action_description}.")
+            self.navigation_controller.navigate("/profiles")
+            return False
+        return True
+
+    def _get_authenticated_user_id(self) -> Optional[int]:
+        """Get the current authenticated user ID
+
+        Returns:
+            Optional[int]: User ID if authenticated user with valid ID exists, None otherwise
+        """
+        user = self.session_service.get_current_user()
+        if not user:
+            self.show_toast("Błąd", "Musisz być zalogowany aby wykonać tę operację.")
+            self.navigation_controller.navigate("/profiles")
+            return None
+
+        if user.id is None:
+            self.show_toast("Błąd", "Błąd identyfikatora użytkownika.")
+            self.navigation_controller.navigate("/profiles")
+            return None
+
+        return user.id
+
+    def _handle_deck_creation(self, name: str) -> None:
+        """Handle deck creation logic
+
+        Args:
+            name: Name of the deck to create
+        """
+        try:
+            user_id = self._get_authenticated_user_id()
+            if user_id is None:
+                return
+
+            self.deck_service.create_deck(name, user_id)
+            self.show_toast("Sukces", "Talia została utworzona")
+            self.load_decks()  # Refresh list
+        except ValueError as e:
+            self.show_toast("Błąd", str(e))
+        except IntegrityError:
+            self.show_toast("Błąd", "Talia o tej nazwie już istnieje")
+        except Exception as e:
+            self.show_toast("Błąd", f"Nie udało się utworzyć talii: {str(e)}")
+            logging.error(f"Failed to create deck: {str(e)}")
+        finally:
             self.dialog_open = False
 
-        CreateDeckDialog(self, on_save, on_cancel)
+    def _handle_dialog_cancel(self) -> None:
+        """Handle dialog cancellation"""
+        self.dialog_open = False
 
     def _on_deck_select(self, deck_id: int) -> None:
         """Handle deck selection"""
-        if not self.session_service.is_authenticated():
-            self.show_toast("Błąd", "Musisz być zalogowany aby przeglądać talie.")
-            self.navigation_controller.navigate("/profiles")
+        if not self._ensure_user_authenticated("przeglądać talie"):
             return
 
         self.navigation_controller.navigate(f"/decks/{deck_id}/cards")
@@ -163,44 +196,60 @@ class DeckListView(ttk.Frame):
         if self.dialog_open or self.deleting_deck_id:
             return
 
-        if not self.session_service.is_authenticated():
-            self.show_toast("Błąd", "Musisz być zalogowany aby usunąć talię.")
-            self.navigation_controller.navigate("/profiles")
+        if not self._ensure_user_authenticated("usunąć talię"):
             return
 
         # Find deck name
-        deck_to_delete = next((d for d in self.decks if d.id == deck_id), None)
+        deck_to_delete = self._find_deck_by_id(deck_id)
         if not deck_to_delete:
             return
 
         self.dialog_open = True
         self.deleting_deck_id = deck_id
+        DeleteConfirmationDialog(self, deck_to_delete.name, self._handle_deck_deletion, self._handle_deletion_cancel)
 
-        def on_confirm() -> None:
-            try:
-                user = self.session_service.get_current_user()
-                if not user:  # This should never happen due to earlier check
-                    self.show_toast("Błąd", "Musisz być zalogowany aby usunąć talię.")
-                    self.navigation_controller.navigate("/profiles")
-                    return
+    def _find_deck_by_id(self, deck_id: int) -> Optional[DeckViewModel]:
+        """Find a deck by its ID
 
-                self.deck_service.delete_deck(deck_id, user.id)
-                self.show_toast("Sukces", "Talia została usunięta")
-                self.load_decks()  # Refresh list
-            except ValueError as e:
-                self.show_toast("Błąd", str(e))
-            except Exception as e:
-                self.show_toast("Błąd", f"Nie udało się usunąć talii: {str(e)}")
-                logging.error(f"Failed to delete deck: {str(e)}")
-            finally:
-                self.dialog_open = False
-                self.deleting_deck_id = None
+        Args:
+            deck_id: ID of the deck to find
 
-        def on_cancel() -> None:
-            self.dialog_open = False
-            self.deleting_deck_id = None
+        Returns:
+            Optional[DeckViewModel]: The deck if found, None otherwise
+        """
+        return next((d for d in self.decks if d.id == deck_id), None)
 
-        DeleteConfirmationDialog(self, deck_to_delete.name, on_confirm, on_cancel)
+    def _handle_deck_deletion(self) -> None:
+        """Handle confirmed deck deletion"""
+        try:
+            user_id = self._get_authenticated_user_id()
+            if user_id is None:
+                return
+
+            if self.deleting_deck_id is None:
+                logging.error("Attempting to delete a deck but deleting_deck_id is None")
+                self.show_toast("Błąd", "Nieprawidłowe ID talii")
+                return
+
+            self.deck_service.delete_deck(self.deleting_deck_id, user_id)
+            self.show_toast("Sukces", "Talia została usunięta")
+            self.load_decks()  # Refresh list
+        except ValueError as e:
+            self.show_toast("Błąd", str(e))
+        except Exception as e:
+            self.show_toast("Błąd", f"Nie udało się usunąć talii: {str(e)}")
+            logging.error(f"Failed to delete deck: {str(e)}")
+        finally:
+            self._reset_deletion_state()
+
+    def _handle_deletion_cancel(self) -> None:
+        """Handle cancellation of deck deletion"""
+        self._reset_deletion_state()
+
+    def _reset_deletion_state(self) -> None:
+        """Reset the state related to deck deletion"""
+        self.dialog_open = False
+        self.deleting_deck_id = None
 
     def _on_logout(self) -> None:
         """Handle logout button click"""
@@ -213,20 +262,16 @@ class DeckListView(ttk.Frame):
         if self.is_loading:
             return
 
-        if not self.session_service.is_authenticated():
-            self.show_toast("Błąd", "Musisz być zalogowany aby przeglądać talie.")
-            self.navigation_controller.navigate("/profiles")
+        if not self._ensure_user_authenticated("przeglądać talie"):
             return
 
         self.is_loading = True
         try:
-            user = self.session_service.get_current_user()
-            if not user:  # This should never happen due to earlier check
-                self.show_toast("Błąd", "Musisz być zalogowany aby przeglądać talie.")
-                self.navigation_controller.navigate("/profiles")
+            user_id = self._get_authenticated_user_id()
+            if user_id is None:
                 return
 
-            decks = self.deck_service.list_decks(user.id)
+            decks = self.deck_service.list_decks(user_id)
             self.decks = [DeckViewModel.from_deck(deck) for deck in decks]
             self.deck_table.set_items(self.decks)
         except Exception as e:
