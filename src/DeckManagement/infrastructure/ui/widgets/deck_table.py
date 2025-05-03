@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, List, Optional, Protocol
+from typing import Callable, Optional, Protocol, Sequence
 
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import W, VERTICAL, END
@@ -75,12 +75,12 @@ class DeckTable(ttk.Frame):
             deck_id = int(selection[0])
             self.on_delete(deck_id)
 
-    def set_items(self, items: List[DeckTableItem]) -> None:
+    def set_items(self, items: Sequence[DeckTableItem]) -> None:
         """
         Update the table with new items.
 
         Args:
-            items: List of items implementing DeckTableItem protocol
+            items: Sequence of items implementing DeckTableItem protocol
         """
         # Clear existing items
         for item in self.tree.get_children():

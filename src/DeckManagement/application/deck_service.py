@@ -51,7 +51,7 @@ class DeckService:
         )
 
         try:
-            created_deck = self.deck_repository.add(deck)
+            created_deck: Deck = self.deck_repository.add(deck)
             self.logger.info(f"Created deck '{name}' for user {user_id}")
             return created_deck
         except Exception as e:
@@ -70,7 +70,7 @@ class DeckService:
             The Deck if found and owned by the user, None otherwise
         """
         try:
-            deck = self.deck_repository.get_by_id(deck_id, user_id)
+            deck: Optional[Deck] = self.deck_repository.get_by_id(deck_id, user_id)
             if deck:
                 self.logger.debug(f"Retrieved deck {deck_id} for user {user_id}")
             else:

@@ -17,7 +17,9 @@ from src.DeckManagement.infrastructure.ui.widgets.delete_confirmation_dialog imp
 class DeckViewModel(DeckTableItem):
     """Data transfer object for deck display"""
 
-    def __init__(self, id: int, name: str, created_at: datetime):
+    def __init__(self, id: int | None, name: str, created_at: datetime | None):
+        if id is None or created_at is None:
+            raise ValueError("id and created_at must not be None for DeckViewModel")
         self.id = id
         self.name = name
         self.created_at = created_at
@@ -25,6 +27,8 @@ class DeckViewModel(DeckTableItem):
     @classmethod
     def from_deck(cls, deck: Deck) -> "DeckViewModel":
         """Creates a ViewModel from a domain Deck model"""
+        if deck.id is None or deck.created_at is None:
+            raise ValueError("Cannot create DeckViewModel from Deck with None id or created_at")
         return cls(id=deck.id, name=deck.name, created_at=deck.created_at)
 
 
