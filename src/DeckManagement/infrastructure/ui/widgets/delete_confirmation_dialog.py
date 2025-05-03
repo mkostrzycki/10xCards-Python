@@ -6,9 +6,7 @@ import ttkbootstrap as ttk
 class DeleteConfirmationDialog(ttk.Toplevel):
     """Dialog for confirming deck deletion"""
 
-    def __init__(
-        self, parent: Any, deck_name: str, on_confirm: Callable[[], None], on_cancel: Callable[[], None]
-    ):
+    def __init__(self, parent: Any, deck_name: str, on_confirm: Callable[[], None], on_cancel: Callable[[], None]):
         """
         Initialize the dialog.
 
