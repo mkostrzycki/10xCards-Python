@@ -1,7 +1,6 @@
 from typing import Callable
 
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
 
 
 class CreateDeckDialog(ttk.Toplevel):

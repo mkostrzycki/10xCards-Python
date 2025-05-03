@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Callable, List, Optional, Protocol
 
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
+from ttkbootstrap.constants import W, VERTICAL, END
 
 
 class DeckTableItem(Protocol):

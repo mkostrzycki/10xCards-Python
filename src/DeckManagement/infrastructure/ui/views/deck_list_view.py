@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime
 from typing import Callable, List, Optional
+from sqlite3 import IntegrityError
 
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
-from sqlite3 import IntegrityError
+from ttkbootstrap.constants import RIGHT
 
 from src.DeckManagement.domain.models.Deck import Deck
 from src.DeckManagement.application.deck_service import DeckService
@@ -96,7 +96,7 @@ class DeckListView(ttk.Frame):
             try:
                 # TODO: Get current user_id from session/auth service
                 user_id = 1  # Temporary hardcoded value
-                deck = self.deck_service.create_deck(name, user_id)
+                self.deck_service.create_deck(name, user_id)
                 self.show_toast("Sukces", "Talia została utworzona")
                 self.load_decks()  # Refresh list
             except ValueError as e:
@@ -124,8 +124,8 @@ class DeckListView(ttk.Frame):
             return
 
         # Find deck name
-        deck = next((d for d in self.decks if d.id == deck_id), None)
-        if not deck:
+        deck_to_delete = next((d for d in self.decks if d.id == deck_id), None)
+        if not deck_to_delete:
             return
 
         self.dialog_open = True
@@ -151,7 +151,7 @@ class DeckListView(ttk.Frame):
             self.dialog_open = False
             self.deleting_deck_id = None
 
-        DeleteConfirmationDialog(self, deck.name, on_confirm, on_cancel)
+        DeleteConfirmationDialog(self, deck_to_delete.name, on_confirm, on_cancel)
 
     def load_decks(self) -> None:
         """Load decks from the service"""

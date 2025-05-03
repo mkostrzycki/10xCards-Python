@@ -1,8 +1,6 @@
 from typing import Callable
 
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
-from ttkbootstrap.dialogs import MessageDialog
 
 
 class DeleteConfirmationDialog(ttk.Toplevel):
