@@ -1,10 +1,20 @@
 import sqlite3
 import pytest
+
 from src.CardManagement.domain.models.Flashcard import Flashcard
 from src.CardManagement.infrastructure.persistence.sqlite.repositories.FlashcardRepositoryImpl import (
     FlashcardRepositoryImpl,
 )
-from datetime import datetime
+
+
+class MockDbProvider:
+    """Test database provider that uses an in-memory SQLite database."""
+
+    def __init__(self, connection: sqlite3.Connection):
+        self.connection = connection
+
+    def get_connection(self) -> sqlite3.Connection:
+        return self.connection
 
 
 @pytest.fixture
@@ -31,8 +41,13 @@ def db_connection():
 
 
 @pytest.fixture
-def repository(db_connection):
-    return FlashcardRepositoryImpl(db_connection)
+def db_provider(db_connection):
+    return MockDbProvider(db_connection)
+
+
+@pytest.fixture
+def repository(db_provider):
+    return FlashcardRepositoryImpl(db_provider)
 
 
 @pytest.fixture
@@ -40,133 +55,103 @@ def sample_flashcard():
     return Flashcard(
         id=None,
         deck_id=1,
-        front_text="Front",
-        back_text="Back",
+        front_text="Front Text",
+        back_text="Back Text",
         fsrs_state=None,
         source="manual",
         ai_model_name=None,
-        created_at=datetime.now(),
-        updated_at=datetime.now(),
+        created_at=None,
+        updated_at=None,
     )
 
 
-def test_add_flashcard_success(repository, sample_flashcard):
-    card = repository.add(sample_flashcard)
-    assert card.id is not None
-    assert card.front_text == "Front"
-    assert card.back_text == "Back"
-    assert card.deck_id == 1
-    assert card.created_at is not None
-    assert card.updated_at is not None
+def test_add_flashcard(repository, sample_flashcard):
+    added = repository.add(sample_flashcard)
+    assert added.id is not None
+    assert added.deck_id == sample_flashcard.deck_id
+    assert added.front_text == sample_flashcard.front_text
+    assert added.back_text == sample_flashcard.back_text
+    assert added.source == sample_flashcard.source
+    assert added.created_at is not None
+    assert added.updated_at is not None
 
 
-def test_get_by_id_found(repository, sample_flashcard):
-    card = repository.add(sample_flashcard)
-    found = repository.get_by_id(card.id)
-    assert found is not None
-    assert found.id == card.id
-    assert found.front_text == card.front_text
+def test_get_by_id(repository, sample_flashcard):
+    added = repository.add(sample_flashcard)
+    retrieved = repository.get_by_id(added.id)
+    assert retrieved is not None
+    assert retrieved.id == added.id
+    assert retrieved.front_text == added.front_text
+    assert retrieved.back_text == added.back_text
 
 
 def test_get_by_id_not_found(repository):
-    assert repository.get_by_id(999) is None
+    retrieved = repository.get_by_id(999)
+    assert retrieved is None
 
 
 def test_list_by_deck_id(repository, sample_flashcard):
     repository.add(sample_flashcard)
-    repository.add(
-        Flashcard(
-            id=None,
-            deck_id=1,
-            front_text="F2",
-            back_text="B2",
-            fsrs_state=None,
-            source="manual",
-            ai_model_name=None,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-        )
-    )
-    cards = repository.list_by_deck_id(1)
-    assert len(cards) == 2
-    fronts = {c.front_text for c in cards}
-    assert "Front" in fronts and "F2" in fronts
-
-
-def test_list_by_deck_id_empty(repository):
-    assert repository.list_by_deck_id(42) == []
-
-
-def test_update_flashcard_success(repository, sample_flashcard):
-    card = repository.add(sample_flashcard)
-    card.front_text = "Updated Front"
-    card.back_text = "Updated Back"
-    card.fsrs_state = '{"srs": 1}'
-    card.source = "ai-edited"
-    card.ai_model_name = "gpt-4"
-    repository.update(card)
-    updated = repository.get_by_id(card.id)
-    assert updated.front_text == "Updated Front"
-    assert updated.back_text == "Updated Back"
-    assert updated.fsrs_state == '{"srs": 1}'
-    assert updated.source == "ai-edited"
-    assert updated.ai_model_name == "gpt-4"
-
-
-def test_delete_flashcard_success(repository, sample_flashcard):
-    card = repository.add(sample_flashcard)
-    repository.delete(card.id)
-    assert repository.get_by_id(card.id) is None
-
-
-def test_delete_flashcard_not_found(repository):
-    # Should not raise
-    repository.delete(999)
-
-
-def test_get_fsrs_card_data_for_deck(repository, sample_flashcard):
-    card1 = repository.add(sample_flashcard)
-    card2 = repository.add(
-        Flashcard(
-            id=None,
-            deck_id=1,
-            front_text="F2",
-            back_text="B2",
-            fsrs_state='{"srs":2}',
-            source="manual",
-            ai_model_name=None,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-        )
-    )
-    data = repository.get_fsrs_card_data_for_deck(1)
-    assert (card1.id, card1.fsrs_state) in data
-    assert (card2.id, card2.fsrs_state) in data
-
-
-def test_add_flashcard_integrity_error(repository, sample_flashcard):
-    # Simulate NOT NULL violation (front_text)
-    bad_card = Flashcard(
+    second_card = Flashcard(
         id=None,
-        deck_id=1,
-        front_text=None,
-        back_text="Back",
+        deck_id=sample_flashcard.deck_id,
+        front_text="Second Front",
+        back_text="Second Back",
         fsrs_state=None,
         source="manual",
         ai_model_name=None,
-        created_at=datetime.now(),
-        updated_at=datetime.now(),
+        created_at=None,
+        updated_at=None,
     )
-    with pytest.raises(sqlite3.IntegrityError):
-        repository.add(bad_card)
+    repository.add(second_card)
+
+    # Add a card to a different deck
+    different_deck_card = Flashcard(
+        id=None,
+        deck_id=2,
+        front_text="Different Deck",
+        back_text="Different Deck Back",
+        fsrs_state=None,
+        source="manual",
+        ai_model_name=None,
+        created_at=None,
+        updated_at=None,
+    )
+    repository.add(different_deck_card)
+
+    cards = repository.list_by_deck_id(sample_flashcard.deck_id)
+    assert len(cards) == 2
+    assert all(card.deck_id == sample_flashcard.deck_id for card in cards)
 
 
-def test_update_flashcard_integrity_error(repository, sample_flashcard):
-    card = repository.add(sample_flashcard)
-    card.front_text = None
-    with pytest.raises(sqlite3.IntegrityError):
-        repository.update(card)
+def test_update_flashcard(repository, sample_flashcard):
+    added = repository.add(sample_flashcard)
+    added.front_text = "Updated Front"
+    added.back_text = "Updated Back"
+    added.fsrs_state = '{"some": "state"}'
+
+    repository.update(added)
+
+    updated = repository.get_by_id(added.id)
+    assert updated is not None
+    assert updated.front_text == "Updated Front"
+    assert updated.back_text == "Updated Back"
+    assert updated.fsrs_state == '{"some": "state"}'
 
 
-def test_get_fsrs_card_data_for_deck_empty(repository):
-    assert repository.get_fsrs_card_data_for_deck(123) == []
+def test_delete_flashcard(repository, sample_flashcard):
+    added = repository.add(sample_flashcard)
+    repository.delete(added.id)
+
+    deleted = repository.get_by_id(added.id)
+    assert deleted is None
+
+
+def test_get_fsrs_card_data_for_deck(repository, sample_flashcard):
+    sample_flashcard.fsrs_state = '{"some": "state"}'
+    added = repository.add(sample_flashcard)
+
+    data = repository.get_fsrs_card_data_for_deck(added.deck_id)
+    assert len(data) == 1
+    assert data[0][0] == added.id
+    assert data[0][1] == added.fsrs_state

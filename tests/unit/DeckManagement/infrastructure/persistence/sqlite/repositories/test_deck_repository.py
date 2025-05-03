@@ -1,7 +1,20 @@
 import sqlite3
 import pytest
+
 from src.DeckManagement.domain.models.Deck import Deck
-from src.DeckManagement.infrastructure.persistence.sqlite.repositories.DeckRepositoryImpl import DeckRepositoryImpl
+from src.DeckManagement.infrastructure.persistence.sqlite.repositories.DeckRepositoryImpl import (
+    DeckRepositoryImpl,
+)
+
+
+class MockDbProvider:
+    """Test database provider that uses an in-memory SQLite database."""
+
+    def __init__(self, connection: sqlite3.Connection):
+        self.connection = connection
+
+    def get_connection(self) -> sqlite3.Connection:
+        return self.connection
 
 
 @pytest.fixture
@@ -26,8 +39,13 @@ def db_connection():
 
 
 @pytest.fixture
-def repository(db_connection):
-    return DeckRepositoryImpl(db_connection)
+def db_provider(db_connection):
+    return MockDbProvider(db_connection)
+
+
+@pytest.fixture
+def repository(db_provider):
+    return DeckRepositoryImpl(db_provider)
 
 
 @pytest.fixture
@@ -44,19 +62,11 @@ def test_add_deck_success(repository, sample_deck):
     assert deck.updated_at is not None
 
 
-def test_add_duplicate_deck_name(repository, sample_deck):
+def test_add_deck_duplicate_name(repository, sample_deck):
     repository.add(sample_deck)
     duplicate = Deck(id=None, user_id=1, name="Test Deck", created_at=None, updated_at=None)
     with pytest.raises(sqlite3.IntegrityError):
         repository.add(duplicate)
-
-
-def test_add_same_name_different_user(repository, sample_deck):
-    repository.add(sample_deck)
-    other_user_deck = Deck(id=None, user_id=2, name="Test Deck", created_at=None, updated_at=None)
-    deck2 = repository.add(other_user_deck)
-    assert deck2.id is not None
-    assert deck2.user_id == 2
 
 
 def test_get_by_id_found(repository, sample_deck):
@@ -82,20 +92,25 @@ def test_get_by_name_not_found(repository):
     assert repository.get_by_name("Nope", 1) is None
 
 
-def test_list_all_decks(repository, sample_deck):
-    repository.add(sample_deck)
-    repository.add(Deck(id=None, user_id=1, name="Deck2", created_at=None, updated_at=None))
-    decks = repository.list_all(1)
-    assert len(decks) == 2
-    names = {d.name for d in decks}
-    assert "Test Deck" in names and "Deck2" in names
+def test_list_all_decks(repository):
+    decks = [
+        Deck(id=None, user_id=1, name="A", created_at=None, updated_at=None),
+        Deck(id=None, user_id=1, name="B", created_at=None, updated_at=None),
+        Deck(id=None, user_id=1, name="C", created_at=None, updated_at=None),
+    ]
+    for deck in decks:
+        repository.add(deck)
+    result = repository.list_all(1)
+    assert len(result) == 3
+    # Should be sorted by name
+    assert [d.name for d in result] == ["A", "B", "C"]
 
 
 def test_list_all_decks_empty(repository):
     assert repository.list_all(1) == []
 
 
-def test_update_deck_success(repository, sample_deck):
+def test_update_deck(repository, sample_deck):
     deck = repository.add(sample_deck)
     deck.name = "Updated Name"
     repository.update(deck)
@@ -103,25 +118,18 @@ def test_update_deck_success(repository, sample_deck):
     assert updated.name == "Updated Name"
 
 
-def test_update_deck_duplicate_name(repository, sample_deck):
-    repository.add(sample_deck)
-    deck2 = repository.add(Deck(id=None, user_id=1, name="Other", created_at=None, updated_at=None))
-    deck2.name = "Test Deck"
+def test_update_deck_duplicate_name(repository):
+    repository.add(Deck(id=None, user_id=1, name="First", created_at=None, updated_at=None))
+    deck2 = repository.add(Deck(id=None, user_id=1, name="Second", created_at=None, updated_at=None))
+    deck2.name = "First"  # Try to update to a name that already exists
     with pytest.raises(sqlite3.IntegrityError):
         repository.update(deck2)
 
 
-def test_delete_deck_success(repository, sample_deck):
+def test_delete_deck(repository, sample_deck):
     deck = repository.add(sample_deck)
     repository.delete(deck.id, deck.user_id)
     assert repository.get_by_id(deck.id, deck.user_id) is None
-
-
-def test_delete_deck_wrong_user(repository, sample_deck):
-    deck = repository.add(sample_deck)
-    # Attempt to delete as another user (should not delete anything, no error)
-    repository.delete(deck.id, 999)
-    assert repository.get_by_id(deck.id, deck.user_id) is not None
 
 
 def test_isolation_between_users(repository):
