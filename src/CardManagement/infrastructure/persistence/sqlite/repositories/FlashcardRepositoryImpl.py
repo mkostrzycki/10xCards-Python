@@ -1,8 +1,8 @@
 import sqlite3
 from typing import List, Optional, Tuple
-from src.CardManagement.domain.models.Flashcard import Flashcard
-from src.CardManagement.domain.repositories.IFlashcardRepository import IFlashcardRepository
-from src.CardManagement.infrastructure.persistence.sqlite.mappers.FlashcardMapper import FlashcardMapper
+from CardManagement.domain.models.Flashcard import Flashcard
+from CardManagement.domain.repositories.IFlashcardRepository import IFlashcardRepository
+from CardManagement.infrastructure.persistence.sqlite.mappers.FlashcardMapper import FlashcardMapper
 
 
 class FlashcardRepositoryImpl(IFlashcardRepository):

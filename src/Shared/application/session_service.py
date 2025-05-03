@@ -1,8 +1,8 @@
 from typing import Optional
 
-from ..domain.errors import AuthenticationError
-from src.UserProfile.domain.models.user import User
-from src.UserProfile.application.user_profile_service import UserProfileService
+from Shared.domain.errors import AuthenticationError
+from UserProfile.domain.models.user import User
+from UserProfile.application.user_profile_service import UserProfileService
 
 
 class SessionService:

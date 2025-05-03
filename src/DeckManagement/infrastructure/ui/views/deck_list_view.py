@@ -6,13 +6,13 @@ from sqlite3 import IntegrityError
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import RIGHT, LEFT
 
-from src.DeckManagement.domain.models.Deck import Deck
-from src.DeckManagement.application.deck_service import DeckService
-from src.Shared.application.session_service import SessionService
-from src.Shared.ui.widgets.header_bar import HeaderBar
-from src.DeckManagement.infrastructure.ui.widgets.deck_table import DeckTable, DeckTableItem
-from src.DeckManagement.infrastructure.ui.widgets.create_deck_dialog import CreateDeckDialog
-from src.DeckManagement.infrastructure.ui.widgets.delete_confirmation_dialog import DeleteConfirmationDialog
+from DeckManagement.domain.models.Deck import Deck
+from DeckManagement.application.deck_service import DeckService
+from Shared.application.session_service import SessionService
+from Shared.ui.widgets.header_bar import HeaderBar
+from DeckManagement.infrastructure.ui.widgets.deck_table import DeckTable, DeckTableItem
+from DeckManagement.infrastructure.ui.widgets.create_deck_dialog import CreateDeckDialog
+from DeckManagement.infrastructure.ui.widgets.delete_confirmation_dialog import DeleteConfirmationDialog
 
 
 class DeckViewModel(DeckTableItem):

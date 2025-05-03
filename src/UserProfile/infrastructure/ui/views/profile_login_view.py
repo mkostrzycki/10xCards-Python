@@ -3,9 +3,9 @@ from typing import Optional, Callable, Protocol
 import tkinter as tk
 import ttkbootstrap as ttk
 
-from src.UserProfile.application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
-from src.Shared.application.session_service import SessionService
-from src.Shared.domain.errors import AuthenticationError
+from UserProfile.application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
+from Shared.application.session_service import SessionService
+from Shared.domain.errors import AuthenticationError
 
 
 @dataclass

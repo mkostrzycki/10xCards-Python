@@ -4,11 +4,11 @@ import tkinter as tk
 import ttkbootstrap as ttk
 import logging
 
-from src.UserProfile.application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
-from src.UserProfile.domain.repositories.exceptions import UsernameAlreadyExistsError, RepositoryError
-from src.Shared.application.session_service import SessionService
-from src.Shared.domain.errors import AuthenticationError
-from src.UserProfile.infrastructure.ui.views.create_profile_dialog import CreateProfileDialog
+from UserProfile.application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
+from UserProfile.domain.repositories.exceptions import UsernameAlreadyExistsError, RepositoryError
+from Shared.application.session_service import SessionService
+from Shared.domain.errors import AuthenticationError
+from UserProfile.infrastructure.ui.views.create_profile_dialog import CreateProfileDialog
 
 
 @dataclass

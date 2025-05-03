@@ -3,8 +3,8 @@ from datetime import datetime
 from typing import List, Optional
 from sqlite3 import IntegrityError
 
-from src.DeckManagement.domain.models.Deck import Deck
-from src.DeckManagement.domain.repositories.IDeckRepository import IDeckRepository
+from DeckManagement.domain.models.Deck import Deck
+from DeckManagement.domain.repositories.IDeckRepository import IDeckRepository
 
 
 class DeckService:

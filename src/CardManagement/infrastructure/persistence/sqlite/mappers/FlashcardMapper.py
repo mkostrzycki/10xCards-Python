@@ -1,4 +1,4 @@
-from src.CardManagement.domain.models.Flashcard import Flashcard
+from CardManagement.domain.models.Flashcard import Flashcard
 from datetime import datetime
 
 

@@ -2,10 +2,10 @@ from typing import Optional, Dict, Callable
 import tkinter as tk
 from tkinter import ttk
 
-from src.UserProfile.application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
-from src.Shared.application.session_service import SessionService
-from src.UserProfile.infrastructure.ui.views.profile_list_view import ProfileListView
-from src.UserProfile.infrastructure.ui.views.profile_login_view import ProfileLoginView
+from UserProfile.application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
+from Shared.application.session_service import SessionService
+from UserProfile.infrastructure.ui.views.profile_list_view import ProfileListView
+from UserProfile.infrastructure.ui.views.profile_login_view import ProfileLoginView
 
 
 class Router:

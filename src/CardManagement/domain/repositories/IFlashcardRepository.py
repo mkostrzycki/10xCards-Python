@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
-from src.CardManagement.domain.models.Flashcard import Flashcard
+from CardManagement.domain.models.Flashcard import Flashcard
 
 
 class IFlashcardRepository(ABC):
