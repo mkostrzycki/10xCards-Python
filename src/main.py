@@ -97,8 +97,8 @@ class TenXCardsApp(ttk.Window):
             return
 
         # Repositories
-        user_repo = UserRepositoryImpl(db_provider.get_connection())
-        deck_repo = DeckRepositoryImpl(db_provider.get_connection())
+        user_repo = UserRepositoryImpl(db_provider)
+        deck_repo = DeckRepositoryImpl(db_provider)
 
         # Services
         profile_service = UserProfileService(user_repo)
@@ -138,7 +138,7 @@ def main() -> None:
     migration_sql_path = "./infrastructure/persistence/sqlite/migrations/20250413174854_initial_schema.sql"
     run_initial_migration_if_needed(db_path, migration_sql_path, target_version=1)
     db_provider = SqliteConnectionProvider(db_path)
-    user_repo = UserRepositoryImpl(db_provider.get_connection())
+    user_repo = UserRepositoryImpl(db_provider)
     profile_service = UserProfileService(user_repo)
     dependencies = {
         "db_provider": db_provider,
