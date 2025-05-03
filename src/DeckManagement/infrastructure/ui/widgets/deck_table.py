@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Optional, Protocol, Sequence
+from typing import Callable, Optional, Protocol, Sequence, Any
 
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import W, VERTICAL, END
@@ -16,7 +16,7 @@ class DeckTableItem(Protocol):
 class DeckTable(ttk.Frame):
     """A table widget for displaying decks with sorting and selection capabilities"""
 
-    def __init__(self, parent: ttk.Widget, on_select: Callable[[int], None], on_delete: Callable[[int], None]):
+    def __init__(self, parent: Any, on_select: Callable[[int], None], on_delete: Callable[[int], None]):
         """
         Initialize the DeckTable widget.
 

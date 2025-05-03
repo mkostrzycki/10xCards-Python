@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Any
 
 import ttkbootstrap as ttk
 
@@ -7,7 +7,7 @@ class DeleteConfirmationDialog(ttk.Toplevel):
     """Dialog for confirming deck deletion"""
 
     def __init__(
-        self, parent: ttk.Widget, deck_name: str, on_confirm: Callable[[], None], on_cancel: Callable[[], None]
+        self, parent: Any, deck_name: str, on_confirm: Callable[[], None], on_cancel: Callable[[], None]
     ):
         """
         Initialize the dialog.
@@ -68,3 +68,8 @@ class DeleteConfirmationDialog(ttk.Toplevel):
         """Handle cancel button click"""
         self.on_cancel()
         self.destroy()
+
+    def show(self) -> None:
+        """Show the dialog"""
+        self.deiconify()
+        self.wait_window()

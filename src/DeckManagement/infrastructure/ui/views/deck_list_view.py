@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Any
 from sqlite3 import IntegrityError
 
 import ttkbootstrap as ttk
@@ -38,7 +38,7 @@ class DeckListView(ttk.Frame):
 
     def __init__(
         self,
-        parent: ttk.Widget,
+        parent: Any,
         deck_service: DeckService,
         session_service: SessionService,
         navigation_controller,

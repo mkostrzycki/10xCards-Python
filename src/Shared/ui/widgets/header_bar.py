@@ -1,10 +1,11 @@
 import ttkbootstrap as ttk
+from typing import Any
 
 
 class HeaderBar(ttk.Frame):
     """A reusable header bar widget with optional back button and title"""
 
-    def __init__(self, parent: ttk.Widget, title: str, show_back_button: bool = False):
+    def __init__(self, parent: Any, title: str, show_back_button: bool = False):
         super().__init__(parent)
         self.title = title
 

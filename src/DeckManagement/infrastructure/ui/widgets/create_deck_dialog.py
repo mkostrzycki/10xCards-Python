@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Any
 
 import ttkbootstrap as ttk
 
@@ -8,7 +8,7 @@ class CreateDeckDialog(ttk.Toplevel):
 
     MAX_NAME_LENGTH = 50
 
-    def __init__(self, parent: ttk.Widget, on_save: Callable[[str], None], on_cancel: Callable[[], None]):
+    def __init__(self, parent: Any, on_save: Callable[[str], None], on_cancel: Callable[[], None]):
         """
         Initialize the dialog.
 
