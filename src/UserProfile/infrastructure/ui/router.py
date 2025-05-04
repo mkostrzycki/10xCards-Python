@@ -72,11 +72,14 @@ class Router:
         )
         self._show_view(view)
 
-    def show_deck_list(self, user_id: int) -> None:
-        """Show the deck list view.
+    def show_deck_list(self) -> None:
+        """Show the deck list view."""
+        # Upewnij się, że użytkownik jest zalogowany
+        if not self._session_service.is_authenticated():
+            self._show_toast("Błąd", "Musisz być zalogowany, aby przeglądać talie.")
+            self.show_profile_list()
+            return
 
-        Args:
-            user_id: ID of the user whose decks to display
-        """
-        # This will be implemented when DeckManagement context is ready
-        self._show_toast("Info", "Przekierowanie do listy talii (niezaimplementowane).")
+        # Przekieruj do widoku talii
+        self._root.event_generate("<<NavigateToDeckList>>")
+        self._show_toast("Info", "Przechodzę do listy talii...")

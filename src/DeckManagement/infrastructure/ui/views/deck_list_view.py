@@ -56,15 +56,17 @@ class DeckListView(ttk.Frame):
         self.dialog_open: bool = False
         self.deleting_deck_id: Optional[int] = None
 
-        # Check if user is authenticated
+        # Inicjalizacja UI
+        self._init_ui()
+        self._bind_events()
+
+        # Check if user is authenticated and load decks if so
         if not self.session_service.is_authenticated():
             self.show_toast("Błąd", "Musisz być zalogowany aby przeglądać talie.")
             self.navigation_controller.navigate("/profiles")
-            return
-
-        self._init_ui()
-        self._bind_events()
-        self.load_decks()
+        else:
+            # Załaduj talie tylko jeśli użytkownik jest zalogowany
+            self.load_decks()
 
     def _init_ui(self) -> None:
         """Initialize the UI components"""
@@ -143,13 +145,16 @@ class DeckListView(ttk.Frame):
         Returns:
             Optional[int]: User ID if authenticated user with valid ID exists, None otherwise
         """
-        user = self.session_service.get_current_user()
-        if not user:
+        # Upewnij się, że użytkownik jest zalogowany
+        if not self.session_service.is_authenticated():
             self.show_toast("Błąd", "Musisz być zalogowany aby wykonać tę operację.")
             self.navigation_controller.navigate("/profiles")
             return None
 
-        if user.id is None:
+        # Pobierz użytkownika z serwisu sesji
+        user = self.session_service.get_current_user()
+        # Ta część nie powinna się nigdy zdarzyć, jeśli is_authenticated zwraca True
+        if user is None or user.id is None:
             self.show_toast("Błąd", "Błąd identyfikatora użytkownika.")
             self.navigation_controller.navigate("/profiles")
             return None
@@ -163,6 +168,7 @@ class DeckListView(ttk.Frame):
             name: Name of the deck to create
         """
         try:
+            # Pobierz ID aktualnie zalogowanego użytkownika
             user_id = self._get_authenticated_user_id()
             if user_id is None:
                 return
@@ -225,6 +231,7 @@ class DeckListView(ttk.Frame):
     def _handle_deck_deletion(self) -> None:
         """Handle confirmed deck deletion"""
         try:
+            # Pobierz ID użytkownika bezpośrednio z serwisu sesji
             user_id = self._get_authenticated_user_id()
             if user_id is None:
                 return
@@ -261,24 +268,29 @@ class DeckListView(ttk.Frame):
         self.navigation_controller.navigate("/profiles")
 
     def load_decks(self) -> None:
-        """Load decks from the service"""
-        if self.is_loading:
-            return
-
-        if not self._ensure_user_authenticated("przeglądać talie"):
+        """Load decks for the current user"""
+        if not self.session_service.is_authenticated():
+            self.show_toast("Błąd", "Musisz być zalogowany aby przeglądać talie.")
+            self.navigation_controller.navigate("/profiles")
             return
 
         self.is_loading = True
         try:
+            # Pobierz ID użytkownika bezpośrednio z serwisu sesji
             user_id = self._get_authenticated_user_id()
             if user_id is None:
                 return
 
+            # Fetch decks
             decks = self.deck_service.list_decks(user_id)
+
+            # Convert to view models
             self.decks = [DeckViewModel.from_deck(deck) for deck in decks]
+
+            # Update UI
             self.deck_table.set_items(self.decks)
         except Exception as e:
-            self.show_toast("Błąd", f"Nie udało się załadować talii: {str(e)}")
-            logging.error(f"Failed to load decks: {str(e)}")
+            self.show_toast("Błąd", f"Wystąpił błąd podczas ładowania talii: {str(e)}")
+            logging.error(f"Error loading decks: {str(e)}")
         finally:
             self.is_loading = False

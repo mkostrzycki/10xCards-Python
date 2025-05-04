@@ -21,7 +21,7 @@ class ProfileListViewState:
 
 class Router(Protocol):
     def show_login(self, profile: UserProfileSummaryViewModel) -> None: ...
-    def show_deck_list(self, user_id: int) -> None: ...
+    def show_deck_list(self) -> None: ...
     def show_profile_list(self) -> None: ...
 
 
@@ -175,7 +175,7 @@ class ProfileListView(ttk.Frame):
             else:
                 # For unprotected profiles, log in directly
                 self._session_service.login(profile.username)
-                self._router.show_deck_list(profile.id)
+                self._router.show_deck_list()
         except AuthenticationError as e:
             self._show_toast("Błąd", str(e))
             self._router.show_profile_list()

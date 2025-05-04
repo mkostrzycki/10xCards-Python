@@ -18,7 +18,7 @@ class ProfileLoginViewState:
 
 
 class Router(Protocol):
-    def show_deck_list(self, user_id: int) -> None: ...
+    def show_deck_list(self) -> None: ...
     def show_profile_list(self) -> None: ...
 
 
@@ -122,7 +122,7 @@ class ProfileLoginView(ttk.Frame):
         try:
             # Attempt login through session service
             self._session_service.login(self._state.username, password)
-            self._router.show_deck_list(self._state.user_id)
+            self._router.show_deck_list()
         except AuthenticationError as e:
             self._show_error(str(e))
             self._clear_password()

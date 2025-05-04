@@ -72,6 +72,14 @@ class NavigationController:
         else:
             logging.error(f"No view registered for path {path}")
 
+    def show_deck_list(self) -> None:
+        """Navigate to the deck list view."""
+        self.navigate("/decks")
+
+    def show_profile_list(self) -> None:
+        """Navigate back to the profile list view."""
+        self.navigate("/profiles")
+
 
 # --- Main Application Class ---
 class TenXCardsApp(ttk.Window):
@@ -124,6 +132,10 @@ class TenXCardsApp(ttk.Window):
             app_view.main_content, deck_service, session_service, navigation_controller, show_toast
         )
         navigation_controller.register_view("/decks", deck_list_view)
+
+        # --- Bind Events ---
+        # Obsługa wydarzenia nawigacji do widoku talii
+        self.bind("<<NavigateToDeckList>>", lambda e: navigation_controller.navigate("/decks"))
 
         # Start with profiles view
         navigation_controller.navigate("/profiles")
