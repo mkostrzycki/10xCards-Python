@@ -6,13 +6,7 @@ import ttkbootstrap as ttk
 class DeleteConfirmationDialog(ttk.Toplevel):
     """Dialog for confirming flashcard deletion"""
 
-    def __init__(
-        self,
-        parent: Any,
-        front_text: str,
-        on_confirm: Callable[[], None],
-        on_cancel: Callable[[], None]
-    ):
+    def __init__(self, parent: Any, front_text: str, on_confirm: Callable[[], None], on_cancel: Callable[[], None]):
         """
         Initialize the dialog.
 
@@ -53,19 +47,11 @@ class DeleteConfirmationDialog(ttk.Toplevel):
         ttk.Label(container, text=message, wraplength=300).grid(row=0, column=0, columnspan=2, pady=(0, 15))
 
         # Buttons
-        ttk.Button(
-            container,
-            text="Nie",
-            style="secondary.TButton",
-            command=self._on_cancel_click
-        ).grid(row=1, column=0, padx=(0, 5))
+        ttk.Button(container, text="Nie", style="secondary.TButton", command=self._on_cancel_click).grid(
+            row=1, column=0, padx=(0, 5)
+        )
 
-        ttk.Button(
-            container,
-            text="Tak",
-            style="danger.TButton",
-            command=self._on_confirm_click
-        ).grid(row=1, column=1)
+        ttk.Button(container, text="Tak", style="danger.TButton", command=self._on_confirm_click).grid(row=1, column=1)
 
     def _bind_events(self) -> None:
         """Bind keyboard events"""

@@ -83,20 +83,10 @@ class FlashcardEditView(ttk.Frame):
         button_bar = ttk.Frame(content)
         button_bar.grid(row=2, column=0, sticky="e", pady=(10, 0))
 
-        self.cancel_btn = ttk.Button(
-            button_bar,
-            text="Anuluj",
-            style="secondary.TButton",
-            command=self._on_back
-        )
+        self.cancel_btn = ttk.Button(button_bar, text="Anuluj", style="secondary.TButton", command=self._on_back)
         self.cancel_btn.pack(side=RIGHT, padx=(5, 0))
 
-        self.save_btn = ttk.Button(
-            button_bar,
-            text="Zapisz",
-            style="primary.TButton",
-            command=self._on_save
-        )
+        self.save_btn = ttk.Button(button_bar, text="Zapisz", style="primary.TButton", command=self._on_save)
         self.save_btn.pack(side=RIGHT)
 
         # Bind text change events
@@ -115,10 +105,7 @@ class FlashcardEditView(ttk.Frame):
 
         text = self.front_text.get("1.0", "end-1c")
         count = len(text)
-        self.front_counter.configure(
-            text=f"{count}/200",
-            style="danger.TLabel" if count > 200 else "secondary.TLabel"
-        )
+        self.front_counter.configure(text=f"{count}/200", style="danger.TLabel" if count > 200 else "secondary.TLabel")
         self._update_save_button()
         self.front_text.edit_modified(False)
 
@@ -129,10 +116,7 @@ class FlashcardEditView(ttk.Frame):
 
         text = self.back_text.get("1.0", "end-1c")
         count = len(text)
-        self.back_counter.configure(
-            text=f"{count}/500",
-            style="danger.TLabel" if count > 500 else "secondary.TLabel"
-        )
+        self.back_counter.configure(text=f"{count}/500", style="danger.TLabel" if count > 500 else "secondary.TLabel")
         self._update_save_button()
         self.back_text.edit_modified(False)
 
@@ -170,18 +154,12 @@ class FlashcardEditView(ttk.Frame):
             if self.flashcard_id:
                 # Update existing
                 self.card_service.update_flashcard(
-                    flashcard_id=self.flashcard_id,
-                    front_text=front_text,
-                    back_text=back_text
+                    flashcard_id=self.flashcard_id, front_text=front_text, back_text=back_text
                 )
                 self.show_toast("Sukces", "Fiszka została zaktualizowana")
             else:
                 # Create new
-                self.card_service.create_flashcard(
-                    deck_id=self.deck_id,
-                    front_text=front_text,
-                    back_text=back_text
-                )
+                self.card_service.create_flashcard(deck_id=self.deck_id, front_text=front_text, back_text=back_text)
                 self.show_toast("Sukces", "Fiszka została utworzona")
 
             # Navigate back to list

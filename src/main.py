@@ -12,7 +12,9 @@ from UserProfile.infrastructure.ui.views.profile_list_view import ProfileListVie
 from DeckManagement.infrastructure.persistence.sqlite.repositories.DeckRepositoryImpl import DeckRepositoryImpl
 from DeckManagement.application.deck_service import DeckService
 from DeckManagement.infrastructure.ui.views.deck_list_view import DeckListView
-from CardManagement.infrastructure.persistence.sqlite.repositories.FlashcardRepositoryImpl import FlashcardRepositoryImpl
+from CardManagement.infrastructure.persistence.sqlite.repositories.FlashcardRepositoryImpl import (
+    FlashcardRepositoryImpl,
+)
 from CardManagement.application.card_service import CardService
 from CardManagement.infrastructure.ui.views.card_list_view import CardListView
 from CardManagement.infrastructure.ui.views.flashcard_edit_view import FlashcardEditView
@@ -22,6 +24,7 @@ from Shared.infrastructure.persistence.sqlite.migrations import run_initial_migr
 
 class NavigationProtocol(Protocol):
     """Protocol defining the navigation interface required by views"""
+
     def navigate(self, path: str) -> None: ...
     def show_deck_list(self) -> None: ...
     def show_profile_list(self) -> None: ...
@@ -30,7 +33,12 @@ class NavigationProtocol(Protocol):
 class AppView(ttk.Frame):
     """Main application view container"""
 
-    def __init__(self, parent: ttk.Window, session_service: SessionService, navigation_controller: Optional[NavigationProtocol] = None):
+    def __init__(
+        self,
+        parent: ttk.Window,
+        session_service: SessionService,
+        navigation_controller: Optional[NavigationProtocol] = None,
+    ):
         super().__init__(parent)
         self.session_service = session_service
         self.navigation_controller = navigation_controller
@@ -63,10 +71,7 @@ class AppView(ttk.Frame):
     def show_toast(self, title: str, message: str) -> None:
         """Show a toast notification."""
         ttk.Toast(
-            title=title,
-            message=message,
-            duration=3000,
-            position=("SE", 10, 50)  # Bottom-right corner
+            title=title, message=message, duration=3000, position=("SE", 10, 50)  # Bottom-right corner
         ).show_toast()
 
 
@@ -183,23 +188,15 @@ class TenXCardsApp(ttk.Window):
         navigation_controller.register_view(
             "/profiles",
             ProfileListView(
-                app_view.main_content,
-                profile_service,
-                session_service,
-                navigation_controller,
-                app_view.show_toast
-            )
+                app_view.main_content, profile_service, session_service, navigation_controller, app_view.show_toast
+            ),
         )
 
         navigation_controller.register_view(
             "/decks",
             DeckListView(
-                app_view.main_content,
-                deck_service,
-                session_service,
-                navigation_controller,
-                app_view.show_toast
-            )
+                app_view.main_content, deck_service, session_service, navigation_controller, app_view.show_toast
+            ),
         )
 
         # Dynamic views (card management)
@@ -213,7 +210,7 @@ class TenXCardsApp(ttk.Window):
                 deck_name=deck.name,
                 card_service=card_service,
                 navigation_controller=navigation_controller,
-                show_toast=app_view.show_toast
+                show_toast=app_view.show_toast,
             )
 
         def create_new_card_view(deck_id: int) -> FlashcardEditView:
@@ -226,7 +223,7 @@ class TenXCardsApp(ttk.Window):
                 deck_name=deck.name,
                 card_service=card_service,
                 navigation_controller=navigation_controller,
-                show_toast=app_view.show_toast
+                show_toast=app_view.show_toast,
             )
 
         def create_edit_card_view(deck_id: int, flashcard_id: int) -> FlashcardEditView:
@@ -240,7 +237,7 @@ class TenXCardsApp(ttk.Window):
                 card_service=card_service,
                 navigation_controller=navigation_controller,
                 show_toast=app_view.show_toast,
-                flashcard_id=flashcard_id
+                flashcard_id=flashcard_id,
             )
 
         def create_ai_generate_view(deck_id: int) -> AIGenerateView:
@@ -252,7 +249,7 @@ class TenXCardsApp(ttk.Window):
                 deck_id=deck_id,
                 deck_name=deck.name,
                 navigation_controller=navigation_controller,
-                show_toast=app_view.show_toast
+                show_toast=app_view.show_toast,
             )
 
         # Register dynamic routes

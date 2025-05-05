@@ -29,10 +29,7 @@ class FlashcardViewModel:
         if flashcard.id is None:
             raise ValueError("Cannot create FlashcardViewModel from Flashcard with None id")
         return cls(
-            id=flashcard.id,
-            front_text=flashcard.front_text,
-            back_text=flashcard.back_text,
-            source=flashcard.source
+            id=flashcard.id, front_text=flashcard.front_text, back_text=flashcard.back_text, source=flashcard.source
         )
 
 
@@ -84,18 +81,13 @@ class CardListView(ttk.Frame):
 
         # Flashcard Table
         self.flashcard_table = FlashcardTable(
-            self,
-            on_edit=self._on_edit_flashcard,
-            on_delete=self._on_delete_flashcard
+            self, on_edit=self._on_edit_flashcard, on_delete=self._on_delete_flashcard
         )
         self.flashcard_table.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
 
         # Button Panel
         self.button_panel = ButtonPanel(
-            self,
-            on_add=self._on_add_flashcard,
-            on_generate_ai=self._on_generate_ai,
-            disabled=self.loading
+            self, on_add=self._on_add_flashcard, on_generate_ai=self._on_generate_ai, disabled=self.loading
         )
         self.button_panel.grid(row=2, column=0, sticky="ew", padx=5, pady=(0, 5))
 
@@ -141,10 +133,7 @@ class CardListView(ttk.Frame):
         self.dialog_open = True
         self.deleting_id = flashcard_id
         DeleteConfirmationDialog(
-            self,
-            flashcard.front_text,
-            self._handle_flashcard_deletion,
-            self._handle_deletion_cancel
+            self, flashcard.front_text, self._handle_flashcard_deletion, self._handle_deletion_cancel
         )
 
     def _find_flashcard_by_id(self, flashcard_id: int) -> Optional[FlashcardViewModel]:

@@ -47,23 +47,20 @@ class AIGenerateView(ttk.Frame):
             content,
             text="Generowanie fiszek z AI będzie dostępne wkrótce! 🚀",
             style="primary.TLabel",
-            font=("TkDefaultFont", 14)
+            font=("TkDefaultFont", 14),
         ).grid(row=0, column=0, pady=20)
 
         ttk.Label(
             content,
             text="Ta funkcjonalność jest w trakcie implementacji.\nSprawdź ponownie w następnej wersji aplikacji.",
             justify="center",
-            wraplength=400
+            wraplength=400,
         ).grid(row=1, column=0)
 
         # Back button
-        ttk.Button(
-            content,
-            text="Wróć do listy",
-            style="primary.TButton",
-            command=self._on_back
-        ).grid(row=2, column=0, pady=(20, 0))
+        ttk.Button(content, text="Wróć do listy", style="primary.TButton", command=self._on_back).grid(
+            row=2, column=0, pady=(20, 0)
+        )
 
     def _bind_events(self) -> None:
         """Bind keyboard shortcuts and events"""

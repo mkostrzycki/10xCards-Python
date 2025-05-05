@@ -8,11 +8,7 @@ class ButtonPanel(ttk.Frame):
     """Panel containing action buttons for card management"""
 
     def __init__(
-        self,
-        parent: Any,
-        on_add: Callable[[], None],
-        on_generate_ai: Callable[[], None],
-        disabled: bool = False
+        self, parent: Any, on_add: Callable[[], None], on_generate_ai: Callable[[], None], disabled: bool = False
     ):
         """
         Initialize the button panel.
@@ -37,7 +33,7 @@ class ButtonPanel(ttk.Frame):
             text="Generuj z AI",
             style="primary.TButton",
             command=self.on_generate_ai,
-            state="disabled" if disabled else "normal"
+            state="disabled" if disabled else "normal",
         )
         self.generate_ai_btn.pack(side=RIGHT, padx=5)
 
@@ -46,7 +42,7 @@ class ButtonPanel(ttk.Frame):
             text="Dodaj fiszkę",
             style="primary.TButton",
             command=self.on_add,
-            state="disabled" if disabled else "normal"
+            state="disabled" if disabled else "normal",
         )
         self.add_card_btn.pack(side=RIGHT)
 

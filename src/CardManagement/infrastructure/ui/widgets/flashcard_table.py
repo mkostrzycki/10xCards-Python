@@ -40,10 +40,7 @@ class FlashcardTable(ttk.Frame):
 
         # Create Treeview
         self.tree = ttk.Treeview(
-            self,
-            columns=("front_text", "back_text", "source"),
-            show="headings",
-            selectmode="browse"
+            self, columns=("front_text", "back_text", "source"), show="headings", selectmode="browse"
         )
 
         # Configure columns
@@ -66,7 +63,7 @@ class FlashcardTable(ttk.Frame):
     def _bind_events(self) -> None:
         """Bind widget events"""
         self.tree.bind("<Double-1>", self._on_double_click)  # Double click to edit
-        self.tree.bind("<Delete>", self._on_delete_key)      # Delete key to delete
+        self.tree.bind("<Delete>", self._on_delete_key)  # Delete key to delete
 
     def _on_double_click(self, event) -> None:
         """Handle double click on a row"""
@@ -98,15 +95,8 @@ class FlashcardTable(ttk.Frame):
             # Truncate text for display
             front_preview = (item.front_text[:50] + "...") if len(item.front_text) > 50 else item.front_text
             back_preview = (item.back_text[:50] + "...") if len(item.back_text) > 50 else item.back_text
-            source_display = {
-                "manual": "Ręcznie",
-                "ai-generated": "AI",
-                "ai-edited": "AI (edyt.)"
-            }.get(item.source, item.source)
-
-            self.tree.insert(
-                "",
-                END,
-                iid=str(item.id),
-                values=(front_preview, back_preview, source_display)
+            source_display = {"manual": "Ręcznie", "ai-generated": "AI", "ai-edited": "AI (edyt.)"}.get(
+                item.source, item.source
             )
+
+            self.tree.insert("", END, iid=str(item.id), values=(front_preview, back_preview, source_display))

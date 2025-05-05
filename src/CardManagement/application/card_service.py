@@ -15,12 +15,7 @@ class CardService:
         self.logger = logging.getLogger(__name__)
 
     def create_flashcard(
-        self,
-        deck_id: int,
-        front_text: str,
-        back_text: str,
-        source: str = "manual",
-        ai_model_name: Optional[str] = None
+        self, deck_id: int, front_text: str, back_text: str, source: str = "manual", ai_model_name: Optional[str] = None
     ) -> Flashcard:
         """
         Creates a new flashcard in the specified deck.
@@ -78,7 +73,7 @@ class CardService:
         front_text: str,
         back_text: str,
         source: Optional[str] = None,
-        ai_model_name: Optional[str] = None
+        ai_model_name: Optional[str] = None,
     ) -> None:
         """
         Updates an existing flashcard.
