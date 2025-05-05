@@ -70,9 +70,12 @@ class AppView(ttk.Frame):
 
     def show_toast(self, title: str, message: str) -> None:
         """Show a toast notification."""
-        ttk.Toast(
-            title=title, message=message, duration=3000, position=("SE", 10, 50)  # Bottom-right corner
-        ).show_toast()
+        from ttkbootstrap.toast import ToastNotification
+
+        toast = ToastNotification(
+            title=title, message=message, duration=3000, position=(10, 50, "se")  # Bottom-right corner
+        )
+        toast.show_toast()
 
 
 class NavigationController:
@@ -208,7 +211,10 @@ class TenXCardsApp(ttk.Window):
 
         # Dynamic views (card management)
         def create_card_list_view(deck_id: int) -> CardListView:
-            deck = deck_service.get_deck(deck_id)
+            user = session_service.get_current_user()
+            if not user or not user.id:
+                raise ValueError("Musisz być zalogowany aby przeglądać karty")
+            deck = deck_service.get_deck(deck_id, user.id)
             if not deck:
                 raise ValueError("Talia nie istnieje")
             return CardListView(
@@ -216,12 +222,16 @@ class TenXCardsApp(ttk.Window):
                 deck_id=deck_id,
                 deck_name=deck.name,
                 card_service=card_service,
+                session_service=session_service,
                 navigation_controller=navigation_controller,
                 show_toast=app_view.show_toast,
             )
 
         def create_new_card_view(deck_id: int) -> FlashcardEditView:
-            deck = deck_service.get_deck(deck_id)
+            user = session_service.get_current_user()
+            if not user or not user.id:
+                raise ValueError("Musisz być zalogowany aby tworzyć karty")
+            deck = deck_service.get_deck(deck_id, user.id)
             if not deck:
                 raise ValueError("Talia nie istnieje")
             return FlashcardEditView(
@@ -234,7 +244,10 @@ class TenXCardsApp(ttk.Window):
             )
 
         def create_edit_card_view(deck_id: int, flashcard_id: int) -> FlashcardEditView:
-            deck = deck_service.get_deck(deck_id)
+            user = session_service.get_current_user()
+            if not user or not user.id:
+                raise ValueError("Musisz być zalogowany aby edytować karty")
+            deck = deck_service.get_deck(deck_id, user.id)
             if not deck:
                 raise ValueError("Talia nie istnieje")
             return FlashcardEditView(
@@ -248,7 +261,10 @@ class TenXCardsApp(ttk.Window):
             )
 
         def create_ai_generate_view(deck_id: int) -> AIGenerateView:
-            deck = deck_service.get_deck(deck_id)
+            user = session_service.get_current_user()
+            if not user or not user.id:
+                raise ValueError("Musisz być zalogowany aby generować karty")
+            deck = deck_service.get_deck(deck_id, user.id)
             if not deck:
                 raise ValueError("Talia nie istnieje")
             return AIGenerateView(
