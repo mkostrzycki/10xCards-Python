@@ -99,18 +99,25 @@ class NavigationController:
         for registered_path, view in self.views.items():
             registered_parts = registered_path.split("/")
             if len(path_parts) == len(registered_parts):
-                params = {}
+                params: Dict[str, Any] = {}
                 matches = True
                 for i, (path_part, registered_part) in enumerate(zip(path_parts, registered_parts)):
                     if registered_part.startswith("{") and registered_part.endswith("}"):
                         param_name = registered_part[1:-1]
-                        try:
-                            params[param_name] = int(path_part)  # Convert to int for IDs
-                        except ValueError:
+                        # Jeśli nazwa parametru sugeruje, że to ID, konwertujemy na int
+                        if param_name.endswith("_id"):
+                            try:
+                                params[param_name] = int(path_part)
+                            except ValueError:
+                                logging.error(f"Expected int for parameter {param_name}, got {path_part}")
+                                matches = False
+                                break
+                        else:
                             params[param_name] = path_part
                     elif path_part != registered_part:
                         matches = False
                         break
+
                 if matches:
                     if callable(view):
                         try:
