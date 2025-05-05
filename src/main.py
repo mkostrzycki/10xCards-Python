@@ -1,6 +1,6 @@
 import ttkbootstrap as ttk
 import logging
-from typing import Any
+from typing import Any, Dict, Optional, Protocol
 
 # --- Project Imports ---
 from Shared.infrastructure.logging import setup_logging
@@ -12,12 +12,25 @@ from UserProfile.infrastructure.ui.views.profile_list_view import ProfileListVie
 from DeckManagement.infrastructure.persistence.sqlite.repositories.DeckRepositoryImpl import DeckRepositoryImpl
 from DeckManagement.application.deck_service import DeckService
 from DeckManagement.infrastructure.ui.views.deck_list_view import DeckListView
+from CardManagement.infrastructure.persistence.sqlite.repositories.FlashcardRepositoryImpl import FlashcardRepositoryImpl
+from CardManagement.application.card_service import CardService
+from CardManagement.infrastructure.ui.views.card_list_view import CardListView
+from CardManagement.infrastructure.ui.views.flashcard_edit_view import FlashcardEditView
+from CardManagement.infrastructure.ui.views.ai_generate_view import AIGenerateView
 from Shared.infrastructure.persistence.sqlite.migrations import run_initial_migration_if_needed
 
 
-# --- Placeholders for missing core UI components ---
+class NavigationProtocol(Protocol):
+    """Protocol defining the navigation interface required by views"""
+    def navigate(self, path: str) -> None: ...
+    def show_deck_list(self) -> None: ...
+    def show_profile_list(self) -> None: ...
+
+
 class AppView(ttk.Frame):
-    def __init__(self, parent, session_service: SessionService, navigation_controller=None):
+    """Main application view container"""
+
+    def __init__(self, parent: ttk.Window, session_service: SessionService, navigation_controller: Optional[NavigationProtocol] = None):
         super().__init__(parent)
         self.session_service = session_service
         self.navigation_controller = navigation_controller
@@ -47,30 +60,74 @@ class AppView(ttk.Frame):
         else:
             self.session_info.configure(text="")
 
+    def show_toast(self, title: str, message: str) -> None:
+        """Show a toast notification."""
+        ttk.Toast(
+            title=title,
+            message=message,
+            duration=3000,
+            position=("SE", 10, 50)  # Bottom-right corner
+        ).show_toast()
+
 
 class NavigationController:
+    """Controller managing view navigation and routing"""
+
     def __init__(self, app_view: AppView):
         self.app_view = app_view
-        self.views: dict[str, ttk.Frame] = {}
-        self.current_view: ttk.Frame | None = None
+        self.views: Dict[str, ttk.Frame] = {}
+        self.current_view: Optional[ttk.Frame] = None
         logging.info("NavigationController initialized")
 
     def register_view(self, path: str, view_instance: ttk.Frame) -> None:
+        """Register a view instance for a static path."""
         self.views[path] = view_instance
         logging.info(f"View registered for path {path}")
 
     def navigate(self, path: str) -> None:
+        """Navigate to a registered view."""
         if self.current_view:
             self.current_view.grid_remove()
-        new_view = self.views.get(path)
-        if new_view:
-            new_view.grid(row=0, column=0, sticky="nsew")
-            self.current_view = new_view
-            # Update session info after navigation
-            self.app_view._update_session_info()
-            logging.info(f"Navigated to {path}")
-        else:
-            logging.error(f"No view registered for path {path}")
+
+        # Extract dynamic path parameters
+        path_parts = path.split("/")
+        for registered_path, view in self.views.items():
+            registered_parts = registered_path.split("/")
+            if len(path_parts) == len(registered_parts):
+                params = {}
+                matches = True
+                for i, (path_part, registered_part) in enumerate(zip(path_parts, registered_parts)):
+                    if registered_part.startswith("{") and registered_part.endswith("}"):
+                        param_name = registered_part[1:-1]
+                        try:
+                            params[param_name] = int(path_part)  # Convert to int for IDs
+                        except ValueError:
+                            params[param_name] = path_part
+                    elif path_part != registered_part:
+                        matches = False
+                        break
+                if matches:
+                    if callable(view):
+                        try:
+                            new_view = view(**params)
+                            self.views[path] = new_view
+                            new_view.grid(row=0, column=0, sticky="nsew")
+                            self.current_view = new_view
+                            self.app_view._update_session_info()
+                            logging.info(f"Navigated to {path} with params {params}")
+                            return
+                        except Exception as e:
+                            logging.error(f"Failed to create view for {path}: {str(e)}")
+                            self.app_view.show_toast("Błąd", str(e))
+                            return
+                    else:
+                        view.grid(row=0, column=0, sticky="nsew")
+                        self.current_view = view
+                        self.app_view._update_session_info()
+                        logging.info(f"Navigated to {path}")
+                        return
+
+        logging.error(f"No view registered for path {path}")
 
     def show_deck_list(self) -> None:
         """Navigate to the deck list view."""
@@ -85,13 +142,14 @@ class NavigationController:
 class TenXCardsApp(ttk.Window):
     """Main application window for 10xCards."""
 
-    def __init__(self, dependencies: dict[str, Any]) -> None:
+    def __init__(self, dependencies: Dict[str, Any]) -> None:
         super().__init__(title="10xCards", themename="darkly")
         self.minsize(800, 600)
         self.geometry("800x600")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
+        # Get dependencies
         db_provider = dependencies.get("db_provider")
         if db_provider is None:
             logging.error("Database provider not provided to TenXCardsApp")
@@ -107,14 +165,12 @@ class TenXCardsApp(ttk.Window):
         # Repositories
         user_repo = UserRepositoryImpl(db_provider)
         deck_repo = DeckRepositoryImpl(db_provider)
+        card_repo = FlashcardRepositoryImpl(db_provider)
 
         # Services
         profile_service = UserProfileService(user_repo)
         deck_service = DeckService(deck_repo)
-
-        # Toast callback placeholder
-        def show_toast(title: str, message: str):
-            logging.info(f"TOAST: {title}: {message}")
+        card_service = CardService(card_repo)
 
         # --- AppView and NavigationController setup ---
         app_view = AppView(self, session_service)
@@ -122,19 +178,90 @@ class TenXCardsApp(ttk.Window):
         navigation_controller = NavigationController(app_view)
         app_view.navigation_controller = navigation_controller
 
-        # --- Views ---
-        profile_list_view = ProfileListView(
-            app_view.main_content, profile_service, session_service, navigation_controller, show_toast
+        # --- Register Views ---
+        # Static views
+        navigation_controller.register_view(
+            "/profiles",
+            ProfileListView(
+                app_view.main_content,
+                profile_service,
+                session_service,
+                navigation_controller,
+                app_view.show_toast
+            )
         )
-        navigation_controller.register_view("/profiles", profile_list_view)
 
-        deck_list_view = DeckListView(
-            app_view.main_content, deck_service, session_service, navigation_controller, show_toast
+        navigation_controller.register_view(
+            "/decks",
+            DeckListView(
+                app_view.main_content,
+                deck_service,
+                session_service,
+                navigation_controller,
+                app_view.show_toast
+            )
         )
-        navigation_controller.register_view("/decks", deck_list_view)
+
+        # Dynamic views (card management)
+        def create_card_list_view(deck_id: int) -> CardListView:
+            deck = deck_service.get_deck(deck_id)
+            if not deck:
+                raise ValueError("Talia nie istnieje")
+            return CardListView(
+                parent=app_view.main_content,
+                deck_id=deck_id,
+                deck_name=deck.name,
+                card_service=card_service,
+                navigation_controller=navigation_controller,
+                show_toast=app_view.show_toast
+            )
+
+        def create_new_card_view(deck_id: int) -> FlashcardEditView:
+            deck = deck_service.get_deck(deck_id)
+            if not deck:
+                raise ValueError("Talia nie istnieje")
+            return FlashcardEditView(
+                parent=app_view.main_content,
+                deck_id=deck_id,
+                deck_name=deck.name,
+                card_service=card_service,
+                navigation_controller=navigation_controller,
+                show_toast=app_view.show_toast
+            )
+
+        def create_edit_card_view(deck_id: int, flashcard_id: int) -> FlashcardEditView:
+            deck = deck_service.get_deck(deck_id)
+            if not deck:
+                raise ValueError("Talia nie istnieje")
+            return FlashcardEditView(
+                parent=app_view.main_content,
+                deck_id=deck_id,
+                deck_name=deck.name,
+                card_service=card_service,
+                navigation_controller=navigation_controller,
+                show_toast=app_view.show_toast,
+                flashcard_id=flashcard_id
+            )
+
+        def create_ai_generate_view(deck_id: int) -> AIGenerateView:
+            deck = deck_service.get_deck(deck_id)
+            if not deck:
+                raise ValueError("Talia nie istnieje")
+            return AIGenerateView(
+                parent=app_view.main_content,
+                deck_id=deck_id,
+                deck_name=deck.name,
+                navigation_controller=navigation_controller,
+                show_toast=app_view.show_toast
+            )
+
+        # Register dynamic routes
+        navigation_controller.register_view("/decks/{deck_id}/cards", create_card_list_view)
+        navigation_controller.register_view("/decks/{deck_id}/cards/new", create_new_card_view)
+        navigation_controller.register_view("/decks/{deck_id}/cards/{flashcard_id}/edit", create_edit_card_view)
+        navigation_controller.register_view("/decks/{deck_id}/cards/generate-ai", create_ai_generate_view)
 
         # --- Bind Events ---
-        # Obsługa wydarzenia nawigacji do widoku talii
         self.bind("<<NavigateToDeckList>>", lambda e: navigation_controller.navigate("/decks"))
 
         # Start with profiles view
@@ -145,10 +272,13 @@ class TenXCardsApp(ttk.Window):
 def main() -> None:
     setup_logging()
     logging.info("Starting 10xCards application")
+
     # Initialize DB and run migration if needed
     db_path = "./data/10xcards.sqlite3"
     migration_sql_path = "./infrastructure/persistence/sqlite/migrations/20250413174854_initial_schema.sql"
     run_initial_migration_if_needed(db_path, migration_sql_path, target_version=1)
+
+    # Initialize dependencies
     db_provider = SqliteConnectionProvider(db_path)
     user_repo = UserRepositoryImpl(db_provider)
     profile_service = UserProfileService(user_repo)
@@ -156,6 +286,8 @@ def main() -> None:
         "db_provider": db_provider,
         "session_service": SessionService(profile_service),
     }
+
+    # Start application
     app = TenXCardsApp(dependencies)
     app.mainloop()
 
