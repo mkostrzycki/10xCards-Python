@@ -1,9 +1,7 @@
 import logging
-from datetime import datetime
-from typing import Callable, List, Optional, Any, Protocol
+from typing import Callable, List, Optional, Any
 
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import RIGHT, LEFT
 
 from CardManagement.domain.models.Flashcard import Flashcard
 from CardManagement.application.card_service import CardService

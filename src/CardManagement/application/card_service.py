@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 from typing import List, Optional
-from sqlite3 import IntegrityError
 
 from CardManagement.domain.models.Flashcard import Flashcard
 from CardManagement.domain.repositories.IFlashcardRepository import IFlashcardRepository

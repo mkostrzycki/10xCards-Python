@@ -4,7 +4,6 @@ from typing import Callable, Optional, Any
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import RIGHT
 
-from CardManagement.domain.models.Flashcard import Flashcard
 from CardManagement.application.card_service import CardService
 from Shared.ui.widgets.header_bar import HeaderBar
 
