@@ -187,9 +187,6 @@ class TenXCardsApp(ttk.Window):
             self.destroy()
             return
 
-        # Get logger
-        app_logger = logging.getLogger("app")
-
         # Repositories
         user_repo = UserRepositoryImpl(db_provider)
         deck_repo = DeckRepositoryImpl(db_provider)
