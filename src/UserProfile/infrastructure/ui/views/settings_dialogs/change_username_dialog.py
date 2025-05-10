@@ -87,14 +87,10 @@ class ChangeUsernameDialog(tk.Toplevel):
         button_frame = ttk.Frame(container)
         button_frame.pack(fill=tk.X, pady=(10, 0))
 
-        save_button = ttk.Button(
-            button_frame, text="Zapisz", style="primary.TButton", command=self._validate_and_save
-        )
+        save_button = ttk.Button(button_frame, text="Zapisz", style="primary.TButton", command=self._validate_and_save)
         save_button.pack(side=tk.RIGHT, padx=(10, 0))
 
-        cancel_button = ttk.Button(
-            button_frame, text="Anuluj", style="secondary.TButton", command=self.destroy
-        )
+        cancel_button = ttk.Button(button_frame, text="Anuluj", style="secondary.TButton", command=self.destroy)
         cancel_button.pack(side=tk.RIGHT)
 
         # Bind Enter key to save

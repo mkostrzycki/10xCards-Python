@@ -74,17 +74,13 @@ class SelectLlmModelDialog(tk.Toplevel):
         model_frame.pack(fill=tk.X, pady=(0, 10))
 
         ttk.Label(model_frame, text="Wybierz model:").pack(anchor=tk.W)
-        
+
         # Combobox with available models
         model_combobox = ttk.Combobox(
-            model_frame,
-            textvariable=self.selected_model_var,
-            values=self.available_models,
-            state="readonly",
-            width=40
+            model_frame, textvariable=self.selected_model_var, values=self.available_models, state="readonly", width=40
         )
         model_combobox.pack(fill=tk.X, pady=(5, 0))
-        
+
         # Select the current model in the combobox
         if self.current_model and self.current_model in self.available_models:
             model_combobox.current(self.available_models.index(self.current_model))
@@ -99,14 +95,10 @@ class SelectLlmModelDialog(tk.Toplevel):
         button_frame = ttk.Frame(container)
         button_frame.pack(fill=tk.X, pady=(10, 0), side=tk.BOTTOM)
 
-        save_button = ttk.Button(
-            button_frame, text="Zapisz", style="primary.TButton", command=self._validate_and_save
-        )
+        save_button = ttk.Button(button_frame, text="Zapisz", style="primary.TButton", command=self._validate_and_save)
         save_button.pack(side=tk.RIGHT, padx=(10, 0))
 
-        cancel_button = ttk.Button(
-            button_frame, text="Anuluj", style="secondary.TButton", command=self.destroy
-        )
+        cancel_button = ttk.Button(button_frame, text="Anuluj", style="secondary.TButton", command=self.destroy)
         cancel_button.pack(side=tk.RIGHT)
 
     def _validate_and_save(self) -> None:

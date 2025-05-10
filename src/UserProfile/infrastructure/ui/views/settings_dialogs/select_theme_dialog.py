@@ -48,7 +48,7 @@ class SelectThemeDialog(tk.Toplevel):
         # Variables
         self.selected_theme_var = ttk.StringVar(value=current_theme)
         self.error_message = ttk.StringVar()
-        
+
         # Style for preview
         self.style = ttk.Style()
 
@@ -74,32 +74,28 @@ class SelectThemeDialog(tk.Toplevel):
         theme_frame.pack(fill=tk.X, pady=(0, 10))
 
         ttk.Label(theme_frame, text="Schemat kolorystyczny:").pack(anchor=tk.W)
-        
+
         # Combobox with available themes
         self.theme_combobox = ttk.Combobox(
-            theme_frame,
-            textvariable=self.selected_theme_var,
-            values=self.available_themes,
-            state="readonly",
-            width=30
+            theme_frame, textvariable=self.selected_theme_var, values=self.available_themes, state="readonly", width=30
         )
         self.theme_combobox.pack(fill=tk.X, pady=(5, 0))
-        
+
         # Set the current theme in the combobox
         if self.current_theme in self.available_themes:
             self.theme_combobox.current(self.available_themes.index(self.current_theme))
-        
+
         # Preview frame
         preview_frame = ttk.Labelframe(container, text="Podgląd", padding=10)
         preview_frame.pack(fill=tk.BOTH, expand=True, pady=10)
-        
+
         # Create a small preview of the selected theme (buttons, label, entry)
         self.preview_content = ttk.Frame(preview_frame)
         self.preview_content.pack(fill=tk.BOTH, expand=True)
-        
+
         # Bind theme change on combobox selection
         self.theme_combobox.bind("<<ComboboxSelected>>", self._on_theme_preview)
-        
+
         # Create initial preview
         self._create_theme_preview()
 
@@ -116,9 +112,7 @@ class SelectThemeDialog(tk.Toplevel):
         )
         apply_button.pack(side=tk.RIGHT, padx=(10, 0))
 
-        cancel_button = ttk.Button(
-            button_frame, text="Anuluj", style="secondary.TButton", command=self.destroy
-        )
+        cancel_button = ttk.Button(button_frame, text="Anuluj", style="secondary.TButton", command=self.destroy)
         cancel_button.pack(side=tk.RIGHT)
 
     def _create_theme_preview(self) -> None:
@@ -126,26 +120,26 @@ class SelectThemeDialog(tk.Toplevel):
         # Clear previous preview
         for widget in self.preview_content.winfo_children():
             widget.destroy()
-            
+
         # Sample label
         ttk.Label(self.preview_content, text="Przykładowa etykieta").pack(pady=5, anchor=tk.W)
-        
+
         # Sample entry
         ttk.Entry(self.preview_content, width=30).pack(pady=5, fill=tk.X)
-        
+
         # Sample buttons frame
         buttons_frame = ttk.Frame(self.preview_content)
         buttons_frame.pack(pady=5, fill=tk.X)
-        
+
         # Regular button
         ttk.Button(buttons_frame, text="Przycisk").pack(side=tk.LEFT, padx=(0, 5))
-        
+
         # Primary button
         ttk.Button(buttons_frame, text="Akcja", style="primary.TButton").pack(side=tk.LEFT, padx=5)
-        
+
         # Secondary button
         ttk.Button(buttons_frame, text="Anuluj", style="secondary.TButton").pack(side=tk.LEFT, padx=5)
-        
+
         # Checkbutton
         ttk.Checkbutton(self.preview_content, text="Opcja zaznaczania").pack(pady=5, anchor=tk.W)
 
@@ -155,13 +149,13 @@ class SelectThemeDialog(tk.Toplevel):
         if selected_theme in self.available_themes:
             # Store current theme
             current_theme = self.style.theme_use()
-            
+
             # Apply selected theme temporarily
             self.style.theme_use(selected_theme)
-            
+
             # Refresh preview elements
             self._create_theme_preview()
-            
+
             # Restore current theme (don't apply globally yet)
             self.style.theme_use(current_theme)
 

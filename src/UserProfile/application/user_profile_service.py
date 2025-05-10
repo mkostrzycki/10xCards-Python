@@ -19,6 +19,7 @@ class UserProfileSummaryViewModel:
 @dataclass
 class SettingsViewModel:
     """ViewModel containing user settings for the SettingsView."""
+
     user_id: int
     current_username: str
     has_password_set: bool
@@ -32,6 +33,7 @@ class SettingsViewModel:
 @dataclass
 class UpdateUserProfileDTO:
     """DTO for updating user profile username."""
+
     user_id: int
     new_username: str
 
@@ -39,6 +41,7 @@ class UpdateUserProfileDTO:
 @dataclass
 class SetUserPasswordDTO:
     """DTO for setting or changing user password."""
+
     user_id: int
     current_password: Optional[str]
     new_password: Optional[str]
@@ -47,6 +50,7 @@ class SetUserPasswordDTO:
 @dataclass
 class UpdateUserApiKeyDTO:
     """DTO for updating user API key."""
+
     user_id: int
     api_key: Optional[str]
 
@@ -54,6 +58,7 @@ class UpdateUserApiKeyDTO:
 @dataclass
 class UpdateUserPreferencesDTO:
     """DTO for updating user preferences like LLM model and theme."""
+
     user_id: int
     default_llm_model: Optional[str] = None
     app_theme: Optional[str] = None
@@ -202,7 +207,9 @@ class UserProfileService:
         # Save changes
         self._user_repository.update(user)
 
-    def get_user_settings(self, user_id: int, available_llm_models: List[str], available_app_themes: List[str]) -> SettingsViewModel:
+    def get_user_settings(
+        self, user_id: int, available_llm_models: List[str], available_app_themes: List[str]
+    ) -> SettingsViewModel:
         """Get user settings for the SettingsView.
 
         Args:
@@ -250,7 +257,7 @@ class UserProfileService:
             current_llm_model=current_llm_model,
             current_app_theme=current_app_theme,
             available_llm_models=available_llm_models,
-            available_app_themes=available_app_themes
+            available_app_themes=available_app_themes,
         )
 
     def update_username(self, dto: UpdateUserProfileDTO) -> User:
@@ -275,7 +282,7 @@ class UserProfileService:
         # Validation should be done in the application layer
         if not dto.new_username:
             raise ValueError("Nazwa użytkownika nie może być pusta")
-            
+
         if len(dto.new_username) > 30:
             raise ValueError("Nazwa użytkownika nie może być dłuższa niż 30 znaków")
 
@@ -291,7 +298,7 @@ class UserProfileService:
         # Update user model
         user.username = dto.new_username
         self._user_repository.update(user)
-        
+
         return user
 
     def set_user_password(self, dto: SetUserPasswordDTO) -> bool:
@@ -316,7 +323,7 @@ class UserProfileService:
         if user.hashed_password:
             if not dto.current_password:
                 raise AuthenticationError("Wymagane jest aktualne hasło")
-                
+
             if not bcrypt.checkpw(dto.current_password.encode("utf-8"), user.hashed_password.encode("utf-8")):
                 raise AuthenticationError("Nieprawidłowe aktualne hasło")
 
@@ -330,7 +337,7 @@ class UserProfileService:
         hashed = bcrypt.hashpw(dto.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
         user.hashed_password = hashed
         self._user_repository.update(user)
-        
+
         return True
 
     def update_user_preferences(self, dto: UpdateUserPreferencesDTO) -> User:
@@ -353,11 +360,11 @@ class UserProfileService:
         # Update only provided fields
         if dto.default_llm_model is not None:
             user.default_llm_model = dto.default_llm_model
-            
+
         if dto.app_theme is not None:
             user.app_theme = dto.app_theme
 
         # Save changes
         self._user_repository.update(user)
-        
+
         return user

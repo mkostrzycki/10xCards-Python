@@ -68,10 +68,7 @@ class ManagePasswordDialog(tk.Toplevel):
 
             ttk.Label(current_frame, text="Aktualne hasło:").pack(anchor=tk.W)
             self.current_password_entry = ttk.Entry(
-                current_frame, 
-                textvariable=self.current_password_var, 
-                width=30, 
-                show="*"
+                current_frame, textvariable=self.current_password_var, width=30, show="*"
             )
             self.current_password_entry.pack(fill=tk.X, pady=(5, 0))
             self.current_password_entry.focus_set()
@@ -84,16 +81,11 @@ class ManagePasswordDialog(tk.Toplevel):
             label_text = "Nowe hasło (zostaw puste by usunąć):"
         else:
             label_text = "Nowe hasło:"
-            
+
         ttk.Label(new_password_frame, text=label_text).pack(anchor=tk.W)
-        new_password_entry = ttk.Entry(
-            new_password_frame, 
-            textvariable=self.new_password_var, 
-            width=30, 
-            show="*"
-        )
+        new_password_entry = ttk.Entry(new_password_frame, textvariable=self.new_password_var, width=30, show="*")
         new_password_entry.pack(fill=tk.X, pady=(5, 0))
-        
+
         if not self.has_password_set:
             new_password_entry.focus_set()
 
@@ -102,23 +94,18 @@ class ManagePasswordDialog(tk.Toplevel):
         confirm_frame.pack(fill=tk.X, pady=(0, 10))
 
         ttk.Label(confirm_frame, text="Potwierdź nowe hasło:").pack(anchor=tk.W)
-        confirm_password_entry = ttk.Entry(
-            confirm_frame, 
-            textvariable=self.confirm_password_var, 
-            width=30, 
-            show="*"
-        )
+        confirm_password_entry = ttk.Entry(confirm_frame, textvariable=self.confirm_password_var, width=30, show="*")
         confirm_password_entry.pack(fill=tk.X, pady=(5, 0))
 
         # Show password option
         show_password_frame = ttk.Frame(container)
         show_password_frame.pack(fill=tk.X, pady=(0, 10))
-        
+
         show_password_cb = ttk.Checkbutton(
             show_password_frame,
             text="Pokaż hasło",
             variable=self.show_password_var,
-            command=self._toggle_password_visibility
+            command=self._toggle_password_visibility,
         )
         show_password_cb.pack(anchor=tk.W)
 
@@ -130,14 +117,10 @@ class ManagePasswordDialog(tk.Toplevel):
         button_frame = ttk.Frame(container)
         button_frame.pack(fill=tk.X, pady=(10, 0))
 
-        save_button = ttk.Button(
-            button_frame, text="Zapisz", style="primary.TButton", command=self._validate_and_save
-        )
+        save_button = ttk.Button(button_frame, text="Zapisz", style="primary.TButton", command=self._validate_and_save)
         save_button.pack(side=tk.RIGHT, padx=(10, 0))
 
-        cancel_button = ttk.Button(
-            button_frame, text="Anuluj", style="secondary.TButton", command=self.destroy
-        )
+        cancel_button = ttk.Button(button_frame, text="Anuluj", style="secondary.TButton", command=self.destroy)
         cancel_button.pack(side=tk.RIGHT)
 
         # Bind Enter key to save
@@ -146,10 +129,10 @@ class ManagePasswordDialog(tk.Toplevel):
     def _toggle_password_visibility(self) -> None:
         """Toggle the visibility of password fields."""
         show_char = "" if self.show_password_var.get() else "*"
-        
+
         if self.has_password_set:
             self.current_password_entry.config(show=show_char)
-            
+
         for entry in self.winfo_children()[0].winfo_children():
             if isinstance(entry, ttk.Frame):
                 for widget in entry.winfo_children():

@@ -14,7 +14,7 @@ class User:
         hashed_password: Optional bcrypt hash of user's password
         encrypted_api_key: Optional encrypted OpenRouter.ai API key
         default_llm_model: Optional preferred LLM model for AI operations
-        app_theme: Optional preferred UI theme 
+        app_theme: Optional preferred UI theme
         created_at: Timestamp of profile creation
         updated_at: Timestamp of last profile update
     """

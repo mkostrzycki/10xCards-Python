@@ -62,10 +62,10 @@ AVAILABLE_LLM_MODELS: Final[List[str]] = [
 
 # Available UI themes
 AVAILABLE_APP_THEMES: Final[List[str]] = [
-    "darkly",    # Default dark theme
-    "litera",    # Light theme
-    "superhero", # Blue-based dark theme
-    "solar",     # Dark green theme
-    "cosmo",     # Light blue theme
-    "yeti",      # Modern light theme
+    "darkly",  # Default dark theme
+    "litera",  # Light theme
+    "superhero",  # Blue-based dark theme
+    "solar",  # Dark green theme
+    "cosmo",  # Light blue theme
+    "yeti",  # Modern light theme
 ]

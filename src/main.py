@@ -64,12 +64,9 @@ class AppView(ttk.Frame):
 
         # Settings button (shown only when logged in)
         self.settings_button = ttk.Button(
-            self.header, 
-            text="Ustawienia", 
-            style="secondary.TButton",
-            command=self._show_settings
+            self.header, text="Ustawienia", style="secondary.TButton", command=self._show_settings
         )
-        
+
         # Update session info
         self._update_session_info()
 
@@ -177,7 +174,7 @@ class NavigationController:
     def show_profile_list(self) -> None:
         """Navigate back to the profile list view."""
         self.navigate("/profiles")
-        
+
     def show_settings(self) -> None:
         """Navigate to the user settings view."""
         self.navigate("/settings")
@@ -257,7 +254,7 @@ class TenXCardsApp(ttk.Window):
                 app_view.main_content, deck_service, session_service, navigation_controller, app_view.show_toast
             ),
         )
-        
+
         # Settings view
         navigation_controller.register_view(
             "/settings",
@@ -269,7 +266,7 @@ class TenXCardsApp(ttk.Window):
                 navigation_controller,
                 app_view.show_toast,
                 AVAILABLE_LLM_MODELS,
-                AVAILABLE_APP_THEMES
+                AVAILABLE_APP_THEMES,
             ),
         )
 
