@@ -1,10 +1,11 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 import bcrypt
 
-from ..domain.repositories.IUserRepository import IUserRepository
-from ..domain.models.user import User
-from ..domain.repositories.exceptions import UserNotFoundError
+from UserProfile.domain.repositories.IUserRepository import IUserRepository
+from UserProfile.domain.models.user import User
+from UserProfile.domain.repositories.exceptions import UserNotFoundError
+from Shared.infrastructure.security.crypto import crypto_manager
 
 
 @dataclass
@@ -59,7 +60,7 @@ class UserProfileService:
             RepositoryError: If there's an error accessing the database
         """
         # Create new user without password
-        user = User(id=None, username=username, hashed_password=None, hashed_api_key=None)
+        user = User(id=None, username=username, hashed_password=None, encrypted_api_key=None)
         created_user = self._user_repository.add(user)
 
         # created_user should always have an id at this point
@@ -91,3 +92,50 @@ class UserProfileService:
             return False
 
         return bcrypt.checkpw(password.encode("utf-8"), user.hashed_password.encode("utf-8"))
+
+    def get_api_key(self, user_id: int) -> Optional[str]:
+        """Get the OpenRouter API key for a user if one exists.
+
+        Args:
+            user_id: The ID of the user
+
+        Returns:
+            The decrypted API key or None if not set
+
+        Raises:
+            UserNotFoundError: If no user exists with the given ID
+            RepositoryError: If there's an error accessing the database
+        """
+        user = self._user_repository.get_by_id(user_id)
+        if not user:
+            raise UserNotFoundError(user_id)
+
+        if not user.encrypted_api_key:
+            return None
+
+        # Decrypt the API key using the crypto manager
+        return crypto_manager.decrypt_api_key(user.encrypted_api_key)
+
+    def set_api_key(self, user_id: int, api_key: str) -> None:
+        """Set or update the OpenRouter API key for a user.
+
+        Args:
+            user_id: The ID of the user
+            api_key: The plain API key to encrypt and store
+
+        Raises:
+            UserNotFoundError: If no user exists with the given ID
+            RepositoryError: If there's an error accessing the database
+        """
+        user = self._user_repository.get_by_id(user_id)
+        if not user:
+            raise UserNotFoundError(user_id)
+
+        # Encrypt the API key
+        encrypted_key = crypto_manager.encrypt_api_key(api_key)
+
+        # Update the user model
+        user.encrypted_api_key = encrypted_key
+
+        # Save changes
+        self._user_repository.update(user)

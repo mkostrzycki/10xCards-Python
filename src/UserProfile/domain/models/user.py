@@ -12,7 +12,7 @@ class User:
         id: Optional database identifier, None for unsaved users
         username: Unique username for the profile
         hashed_password: Optional bcrypt hash of user's password
-        hashed_api_key: Optional bcrypt hash of user's Openrouter.ai API key
+        encrypted_api_key: Optional encrypted OpenRouter.ai API key
         created_at: Timestamp of profile creation
         updated_at: Timestamp of last profile update
     """
@@ -20,6 +20,6 @@ class User:
     id: Optional[int]
     username: str
     hashed_password: Optional[str] = None
-    hashed_api_key: Optional[str] = None
+    encrypted_api_key: Optional[bytes] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
