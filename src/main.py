@@ -6,11 +6,12 @@ from typing import Any, Dict, Optional, Protocol
 from Shared.infrastructure.logging import setup_logging
 from Shared.infrastructure.persistence.sqlite.connection import SqliteConnectionProvider
 from Shared.infrastructure.persistence.sqlite.migrations import run_migrations
-from Shared.infrastructure.config import DATABASE_PATH
+from Shared.infrastructure.config import DATABASE_PATH, AVAILABLE_LLM_MODELS, AVAILABLE_APP_THEMES
 from Shared.application.session_service import SessionService
 from UserProfile.infrastructure.persistence.sqlite.repositories.UserRepositoryImpl import UserRepositoryImpl
 from UserProfile.application.user_profile_service import UserProfileService
 from UserProfile.infrastructure.ui.views.profile_list_view import ProfileListView
+from UserProfile.infrastructure.ui.views.settings_view import SettingsView
 from DeckManagement.infrastructure.persistence.sqlite.repositories.DeckRepositoryImpl import DeckRepositoryImpl
 from DeckManagement.application.deck_service import DeckService
 from DeckManagement.infrastructure.ui.views.deck_list_view import DeckListView
@@ -31,6 +32,7 @@ class NavigationProtocol(Protocol):
     def navigate(self, path: str) -> None: ...
     def show_deck_list(self) -> None: ...
     def show_profile_list(self) -> None: ...
+    def show_settings(self) -> None: ...
 
 
 class AppView(ttk.Frame):
@@ -60,6 +62,14 @@ class AppView(ttk.Frame):
         self.session_info = ttk.Label(self.header, text="", style="secondary.TLabel")
         self.session_info.pack(side=ttk.RIGHT, padx=5)
 
+        # Settings button (shown only when logged in)
+        self.settings_button = ttk.Button(
+            self.header, 
+            text="Ustawienia", 
+            style="secondary.TButton",
+            command=self._show_settings
+        )
+        
         # Update session info
         self._update_session_info()
 
@@ -68,8 +78,17 @@ class AppView(ttk.Frame):
         user = self.session_service.get_current_user()
         if user:
             self.session_info.configure(text=f"Zalogowany jako: {user.username}")
+            # Show settings button when logged in
+            self.settings_button.pack(side=ttk.RIGHT, padx=5, before=self.session_info)
         else:
             self.session_info.configure(text="")
+            # Hide settings button when not logged in
+            self.settings_button.pack_forget()
+
+    def _show_settings(self) -> None:
+        """Navigate to settings view."""
+        if self.navigation_controller:
+            self.navigation_controller.show_settings()
 
     def show_toast(self, title: str, message: str) -> None:
         """Show a toast notification."""
@@ -158,6 +177,10 @@ class NavigationController:
     def show_profile_list(self) -> None:
         """Navigate back to the profile list view."""
         self.navigate("/profiles")
+        
+    def show_settings(self) -> None:
+        """Navigate to the user settings view."""
+        self.navigate("/settings")
 
 
 # --- Main Application Class ---
@@ -232,6 +255,21 @@ class TenXCardsApp(ttk.Window):
             "/decks",
             DeckListView(
                 app_view.main_content, deck_service, session_service, navigation_controller, app_view.show_toast
+            ),
+        )
+        
+        # Settings view
+        navigation_controller.register_view(
+            "/settings",
+            SettingsView(
+                app_view.main_content,
+                profile_service,
+                session_service,
+                openrouter_api_client,
+                navigation_controller,
+                app_view.show_toast,
+                AVAILABLE_LLM_MODELS,
+                AVAILABLE_APP_THEMES
             ),
         )
 
