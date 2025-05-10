@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Final
+from typing import Final, List
 
 from dotenv import load_dotenv
 
@@ -51,3 +51,21 @@ def get_secret_key() -> str:
 # OpenRouter API Configuration
 OPENROUTER_API_BASE: Final[str] = "https://openrouter.ai/api/v1"
 DEFAULT_AI_MODEL: Final[str] = os.getenv("DEFAULT_AI_MODEL", "gpt-4o-mini")
+
+# Available LLM models
+AVAILABLE_LLM_MODELS: Final[List[str]] = [
+    "gpt-4o-mini",
+    "gpt-4o",
+    "claude-3-haiku-20240307",
+    "claude-3-5-sonnet-20240620",
+]
+
+# Available UI themes
+AVAILABLE_APP_THEMES: Final[List[str]] = [
+    "darkly",    # Default dark theme
+    "litera",    # Light theme
+    "superhero", # Blue-based dark theme
+    "solar",     # Dark green theme
+    "cosmo",     # Light blue theme
+    "yeti",      # Modern light theme
+]
