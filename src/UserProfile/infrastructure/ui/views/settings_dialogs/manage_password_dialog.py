@@ -1,7 +1,7 @@
 """Dialog for managing user password."""
 
 import tkinter as tk
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 import ttkbootstrap as ttk
 
@@ -11,7 +11,7 @@ class ManagePasswordDialog(tk.Toplevel):
 
     def __init__(
         self,
-        parent: tk.Widget,
+        parent: Union[tk.Toplevel, tk.Tk],
         has_password_set: bool,
         on_save: Callable[[Optional[str], Optional[str]], None],
     ):

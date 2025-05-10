@@ -1,7 +1,7 @@
 """Dialog for selecting default LLM model."""
 
 import tkinter as tk
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Union
 
 import ttkbootstrap as ttk
 
@@ -11,7 +11,7 @@ class SelectLlmModelDialog(tk.Toplevel):
 
     def __init__(
         self,
-        parent: tk.Widget,
+        parent: Union[tk.Toplevel, tk.Tk],
         current_model: Optional[str],
         available_models: List[str],
         on_save: Callable[[str], None],

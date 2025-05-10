@@ -1,7 +1,7 @@
 """Dialog for changing username."""
 
 import tkinter as tk
-from typing import Callable
+from typing import Callable, Union
 
 import ttkbootstrap as ttk
 
@@ -11,7 +11,7 @@ class ChangeUsernameDialog(tk.Toplevel):
 
     def __init__(
         self,
-        parent: tk.Widget,
+        parent: Union[tk.Toplevel, tk.Tk],
         current_username: str,
         on_save: Callable[[str], None],
     ):

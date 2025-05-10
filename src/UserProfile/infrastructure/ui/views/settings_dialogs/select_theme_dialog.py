@@ -1,7 +1,7 @@
 """Dialog for selecting application theme."""
 
 import tkinter as tk
-from typing import Callable, List
+from typing import Callable, List, Union
 
 import ttkbootstrap as ttk
 
@@ -11,7 +11,7 @@ class SelectThemeDialog(tk.Toplevel):
 
     def __init__(
         self,
-        parent: tk.Widget,
+        parent: Union[tk.Toplevel, tk.Tk],
         current_theme: str,
         available_themes: List[str],
         on_save: Callable[[str], None],
