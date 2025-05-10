@@ -233,7 +233,7 @@ class SettingsView(ttk.Frame):
             # If we can't get the key, just start with an empty one
             pass
 
-        dialog = APIKeyDialog(self, self.api_client, current_key, lambda key: self._on_api_key_changed(user.id, key))
+        APIKeyDialog(self, self.api_client, current_key, lambda key: self._on_api_key_changed(user.id, key))
 
     def _on_api_key_changed(self, user_id: int, api_key: str) -> None:
         """Handle API key change."""
