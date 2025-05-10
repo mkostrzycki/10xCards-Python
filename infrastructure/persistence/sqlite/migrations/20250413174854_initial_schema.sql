@@ -1,4 +1,5 @@
 -- Migration: Initial Schema Setup
+-- Version: 1
 -- Description: Creates the initial database schema for 10xCards MVP including Users, Decks, and Flashcards tables
 -- with their relationships, indexes, and triggers for updated_at columns.
 -- Author: AI Assistant
