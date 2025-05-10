@@ -75,8 +75,13 @@ def run_migrations(db_path: str) -> None:
         db_path: Path to the SQLite database file.
     """
     if not os.path.exists(db_path):
-        logging.error(f"Database file not found: {db_path}")
-        return
+        logging.info(f"Database file not found: {db_path}. Creating new database.")
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        # Create an empty database file by connecting and then closing
+        conn = sqlite3.connect(db_path)
+        conn.close()
+        logging.info(f"Created new database at {db_path}")
 
     conn = sqlite3.connect(db_path)
     try:
