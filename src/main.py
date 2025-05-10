@@ -242,7 +242,6 @@ class TenXCardsApp(ttk.Window):
                 app_view.main_content,
                 profile_service,
                 session_service,
-                openrouter_api_client,
                 navigation_controller,
                 app_view.show_toast,
             ),
