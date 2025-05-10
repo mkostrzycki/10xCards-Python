@@ -1,7 +1,7 @@
 """AI service for flashcard generation."""
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from ...infrastructure.api_clients.openrouter.client import OpenRouterAPIClient
 from ...infrastructure.api_clients.openrouter.exceptions import (
@@ -51,7 +51,10 @@ class AIService:
             raise AIAPIAuthError("No user logged in")
         if not user.encrypted_api_key:
             raise AIAPIAuthError("API key not set. Please set your OpenRouter API key in profile settings.")
-        return user.encrypted_api_key  # Already decrypted by repository
+
+        # Comment below clarifies that the value is already decrypted by the repository
+        # Use cast to ensure proper type checking
+        return cast(str, user.encrypted_api_key)  # Already decrypted by repository
 
     def explain_error(self, error: Exception) -> str:
         """Convert an API error to a user-friendly message.

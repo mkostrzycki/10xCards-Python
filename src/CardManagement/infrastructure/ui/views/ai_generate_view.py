@@ -228,7 +228,8 @@ class AIGenerateView(ttk.Frame):
             self.after(0, lambda: self._set_generating_state(False))
 
         except FlashcardGenerationError as e:
-            self.after(0, lambda: self.show_toast("Błąd generowania fiszek", str(e)))
+            error_message = str(e)  # Przechwycenie wartości e
+            self.after(0, lambda: self.show_toast("Błąd generowania fiszek", error_message))
             self.after(0, lambda: self._set_generating_state(False))
 
         except Exception as e:

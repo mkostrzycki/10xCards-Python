@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import List, Optional, Any, NoReturn, Tuple
+from typing import List, Optional, Any, NoReturn, Tuple, cast
 
 import litellm
 from litellm import ModelResponse
@@ -63,7 +63,7 @@ class OpenRouterAPIClient:
             raise AIAPIRequestError(400, str(error))
         elif isinstance(error, litellm.exceptions.ServiceUnavailableError):
             raise AIAPIServerError(503, str(error))
-        elif isinstance(error, (litellm.exceptions.RequestTimeout, litellm.exceptions.APIConnectionError)):
+        elif isinstance(error, (litellm.exceptions.Timeout, litellm.exceptions.APIConnectionError)):
             raise AIAPIConnectionError(str(error))
         else:
             self.logger.error(f"Unexpected error in OpenRouter API client: {error}", exc_info=True)
@@ -87,21 +87,24 @@ class OpenRouterAPIClient:
 
         try:
             # Make a lightweight call to get available models
-            # We'll use a direct litellm call rather than our usual abstraction
-            # since the interface is different from chat completion
-            response = litellm.get_models(api_key=api_key)
+            # In litellm 1.66.0, use the completion method with a lightweight model check
+            # instead of get_models which doesn't exist
+            litellm.completion(
+                model="openrouter/mistral-7b-instruct",
+                messages=[{"role": "user", "content": "Hello"}],
+                max_tokens=1,  # Minimal tokens to reduce cost
+                api_key=api_key,
+            )
 
             # If we get here, the key is valid
-            model_count = len(response.get("data", []))
-            self.logger.info(f"API key verification successful, found {model_count} models")
-
-            return True, f"API key valid, {model_count} models available"
+            self.logger.info("API key verification successful")
+            return True, "API key valid"
 
         except litellm.exceptions.AuthenticationError as e:
             self.logger.warning(f"API key verification failed: {str(e)}")
             return False, "Invalid API key"
 
-        except (litellm.exceptions.RequestTimeout, litellm.exceptions.APIConnectionError) as e:
+        except (litellm.exceptions.Timeout, litellm.exceptions.APIConnectionError) as e:
             error_msg = f"Could not verify API key: {str(e)}"
             self.logger.error(error_msg)
             return False, error_msg
@@ -183,7 +186,7 @@ class OpenRouterAPIClient:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10),
-        retry_error_callback=lambda retry_state: retry_state.outcome.result(),
+        retry_error_callback=lambda retry_state: retry_state.outcome.result() if retry_state.outcome else None,
     )
     def chat_completion(
         self,
@@ -246,11 +249,56 @@ class OpenRouterAPIClient:
                 api_key=api_key,
             )
 
+            # Extract and convert the necessary fields from ModelResponse
+            choices = (
+                [
+                    {
+                        "content": (
+                            choice.message.content
+                            if hasattr(choice, "message") and hasattr(choice.message, "content")
+                            else None
+                        ),
+                        "role": (
+                            choice.message.role
+                            if hasattr(choice, "message") and hasattr(choice.message, "role")
+                            else "assistant"
+                        ),
+                        "index": choice.index if hasattr(choice, "index") else 0,
+                        # Add any other fields that might be needed
+                    }
+                    for choice in response.choices
+                ]
+                if hasattr(response, "choices")
+                else []
+            )
+
+            usage = (
+                {
+                    "prompt_tokens": (
+                        response.usage.prompt_tokens
+                        if hasattr(response, "usage") and hasattr(response.usage, "prompt_tokens")
+                        else 0
+                    ),
+                    "completion_tokens": (
+                        response.usage.completion_tokens
+                        if hasattr(response, "usage") and hasattr(response.usage, "completion_tokens")
+                        else 0
+                    ),
+                    "total_tokens": (
+                        response.usage.total_tokens
+                        if hasattr(response, "usage") and hasattr(response.usage, "total_tokens")
+                        else 0
+                    ),
+                }
+                if hasattr(response, "usage")
+                else {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+            )
+
             # Convert to DTO
             return ChatCompletionDTO(
-                model=response.model,
-                choices=response.choices,
-                usage=response.usage,
+                model=cast(str, response.model),  # Cast to ensure str type
+                choices=choices,
+                usage=usage,
                 raw_response=response.__dict__,
             )
 
