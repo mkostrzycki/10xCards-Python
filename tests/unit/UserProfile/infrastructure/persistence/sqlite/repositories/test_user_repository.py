@@ -24,7 +24,7 @@ def repository(mock_db_provider):
 
 @pytest.fixture
 def sample_user():
-    return User(id=None, username="testuser", hashed_password="hashedpass123", hashed_api_key="hashedkey456")
+    return User(id=None, username="testuser", hashed_password="hashedpass123", encrypted_api_key=b"hashedkey456")
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def sample_db_row():
         "id": 1,
         "username": "testuser",
         "hashed_password": "hashedpass123",
-        "hashed_api_key": "hashedkey456",
+        "hashed_api_key": b"hashedkey456",
         "created_at": "2024-03-20T12:00:00",
         "updated_at": "2024-03-20T12:00:00",
     }
@@ -55,13 +55,13 @@ def test_add_user_success(mocker: MockerFixture, repository, mock_db_provider, s
     assert result.id == 1
     assert result.username == sample_user.username
     assert result.hashed_password == sample_user.hashed_password
-    assert result.hashed_api_key == sample_user.hashed_api_key
+    assert result.encrypted_api_key == sample_user.encrypted_api_key
     assert isinstance(result.created_at, datetime)
     assert isinstance(result.updated_at, datetime)
 
     # Verify SQL query was executed with correct parameters
     mock_db_provider.get_connection.return_value.execute.assert_any_call(
-        mocker.ANY, (sample_user.username, sample_user.hashed_password, sample_user.hashed_api_key)
+        mocker.ANY, (sample_user.username, sample_user.hashed_password, sample_user.encrypted_api_key)
     )
 
 
@@ -139,7 +139,7 @@ def test_get_by_id_not_found(mocker: MockerFixture, repository, mock_db_provider
 
 def test_update_user_success(mocker: MockerFixture, repository, mock_db_provider, sample_db_row):
     # Setup user with ID
-    user_to_update = User(id=1, username="newusername", hashed_password="newhash123", hashed_api_key="newkey456")
+    user_to_update = User(id=1, username="newusername", hashed_password="newhash123", encrypted_api_key=b"newkey456")
 
     # Setup get_by_id mock
     mock_cursor = mocker.Mock()
@@ -153,12 +153,12 @@ def test_update_user_success(mocker: MockerFixture, repository, mock_db_provider
     # Verify SQL query was executed with correct parameters
     mock_db_provider.get_connection.return_value.execute.assert_any_call(
         mocker.ANY,
-        (user_to_update.username, user_to_update.hashed_password, user_to_update.hashed_api_key, user_to_update.id),
+        (user_to_update.username, user_to_update.hashed_password, user_to_update.encrypted_api_key, user_to_update.id),
     )
 
 
 def test_update_user_not_found(mocker: MockerFixture, repository, mock_db_provider):
-    user_to_update = User(id=999, username="newusername", hashed_password="newhash123", hashed_api_key="newkey456")
+    user_to_update = User(id=999, username="newusername", hashed_password="newhash123", encrypted_api_key=b"newkey456")
 
     # Create a mock connection
     mock_conn = mocker.Mock()

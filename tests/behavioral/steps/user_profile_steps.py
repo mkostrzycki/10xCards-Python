@@ -23,7 +23,7 @@ class TestDbProvider:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT NOT NULL UNIQUE,
                 hashed_password TEXT,
-                hashed_api_key TEXT,
+                encrypted_api_key BLOB,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
@@ -50,7 +50,7 @@ def setup_empty_database(context):
 
 @given('there is a user with username "{username}"')
 def create_initial_user(context, username):
-    user = User(id=None, username=username, hashed_password="dummyhash", hashed_api_key="dummykey")
+    user = User(id=None, username=username, hashed_password="dummyhash", encrypted_api_key=b"dummykey")
     context.current_user = context.repository.add(user)
 
 
@@ -62,7 +62,7 @@ def create_user_profile(context):
         id=None,
         username=row["username"],
         hashed_password=row["password"],  # In real app this would be hashed
-        hashed_api_key=row["api_key"],  # In real app this would be hashed
+        encrypted_api_key=row["api_key"].encode() if row["api_key"] else None,  # In real app this would be encrypted
     )
     try:
         context.current_user = context.repository.add(user)
@@ -78,7 +78,7 @@ def update_user_profile(context):
         id=context.current_user.id,
         username=row["username"],
         hashed_password=row["password"],  # In real app this would be hashed
-        hashed_api_key=row["api_key"],  # In real app this would be hashed
+        encrypted_api_key=row["api_key"].encode() if row["api_key"] else None,  # In real app this would be encrypted
     )
     try:
         context.repository.update(user)
