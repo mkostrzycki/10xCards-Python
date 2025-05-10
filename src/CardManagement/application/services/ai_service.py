@@ -135,13 +135,14 @@ class AIService:
 
         try:
             # Call the API client
-            return self.api_client.generate_flashcards(
+            flashcards: List[FlashcardDTO] = self.api_client.generate_flashcards(
                 api_key=api_key,
                 raw_text=raw_text,
                 deck_id=deck_id,
                 model=model or DEFAULT_AI_MODEL,
                 temperature=0.3,  # Lower temperature for more focused output
             )
+            return flashcards
 
         except Exception as e:
             # Log the error
