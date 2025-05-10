@@ -1,70 +1,52 @@
-from typing import Optional
+from typing import Optional, Protocol
+import logging
 
 from Shared.domain.errors import AuthenticationError
 from UserProfile.domain.models.user import User
 from UserProfile.application.user_profile_service import UserProfileService
 
 
+class ProfileServiceProtocol(Protocol):
+    def get_profile_by_username(self, username: str) -> User: ...
+
+
 class SessionService:
     """Service responsible for user session management and authentication."""
 
-    def __init__(self, profile_service: UserProfileService):
+    def __init__(self, profile_service: ProfileServiceProtocol):
         """Initialize the session service.
 
         Args:
-            profile_service: Service for user profile operations
+            profile_service: Service for accessing user profiles
         """
         self._profile_service = profile_service
         self._current_user: Optional[User] = None
+        logging.info("Session service initialized")
 
-    def login(self, username: str, password: str = "") -> User:
-        """Log in a user with the given credentials.
+    def login(self, username: str) -> None:
+        """Log in a user by username.
 
         Args:
-            username: The username to log in with
-            password: The password to verify (can be empty for unprotected profiles)
-
-        Returns:
-            The logged in User object
+            username: Username to log in
 
         Raises:
-            AuthenticationError: If authentication fails (user not found or wrong password)
+            AuthenticationError: If no user exists with the given username
         """
-        # Get user profile
-        profiles = self._profile_service.get_all_profiles_summary()
-        profile = next((p for p in profiles if p.username == username), None)
-        if not profile:
-            raise AuthenticationError("Profil nie istnieje")
-
-        # For unprotected profiles, allow login without password
-        if not profile.is_password_protected and not password:
-            user = self._profile_service._user_repository.get_by_id(profile.id)
-            if not user:  # This should never happen
-                raise AuthenticationError("Wystąpił błąd podczas logowania")
-            self._current_user = user
-            return user
-
-        # For protected profiles, verify password
-        is_authenticated = self._profile_service.authenticate_user(profile.id, password)
-        if not is_authenticated:
-            raise AuthenticationError("Niepoprawne hasło")
-
-        user = self._profile_service._user_repository.get_by_id(profile.id)
-        if not user:  # This should never happen
-            raise AuthenticationError("Wystąpił błąd podczas logowania")
-
+        user = self._profile_service.get_profile_by_username(username)
         self._current_user = user
-        return user
+        logging.info(f"User logged in: {username}")
 
     def logout(self) -> None:
         """Log out the current user."""
-        self._current_user = None
+        if self._current_user:
+            logging.info(f"User logged out: {self._current_user.username}")
+            self._current_user = None
 
     def get_current_user(self) -> Optional[User]:
         """Get the currently logged in user.
 
         Returns:
-            The current User object, or None if no user is logged in
+            User object if logged in, None otherwise
         """
         return self._current_user
 
@@ -75,3 +57,20 @@ class SessionService:
             True if a user is logged in, False otherwise
         """
         return self._current_user is not None
+
+    def refresh_current_user(self) -> None:
+        """Refresh the current user's data from the repository.
+
+        This is useful when user data has been updated outside the session.
+        """
+        if not self._current_user:
+            return
+
+        try:
+            # Get fresh user data
+            username = self._current_user.username
+            self._current_user = self._profile_service.get_profile_by_username(username)
+            logging.info(f"User data refreshed: {username}")
+        except Exception as e:
+            logging.error(f"Failed to refresh user data: {str(e)}")
+            # Keep current user data if refresh fails
