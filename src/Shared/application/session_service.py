@@ -2,10 +2,12 @@ from typing import Optional, Protocol
 import logging
 
 from UserProfile.domain.models.user import User
+from Shared.domain.errors import AuthenticationError
 
 
 class ProfileServiceProtocol(Protocol):
     def get_profile_by_username(self, username: str) -> User: ...
+    def authenticate_user(self, user_id: int, password: str) -> bool: ...
 
 
 class SessionService:
@@ -21,18 +23,30 @@ class SessionService:
         self._current_user: Optional[User] = None
         logging.info("Session service initialized")
 
-    def login(self, username: str) -> None:
+    def login(self, username: str, password: str = None) -> None:
         """Log in a user by username.
 
         Args:
             username: Username to log in
+            password: Optional password for password-protected profiles
 
         Raises:
-            AuthenticationError: If no user exists with the given username
+            AuthenticationError: If no user exists with the given username or password is incorrect
         """
-        user = self._profile_service.get_profile_by_username(username)
-        self._current_user = user
-        logging.info(f"User logged in: {username}")
+        try:
+            user = self._profile_service.get_profile_by_username(username)
+
+            # Verify password if provided and user has password protection
+            if password and user.hashed_password:
+                if not self._profile_service.authenticate_user(user.id, password):  # type: ignore
+                    logging.error(f"Failed login attempt for user: {username} - incorrect password")
+                    raise AuthenticationError("Niepoprawne hasło")
+
+            self._current_user = user
+            logging.info(f"User logged in: {username}")
+        except Exception as e:
+            logging.error(f"Unexpected error during login: {str(e)}")
+            raise
 
     def logout(self) -> None:
         """Log out the current user."""

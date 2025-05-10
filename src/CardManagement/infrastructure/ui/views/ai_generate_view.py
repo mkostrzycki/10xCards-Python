@@ -356,7 +356,7 @@ class AIGenerateView(ttk.Frame):
         self.selected_flashcards = []
 
         # Enable input
-        self.text_input.configure(state="normal")
+        self.text_input.text.configure(state="normal")
         self.generate_button.configure(state="normal")
         self.model_combobox.configure(state="readonly")
 
@@ -368,7 +368,7 @@ class AIGenerateView(ttk.Frame):
             # Show progress and disable input
             self.progress_frame.grid()
             self.progress_bar.start(10)
-            self.text_input.configure(state="disabled")
+            self.text_input.text.configure(state="disabled")
             self.generate_button.configure(state="disabled")
             self.model_combobox.configure(state="disabled")
             self.results_frame.grid_remove()
@@ -376,6 +376,6 @@ class AIGenerateView(ttk.Frame):
             # Hide progress and enable input
             self.progress_frame.grid_remove()
             self.progress_bar.stop()
-            self.text_input.configure(state="normal")
+            self.text_input.text.configure(state="normal")
             self.generate_button.configure(state="normal")
             self.model_combobox.configure(state="readonly")

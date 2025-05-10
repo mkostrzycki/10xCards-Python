@@ -115,7 +115,7 @@ class APIKeyDialog(tk.Toplevel):
         # Validation indicator
         self.progress_bar = ttk.Progressbar(button_frame, mode="indeterminate", length=100)
         self.progress_bar.pack(side=tk.LEFT, padx=(0, 10))
-        self.progress_bar.grid_remove()  # Hide initially
+        self.progress_bar.pack_forget()  # Hide initially
 
         # Buttons
         self.save_button = ttk.Button(
@@ -186,11 +186,11 @@ class APIKeyDialog(tk.Toplevel):
 
         if validating:
             # Show progress, disable buttons
-            self.progress_bar.grid()
+            self.progress_bar.pack(side=tk.LEFT, padx=(0, 10))
             self.progress_bar.start(10)
             self.save_button.configure(state="disabled")
         else:
             # Hide progress, enable buttons
             self.progress_bar.stop()
-            self.progress_bar.grid_remove()
+            self.progress_bar.pack_forget()
             self.save_button.configure(state="normal")

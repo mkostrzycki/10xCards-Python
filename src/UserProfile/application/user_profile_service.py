@@ -6,6 +6,7 @@ from UserProfile.domain.repositories.IUserRepository import IUserRepository
 from UserProfile.domain.models.user import User
 from UserProfile.domain.repositories.exceptions import UserNotFoundError
 from Shared.infrastructure.security.crypto import crypto_manager
+from Shared.domain.errors import AuthenticationError
 
 
 @dataclass
@@ -25,6 +26,23 @@ class UserProfileService:
             user_repository: Repository for user data persistence
         """
         self._user_repository = user_repository
+
+    def get_profile_by_username(self, username: str) -> User:
+        """Get a user profile by username.
+
+        Args:
+            username: The username to find
+
+        Returns:
+            User object if found
+
+        Raises:
+            AuthenticationError: If no user exists with the given username
+        """
+        user = self._user_repository.get_by_username(username)
+        if not user:
+            raise AuthenticationError(f"Użytkownik '{username}' nie istnieje")
+        return user
 
     def get_all_profiles_summary(self) -> List[UserProfileSummaryViewModel]:
         """Get a list of all user profiles with basic information.

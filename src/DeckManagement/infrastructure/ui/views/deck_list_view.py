@@ -108,6 +108,12 @@ class DeckListView(ttk.Frame):
     def _bind_events(self) -> None:
         """Bind keyboard shortcuts and events"""
         self.bind("<BackSpace>", lambda e: self._on_back())
+        self.bind("<Visibility>", lambda e: self._on_visibility())
+
+    def _on_visibility(self) -> None:
+        """Handle visibility change event - reload decks when view becomes visible"""
+        if self.winfo_viewable() and self.session_service.is_authenticated():
+            self.load_decks()
 
     def _on_back(self) -> None:
         """Handle back navigation"""

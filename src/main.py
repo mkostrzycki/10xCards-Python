@@ -132,6 +132,8 @@ class NavigationController:
                             new_view.grid(row=0, column=0, sticky="nsew")
                             self.current_view = new_view
                             self.app_view._update_session_info()
+                            # Wywołaj zdarzenie <Visibility> na widoku
+                            self.current_view.event_generate("<Visibility>")
                             logging.info(f"Navigated to {path} with params {params}")
                             return
                         except Exception as e:
@@ -142,6 +144,8 @@ class NavigationController:
                         view.grid(row=0, column=0, sticky="nsew")
                         self.current_view = view
                         self.app_view._update_session_info()
+                        # Wywołaj zdarzenie <Visibility> na widoku
+                        self.current_view.event_generate("<Visibility>")
                         logging.info(f"Navigated to {path}")
                         return
 
