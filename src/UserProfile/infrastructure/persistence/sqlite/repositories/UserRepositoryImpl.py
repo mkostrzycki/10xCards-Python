@@ -59,7 +59,7 @@ class UserRepositoryImpl(IUserRepository):
                 id=row["id"],
                 username=row["username"],
                 hashed_password=row["hashed_password"],
-                hashed_api_key=row["hashed_api_key"],
+                encrypted_api_key=row["encrypted_api_key"],
                 created_at=datetime.fromisoformat(row["created_at"]),
                 updated_at=datetime.fromisoformat(row["updated_at"]),
             )
@@ -118,14 +118,14 @@ class UserRepositoryImpl(IUserRepository):
             raise InvalidUserDataError("Username is required")
 
         query = """
-            INSERT INTO Users (username, hashed_password, hashed_api_key)
+            INSERT INTO Users (username, hashed_password, encrypted_api_key)
             VALUES (?, ?, ?)
         """
         try:
             logger.info(f"Adding new user with username: {user.username}")
             conn = self._db_provider.get_connection()
             conn.execute("PRAGMA foreign_keys = ON")
-            cursor = conn.execute(query, (user.username, user.hashed_password, user.hashed_api_key))
+            cursor = conn.execute(query, (user.username, user.hashed_password, user.encrypted_api_key))
             conn.commit()
 
             # Get the newly created user with timestamps
@@ -169,7 +169,7 @@ class UserRepositoryImpl(IUserRepository):
             InvalidUserDataError: If retrieved data is invalid
         """
         query = """
-            SELECT id, username, hashed_password, hashed_api_key, created_at, updated_at
+            SELECT id, username, hashed_password, encrypted_api_key, created_at, updated_at
             FROM Users
             WHERE id = ?
         """
@@ -209,7 +209,7 @@ class UserRepositoryImpl(IUserRepository):
             InvalidUserDataError: If retrieved data is invalid
         """
         query = """
-            SELECT id, username, hashed_password, hashed_api_key, created_at, updated_at
+            SELECT id, username, hashed_password, encrypted_api_key, created_at, updated_at
             FROM Users
             WHERE username = ?
         """
@@ -246,7 +246,7 @@ class UserRepositoryImpl(IUserRepository):
             InvalidUserDataError: If retrieved data is invalid
         """
         query = """
-            SELECT id, username, hashed_password, hashed_api_key, created_at, updated_at
+            SELECT id, username, hashed_password, encrypted_api_key, created_at, updated_at
             FROM Users
             ORDER BY username
         """
@@ -292,14 +292,14 @@ class UserRepositoryImpl(IUserRepository):
             UPDATE Users
             SET username = ?,
                 hashed_password = ?,
-                hashed_api_key = ?
+                encrypted_api_key = ?
             WHERE id = ?
         """
         try:
             logger.info(f"Updating user {user.id} with username: {user.username}")
             conn = self._db_provider.get_connection()
             conn.execute("PRAGMA foreign_keys = ON")
-            cursor = conn.execute(query, (user.username, user.hashed_password, user.hashed_api_key, user.id))
+            cursor = conn.execute(query, (user.username, user.hashed_password, user.encrypted_api_key, user.id))
             conn.commit()
 
             if cursor.rowcount == 0:  # Should never happen as we checked existence

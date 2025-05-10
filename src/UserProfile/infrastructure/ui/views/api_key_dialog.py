@@ -1,7 +1,7 @@
 """Dialog for setting OpenRouter API key."""
 
 import tkinter as tk
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 import ttkbootstrap as ttk
 
@@ -13,15 +13,15 @@ class APIKeyDialog(tk.Toplevel):
 
     def __init__(
         self,
-        parent: tk.Widget,
+        parent: Union[tk.Tk, tk.Toplevel],
         api_client: OpenRouterAPIClient,
         current_key: Optional[str] = None,
-        on_save: Callable[[str], None] = None,
+        on_save: Optional[Callable[[str], None]] = None,
     ):
         """Initialize the API key dialog.
 
         Args:
-            parent: Parent widget
+            parent: Parent window
             api_client: OpenRouter API client for key validation
             current_key: Current API key (masked if exists)
             on_save: Callback function to save the API key

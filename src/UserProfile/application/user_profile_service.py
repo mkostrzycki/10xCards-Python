@@ -114,7 +114,8 @@ class UserProfileService:
             return None
 
         # Decrypt the API key using the crypto manager
-        return crypto_manager.decrypt_api_key(user.encrypted_api_key)
+        decrypted_key: str = crypto_manager.decrypt_api_key(user.encrypted_api_key)
+        return decrypted_key
 
     def set_api_key(self, user_id: int, api_key: str) -> None:
         """Set or update the OpenRouter API key for a user.
