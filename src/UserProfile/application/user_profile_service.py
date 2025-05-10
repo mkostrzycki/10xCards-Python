@@ -126,7 +126,14 @@ class UserProfileService:
             RepositoryError: If there's an error accessing the database
         """
         # Create new user without password
-        user = User(id=None, username=username, hashed_password=None, encrypted_api_key=None)
+        user = User(
+            id=None,
+            username=username,
+            hashed_password=None,
+            encrypted_api_key=None,
+            default_llm_model=None,
+            app_theme=None,
+        )
         created_user = self._user_repository.add(user)
 
         # created_user should always have an id at this point
