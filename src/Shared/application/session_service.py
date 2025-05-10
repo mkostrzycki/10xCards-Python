@@ -23,7 +23,7 @@ class SessionService:
         self._current_user: Optional[User] = None
         logging.info("Session service initialized")
 
-    def login(self, username: str, password: str = None) -> None:
+    def login(self, username: str, password: Optional[str] = None) -> None:
         """Log in a user by username.
 
         Args:
