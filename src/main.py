@@ -5,6 +5,8 @@ from typing import Any, Dict, Optional, Protocol
 # --- Project Imports ---
 from Shared.infrastructure.logging import setup_logging
 from Shared.infrastructure.persistence.sqlite.connection import SqliteConnectionProvider
+from Shared.infrastructure.persistence.sqlite.migrations import run_migrations
+from Shared.infrastructure.config import DATABASE_PATH
 from Shared.application.session_service import SessionService
 from UserProfile.infrastructure.persistence.sqlite.repositories.UserRepositoryImpl import UserRepositoryImpl
 from UserProfile.application.user_profile_service import UserProfileService
@@ -16,10 +18,11 @@ from CardManagement.infrastructure.persistence.sqlite.repositories.FlashcardRepo
     FlashcardRepositoryImpl,
 )
 from CardManagement.application.card_service import CardService
+from CardManagement.application.services.ai_service import AIService
+from CardManagement.infrastructure.api_clients.openrouter.client import OpenRouterAPIClient
 from CardManagement.infrastructure.ui.views.card_list_view import CardListView
 from CardManagement.infrastructure.ui.views.flashcard_edit_view import FlashcardEditView
 from CardManagement.infrastructure.ui.views.ai_generate_view import AIGenerateView
-from Shared.infrastructure.persistence.sqlite.migrations import run_initial_migration_if_needed
 
 
 class NavigationProtocol(Protocol):
@@ -177,6 +180,16 @@ class TenXCardsApp(ttk.Window):
             self.destroy()
             return
 
+        # Get OpenRouter API client
+        openrouter_api_client = dependencies.get("openrouter_api_client")
+        if openrouter_api_client is None:
+            logging.error("OpenRouter API client not provided to TenXCardsApp")
+            self.destroy()
+            return
+
+        # Get logger
+        app_logger = logging.getLogger("app")
+
         # Repositories
         user_repo = UserRepositoryImpl(db_provider)
         deck_repo = DeckRepositoryImpl(db_provider)
@@ -186,6 +199,13 @@ class TenXCardsApp(ttk.Window):
         profile_service = UserProfileService(user_repo)
         deck_service = DeckService(deck_repo)
         card_service = CardService(card_repo)
+
+        # AI Service setup
+        ai_service = dependencies.get("ai_service")
+        if ai_service is None:
+            logging.error("AI service not provided to TenXCardsApp")
+            self.destroy()
+            return
 
         # --- AppView and NavigationController setup ---
         app_view = AppView(self, session_service)
@@ -198,7 +218,12 @@ class TenXCardsApp(ttk.Window):
         navigation_controller.register_view(
             "/profiles",
             ProfileListView(
-                app_view.main_content, profile_service, session_service, navigation_controller, app_view.show_toast
+                app_view.main_content,
+                profile_service,
+                session_service,
+                openrouter_api_client,
+                navigation_controller,
+                app_view.show_toast,
             ),
         )
 
@@ -271,6 +296,8 @@ class TenXCardsApp(ttk.Window):
                 parent=app_view.main_content,
                 deck_id=deck_id,
                 deck_name=deck.name,
+                ai_service=ai_service,
+                card_service=card_service,
                 navigation_controller=navigation_controller,
                 show_toast=app_view.show_toast,
             )
@@ -293,18 +320,30 @@ def main() -> None:
     setup_logging()
     logging.info("Starting 10xCards application")
 
-    # Initialize DB and run migration if needed
-    db_path = "./data/10xcards.sqlite3"
-    migration_sql_path = "./infrastructure/persistence/sqlite/migrations/20250413174854_initial_schema.sql"
-    run_initial_migration_if_needed(db_path, migration_sql_path, target_version=1)
+    # Initialize DB and run migrations
+    run_migrations(str(DATABASE_PATH))
 
     # Initialize dependencies
-    db_provider = SqliteConnectionProvider(db_path)
+    db_provider = SqliteConnectionProvider(str(DATABASE_PATH))
     user_repo = UserRepositoryImpl(db_provider)
     profile_service = UserProfileService(user_repo)
+    session_service = SessionService(profile_service)
+
+    # Get logger
+    app_logger = logging.getLogger("app")
+
+    # Setup OpenRouter API client and AI service
+    openrouter_api_client = OpenRouterAPIClient(logger=app_logger.getChild("openrouter"), default_model="gpt-4o-mini")
+    ai_service = AIService(
+        api_client=openrouter_api_client, session_service=session_service, logger=app_logger.getChild("ai_service")
+    )
+
+    # Create dependencies dict
     dependencies = {
         "db_provider": db_provider,
-        "session_service": SessionService(profile_service),
+        "session_service": session_service,
+        "openrouter_api_client": openrouter_api_client,
+        "ai_service": ai_service,
     }
 
     # Start application
