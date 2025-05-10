@@ -6,18 +6,18 @@
 
 ## 2. Problem użytkownika
 
-Manualne tworzenie wysokiej jakości fiszek edukacyjnych jest procesem czasochłonnym i żmudnym. Wymaga to nie tylko syntezy materiału, ale także formułowania pytań i odpowiedzi, co może zniechęcać użytkowników, zwłaszcza profesjonalistów z ograniczonym czasem, do korzystania z metody spaced repetition – jednej z najefektywniejszych technik nauki. Istniejące aplikacje często oferują gotowe zestawy, które nie zawsze odpowiadają indywidualnym potrzebom, lub wymagają w pełni manualnego wprowadzania danych. Brak jest prostego narzędzia, które automatyzowałoby część procesu tworzenia fiszek na podstawie własnych materiałów użytkownika, integrując to jednocześnie z naukowo potwierdzonym algorytmem powtórek.
+Manualne tworzenie wysokiej jakości fiszek edukacyjnych jest procesem czasochłonnym i żmudnym. Wymaga to nie tylko syntezy materiału, ale także formułowania pytań i odpowiedzi, co może zniechęcać użytkowników, zwłaszcza profesjonalistów z ograniczonym czasem, do korzystania z metody spaced repetition – jednej z najefektywniejszych technik nauki. Istniejące aplikacje często oferują gotowe zestawy, które nie zawsze odpowiadają indywidualnym potrzebom, lub wymagają w pełni manualnego wprowadzania danych. Brak jest prostego narzędzia, które automatyzowałoby część procesu tworzenia fiszek na podstawie własnych materiałów użytkownika, integrując to jednocześnie z naukowo potwierdzonym algorytmem powtórek. Dodatkowo, użytkownicy potrzebują możliwości personalizacji swojego doświadczenia oraz zarządzania kluczowymi ustawieniami aplikacji, takimi jak dane dostępowe do usług AI czy preferencje wizualne, w jednym, łatwo dostępnym miejscu.
 
 ## 3. Wymagania funkcjonalne
 
 ### 3.1 Zarządzanie profilami użytkowników
 - FR-001: Aplikacja musi umożliwiać utworzenie nowego profilu użytkownika poprzez podanie nazwy.
 - FR-002: Aplikacja musi wyświetlać listę istniejących profili przy starcie.
-- FR-003: Aplikacja musi umożliwiać wybór profilu z listy w celu zalogowania.
-- FR-004: Użytkownik musi mieć możliwość opcjonalnego ustawienia hasła dla swojego profilu.
+- FR-003: Aplikacja musi umożliwiać wybór profilu z listy w celu zalogowania. (Zobacz też FR-042 dotyczące dostępu do Panelu Ustawień)
+- FR-004: Użytkownik musi mieć możliwość opcjonalnego ustawienia hasła dla swojego profilu. (Przeniesione do Panelu Ustawień Użytkownika - zobacz FR-045)
 - FR-005: Jeśli profil jest chroniony hasłem, aplikacja musi wymagać podania hasła przy próbie logowania.
 - FR-006: Hasła muszą być przechowywane w bazie danych w formie zahashowanej (bcrypt).
-- FR-007: Dane każdego użytkownika (talie, fiszki, postęp nauki) muszą być odizolowane od innych profili.
+- FR-007: Dane każdego użytkownika (talie, fiszki, postęp nauki, ustawienia) muszą być odizolowane od innych profili.
 
 ### 3.2 Zarządzanie taliami fiszek
 - FR-008: Użytkownik musi mieć możliwość utworzenia nowej talii fiszek, podając jej nazwę.
@@ -60,11 +60,57 @@ Manualne tworzenie wysokiej jakości fiszek edukacyjnych jest procesem czasochł
 - FR-035: Aplikacja musi logować błędy zgłaszane przez bibliotekę `Py-FSRS`.
 - FR-036: Aplikacja musi logować błędy operacji na bazie danych SQLite.
 - FR-037: Aplikacja musi logować inne nieoczekiwane błędy i wyjątki.
+- FR-037a: Aplikacja powinna logować zmiany istotnych ustawień użytkownika (np. zmiana klucza API, domyślnego modelu LLM) dla celów audytu i wsparcia.
 
 ### 3.8 Interfejs użytkownika (UI)
-- FR-038: Interfejs użytkownika musi być zaimplementowany przy użyciu biblioteki Tkinter w Pythonie.
+- FR-038: Interfejs użytkownika musi być zaimplementowany przy użyciu biblioteki Tkinter w Pythonie (z wykorzystaniem ttkbootstrap do stylizacji).
 - FR-039: Architektura kodu musi oddzielać logikę biznesową od warstwy UI, aby ułatwić ewentualną migrację UI w przyszłości.
 - FR-040: Interfejs musi być intuicyjny i łatwy w obsłudze dla użytkownika docelowego.
+
+### 3.9 Panel Ustawień Użytkownika
+- FR-041: Aplikacja musi udostępniać dedykowany "Panel Ustawień Użytkownika", dostępny po zalogowaniu.
+- FR-042: Dostęp do Panelu Ustawień musi być możliwy poprzez przycisk "Ustawienia" zlokalizowany na górnym pasku aplikacji, widoczny po zalogowaniu użytkownika (np. na ekranie listy talii).
+- FR-043: Panel Ustawień musi pozwalać na nawigację do poszczególnych opcji konfiguracyjnych. Każda opcja (np. zmiana hasła) musi otwierać dedykowane okno dialogowe.
+- FR-044: Z Panelu Ustawień użytkownik musi mieć możliwość powrotu do poprzedniego widoku (np. listy talii).
+
+#### 3.9.1 Zmiana Nazwy Profilu (w Panelu Ustawień)
+- FR-044a: Użytkownik musi mieć możliwość zmiany nazwy swojego profilu.
+- FR-044b: Nowa nazwa profilu podlega tym samym ograniczeniom co przy tworzeniu profilu (np. unikalność, maksymalna długość 30 znaków, nie może być pusta).
+- FR-044c: Zmiana nazwy profilu musi być zapisywana w bazie danych.
+
+#### 3.9.2 Zarządzanie Hasłem Profilu (w Panelu Ustawień)
+- FR-045: Użytkownik musi mieć możliwość ustawienia, zmiany lub usunięcia hasła do swojego profilu.
+- FR-046: W przypadku zmiany lub usunięcia hasła, aplikacja musi wymagać podania aktualnego hasła.
+- FR-047: Aby usunąć hasło, użytkownik musi pozostawić pole nowego hasła puste (i potwierdzić aktualne hasło).
+- FR-048: Nowe hasło musi być hashowane (bcrypt) przed zapisaniem do bazy danych.
+
+#### 3.9.3 Zarządzanie Kluczem API OpenRouter (w Panelu Ustawień)
+- FR-049: Użytkownik musi mieć możliwość wprowadzenia, zaktualizowania lub usunięcia swojego klucza API OpenRouter.
+- FR-050: Klucz API musi być szyfrowany (np. przy użyciu Fernet z solą przechowywaną w pliku konfiguracyjnym aplikacji) przed zapisaniem do bazy danych. Należy zaznaczyć, że jest to rozwiązanie MVP dla lokalnego przechowywania.
+- FR-051: Aplikacja musi walidować poprawność klucza API przy próbie jego zapisu (np. poprzez testowe odpytanie API OpenRouter).
+- FR-052: Użytkownik musi otrzymywać informację zwrotną o wyniku walidacji i zapisu klucza API (np. "Klucz API jest poprawny. Zapis klucza zakończył się sukcesem." lub "Wprowadzony klucz API jest niepoprawny. Zapis klucza anulowany.").
+- FR-053: Wprowadzony klucz API nie powinien być wyświetlany w pełnej, jawnej formie w UI Panelu Ustawień po jego zapisaniu (np. wyświetlany jako zamaskowany).
+- FR-054: W przypadku usunięcia klucza API, przy próbie generowania fiszek przez AI, użytkownik musi otrzymać komunikat o braku klucza i niemożności wykonania operacji.
+
+#### 3.9.4 Wybór Domyślnego Modelu LLM (w Panelu Ustawień)
+- FR-055: Użytkownik musi mieć możliwość wyboru domyślnego modelu LLM z predefiniowanej listy.
+- FR-056: Lista dostępnych modeli LLM musi być przechowywana w pliku konfiguracyjnym aplikacji (`src/Shared/infrastructure/config.py`).
+- FR-057: Wybrany domyślny model LLM musi być zapisywany w bazie danych dla profilu użytkownika.
+- FR-058: Aktualnie wybrany (lub zastępczy) model LLM musi być widoczny na ekranie generowania fiszek.
+- FR-059: W przypadku, gdy zapisany domyślny model LLM użytkownika zostanie usunięty z globalnej konfiguracji (pliku `config.py`), aplikacja musi:
+    - FR-059a: Użyć pierwszego dostępnego modelu z listy jako modelu zastępczego dla generowania fiszek.
+    - FR-059b: Poinformować użytkownika (np. jednorazowym komunikatem po zalogowaniu) o zmianie modelu na zastępczy i zasugerować wybór nowego domyślnego modelu w Panelu Ustawień.
+    - FR-059c: Wartość domyślnego modelu w bazie danych dla tego użytkownika powinna zostać zaktualizowana (np. na `null` lub na faktycznie używany model zastępczy, do decyzji implementacyjnej).
+
+#### 3.9.5 Wybór Schematu Kolorystycznego Aplikacji (w Panelu Ustawień)
+- FR-060: Użytkownik musi mieć możliwość wyboru schematu kolorystycznego aplikacji z predefiniowanej listy (opartej na motywach ttkbootstrap).
+- FR-061: Lista dostępnych schematów kolorystycznych musi być przechowywana w pliku konfiguracyjnym aplikacji (`src/Shared/infrastructure/config.py`).
+- FR-062: Wybrany schemat kolorystyczny musi być zapisywany w bazie danych dla profilu użytkownika.
+- FR-063: Zmiana schematu kolorystycznego musi być aplikowana natychmiast do aktywnego okna aplikacji, bez konieczności jej restartu. Pozostałe (nieaktywne/zamknięte) okna zaktualizują wygląd po ponownym otwarciu.
+
+### 3.10 Konfiguracja Globalna Aplikacji
+- FR-064: Aplikacja musi wykorzystywać centralny plik konfiguracyjny (np. `src/Shared/infrastructure/config.py`) do przechowywania globalnych ustawień, takich jak lista dostępnych modeli LLM, lista schematów kolorystycznych oraz sól dla szyfrowania klucza API.
+- FR-065: Należy przewidzieć, że modyfikacje tego pliku (np. usunięcie modelu LLM) mogą wymagać odpowiedniej obsługi po stronie logiki aplikacji (jak w FR-059) oraz potencjalnie mechanizmów migracji danych użytkowników w przyszłych wersjach, jeśli struktura przechowywanych preferencji ulegnie zmianie.
 
 ## 4. Granice produktu
 
@@ -77,9 +123,15 @@ Manualne tworzenie wysokiej jakości fiszek edukacyjnych jest procesem czasochł
     - Generowanie fiszek przez AI (GPT-4o mini) z tekstu (1k-10k znaków) z możliwością akceptacji/edycji/odrzucenia.
     - Manualne tworzenie, edycja i usuwanie fiszek (tylko tekst przód/tył).
     - Sesja nauki oparta na algorytmie FSRS (integracja `Py-FSRS`) z ocenami Again/Hard/Good/Easy.
-- Przechowywanie danych: Lokalna baza danych SQLite.
-- UI: Python z Tkinter.
-- Logowanie: Błędy (AI, FSRS, DB, ogólne), komunikacja AI.
+    - Panel Ustawień Użytkownika:
+        - Zmiana nazwy profilu.
+        - Zarządzanie hasłem profilu (ustawianie, zmiana, usuwanie z weryfikacją aktualnego hasła).
+        - Zarządzanie kluczem API OpenRouter (wprowadzanie, aktualizacja, usuwanie, szyfrowanie Fernet z solą z config.py, walidacja online, maskowanie w UI).
+        - Wybór domyślnego modelu LLM (z listy w `config.py`, obsługa niedostępności modelu, informacja dla użytkownika).
+        - Wybór schematu kolorystycznego aplikacji (z listy w `config.py` opartej na ttkbootstrap, natychmiastowe zastosowanie).
+- Przechowywanie danych: Lokalna baza danych SQLite (rozszerzona o ustawienia użytkownika).
+- UI: Python z Tkinter (z wykorzystaniem ttkbootstrap).
+- Logowanie: Błędy (AI, FSRS, DB, ogólne), komunikacja AI, opcjonalnie zmiany w ustawieniach.
 
 ### 4.2 Co NIE wchodzi w zakres MVP:
 - Wsparcie dla innych systemów operacyjnych (Windows, Linux).
@@ -123,14 +175,24 @@ Manualne tworzenie wysokiej jakości fiszek edukacyjnych jest procesem czasochł
 
 ---
 - ID: US-003
-- Tytuł: Ustawianie hasła dla profilu
-- Opis: Jako użytkownik, chcę móc ustawić opcjonalne hasło dla mojego profilu, aby chronić dostęp do moich danych na współdzielonym komputerze.
+- Tytuł: Ustawianie/Zmiana/Usuwanie hasła dla profilu w Panelu Ustawień
+- Opis: Jako użytkownik, chcę móc ustawić, zmienić lub usunąć opcjonalne hasło dla mojego profilu w Panelu Ustawień, aby chronić dostęp do moich danych na współdzielonym komputerze.
 - Kryteria akceptacji:
-    - 1. W ustawieniach profilu istnieje opcja "Ustaw/Zmień hasło".
-    - 2. Po wybraniu opcji, użytkownik jest proszony o podanie nowego hasła i jego potwierdzenie.
-    - 3. Po zatwierdzeniu, hasło jest hashowane za pomocą bcrypt i zapisywane w bazie danych dla danego profilu.
-    - 4. Użytkownik otrzymuje potwierdzenie, że hasło zostało ustawione/zmienione.
-    - 5. Istnieje możliwość usunięcia hasła (np. przez pozostawienie pustego pola nowego hasła).
+    - 1. W Panelu Ustawień Użytkownika dostępna jest opcja "Zarządzaj hasłem" (lub podobna).
+    - 2. Po wybraniu opcji otwiera się dedykowane okno dialogowe.
+    - 3. Jeśli hasło nie jest ustawione:
+        - a. Użytkownik jest proszony o podanie nowego hasła i jego potwierdzenie.
+        - b. Po zatwierdzeniu, hasło jest hashowane (bcrypt) i zapisywane w bazie danych dla danego profilu.
+        - c. Użytkownik otrzymuje potwierdzenie, że hasło zostało ustawione.
+    - 4. Jeśli hasło jest już ustawione:
+        - a. Użytkownik jest proszony o podanie aktualnego hasła.
+        - b. Użytkownik jest proszony o podanie nowego hasła i jego potwierdzenie. Pozostawienie pól nowego hasła pustymi oznacza chęć usunięcia hasła.
+        - c. Po wprowadzeniu poprawnego aktualnego hasła i zatwierdzeniu:
+            - i. Jeśli podano nowe hasło, jest ono hashowane (bcrypt) i aktualizuje istniejące w bazie. Użytkownik otrzymuje potwierdzenie.
+            - ii. Jeśli pola nowego hasła pozostawiono puste, hasło jest usuwane z bazy danych. Użytkownik otrzymuje potwierdzenie.
+        - d. Wprowadzenie niepoprawnego aktualnego hasła skutkuje komunikatem o błędzie.
+    - 5. Okno dialogowe zawiera przycisk "Zapisz" (lub "Ustaw", "Zmień") i "Anuluj".
+    - 6. Po udanej operacji użytkownik wraca do głównego widoku Panelu Ustawień.
 
 ---
 - ID: US-004
@@ -266,6 +328,82 @@ Manualne tworzenie wysokiej jakości fiszek edukacyjnych jest procesem czasochł
     - 5. Kliknięcie jednego z przycisków oceny powoduje przekazanie tej oceny do biblioteki `Py-FSRS` dla bieżącej fiszki.
     - 6. Aplikacja pobiera kolejną fiszkę do powtórki z FSRS i wyświetla jej stronę przednią, kontynuując cykl.
     - 7. Sesja kończy się (lub użytkownik jest informowany), gdy FSRS nie zwraca kolejnej fiszki do powtórki. Aplikacja wraca do widoku listy fiszek/talii.
+
+---
+- ID: US-016
+- Tytuł: Dostęp do Panelu Ustawień Użytkownika
+- Opis: Jako zalogowany użytkownik, chcę mieć łatwy dostęp do Panelu Ustawień, aby móc zarządzać konfiguracją swojego profilu i preferencjami aplikacji.
+- Kryteria akceptacji:
+    - 1. Po zalogowaniu, na górnym pasku aplikacji (np. w widoku listy talii) widoczny jest przycisk "Ustawienia".
+    - 2. Kliknięcie przycisku "Ustawienia" przenosi użytkownika do ekranu Panelu Ustawień Użytkownika.
+    - 3. Ekran Panelu Ustawień zawiera listę dostępnych opcji konfiguracyjnych (np. "Zmień nazwę profilu", "Zarządzaj hasłem", "Klucz API OpenRouter", "Domyślny model LLM", "Schemat kolorystyczny").
+    - 4. Na ekranie Panelu Ustawień dostępny jest przycisk "Wróć" (lub analogiczny), który pozwala powrócić do poprzedniego widoku (np. listy talii).
+
+---
+- ID: US-017
+- Tytuł: Zmiana nazwy profilu w Panelu Ustawień
+- Opis: Jako użytkownik, chcę móc zmienić nazwę swojego profilu w Panelu Ustawień, jeśli zdecyduję, że obecna nazwa mi nie odpowiada.
+- Kryteria akceptacji:
+    - 1. W Panelu Ustawień dostępna jest opcja "Zmień nazwę profilu".
+    - 2. Po wybraniu opcji otwiera się okno dialogowe z polem do wprowadzenia nowej nazwy profilu, pre-wypełnionym aktualną nazwą.
+    - 3. Nowa nazwa profilu musi być unikalna wśród istniejących profili.
+    - 4. Nowa nazwa profilu nie może być pusta i może mieć maksymalnie 30 znaków.
+    - 5. Próba zapisania niepoprawnej nazwy (np. pustej, zbyt długiej, już istniejącej) skutkuje wyświetleniem komunikatu o błędzie, a zmiana nie jest zapisywana.
+    - 6. Po wprowadzeniu poprawnej nowej nazwy i kliknięciu "Zapisz", nazwa profilu jest aktualizowana w bazie danych.
+    - 7. Użytkownik otrzymuje potwierdzenie zmiany nazwy.
+    - 8. Okno dialogowe zamyka się, a użytkownik wraca do Panelu Ustawień, gdzie widoczna jest (jeśli dotyczy) zaktualizowana nazwa lub jest pewność, że zmiana została dokonana.
+
+---
+- ID: US-018
+- Tytuł: Zarządzanie kluczem API OpenRouter w Panelu Ustawień
+- Opis: Jako użytkownik, chcę móc wprowadzić, zaktualizować lub usunąć mój klucz API OpenRouter w Panelu Ustawień, aby kontrolować dostęp aplikacji do usług AI.
+- Kryteria akceptacji:
+    - 1. W Panelu Ustawień dostępna jest opcja "Zarządzaj kluczem API OpenRouter" (lub podobna).
+    - 2. Po wybraniu opcji otwiera się okno dialogowe.
+    - 3. W oknie dialogowym znajduje się pole do wprowadzenia/edycji klucza API.
+    - 4. Jeśli klucz API jest już zapisany, jest on wyświetlany w formie zamaskowanej (np. `sk-xxxx...xxxx`).
+    - 5. Użytkownik może wprowadzić nowy klucz, zmodyfikować istniejący (wpisując nowy w jego miejsce) lub usunąć klucz (np. poprzez dedykowany przycisk "Usuń klucz" lub czyszcząc pole i zapisując).
+    - 6. Po kliknięciu "Zapisz" (lub "Zastosuj"):
+        - a. Jeśli wprowadzono nowy/zmieniony klucz, aplikacja próbuje go zwalidować online (np. przez testowe zapytanie do OpenRouter).
+        - b. Jeśli walidacja powiedzie się, klucz jest szyfrowany (Fernet z solą z `config.py`) i zapisywany/aktualizowany w bazie danych. Użytkownik otrzymuje komunikat "Klucz API jest poprawny. Zapis klucza zakończył się sukcesem."
+        - c. Jeśli walidacja nie powiedzie się, klucz nie jest zapisywany. Użytkownik otrzymuje komunikat "Wprowadzony klucz API jest niepoprawny. Zapis klucza anulowany."
+        - d. Jeśli użytkownik zdecydował się usunąć klucz, jest on usuwany z bazy danych. Użytkownik otrzymuje potwierdzenie.
+    - 7. Okno dialogowe zawiera przyciski "Zapisz", "Usuń klucz" (opcjonalnie) i "Anuluj".
+    - 8. Po udanej operacji (zapis/usunięcie) użytkownik wraca do głównego widoku Panelu Ustawień.
+    - 9. Jeśli klucz API nie jest ustawiony lub został usunięty, próba skorzystania z funkcji generowania fiszek AI skutkuje komunikatem informującym o braku klucza i konieczności jego skonfigurowania.
+
+---
+- ID: US-019
+- Tytuł: Wybór domyślnego modelu LLM w Panelu Ustawień
+- Opis: Jako użytkownik, chcę móc wybrać preferowany domyślny model LLM z listy dostępnych modeli w Panelu Ustawień, aby dostosować generowanie fiszek AI do moich potrzeb.
+- Kryteria akceptacji:
+    - 1. W Panelu Ustawień dostępna jest opcja "Wybierz domyślny model LLM" (lub podobna).
+    - 2. Po wybraniu opcji otwiera się okno dialogowe z listą rozwijaną (lub innym selektorem) dostępnych modeli LLM. Lista modeli jest pobierana z pliku `src/Shared/infrastructure/config.py`.
+    - 3. Aktualnie wybrany domyślny model jest zaznaczony na liście.
+    - 4. Użytkownik może wybrać model z listy i kliknąć "Zapisz".
+    - 5. Wybrany model jest zapisywany jako domyślny dla profilu użytkownika w bazie danych.
+    - 6. Użytkownik otrzymuje potwierdzenie zapisu.
+    - 7. Okno dialogowe zamyka się, a użytkownik wraca do Panelu Ustawień.
+    - 8. Wybrany model (lub jego identyfikator) jest wyświetlany na ekranie generowania fiszek.
+    - 9. Jeśli zapisany domyślny model użytkownika zostanie usunięty z globalnej konfiguracji (z `config.py`):
+        - a. Przy następnym logowaniu lub próbie użycia AI, użytkownik otrzymuje jednorazowy komunikat informujący, że jego poprzedni domyślny model nie jest już dostępny i został ustawiony model zastępczy (pierwszy z aktualnej listy), z sugestią wyboru nowego modelu w Panelu Ustawień.
+        - b. Do generowania fiszek używany jest model zastępczy.
+
+---
+- ID: US-020
+- Tytuł: Wybór schematu kolorystycznego aplikacji w Panelu Ustawień
+- Opis: Jako użytkownik, chcę móc wybrać preferowany schemat kolorystyczny aplikacji z listy dostępnych motywów w Panelu Ustawień, aby dostosować wygląd interfejsu do moich upodobań.
+- Kryteria akceptacji:
+    - 1. W Panelu Ustawień dostępna jest opcja "Wybierz schemat kolorystyczny" (lub podobna).
+    - 2. Po wybraniu opcji otwiera się okno dialogowe z listą rozwijaną (lub innym selektorem) dostępnych schematów kolorystycznych (np. motywów ttkbootstrap). Lista schematów jest pobierana z pliku `src/Shared/infrastructure/config.py`.
+    - 3. Aktualnie aktywny schemat jest zaznaczony na liście.
+    - 4. Użytkownik może wybrać schemat z listy.
+    - 5. Po wybraniu schematu i kliknięciu "Zastosuj" (lub "Zapisz"):
+        - a. Wybrany schemat jest natychmiast aplikowany do aktywnego okna aplikacji (Panel Ustawień i okno dialogowe wyboru schematu).
+        - b. Wybrany schemat jest zapisywany jako preferencja dla profilu użytkownika w bazie danych.
+        - c. Użytkownik otrzymuje potwierdzenie (może być wizualne poprzez zmianę wyglądu).
+    - 6. Okno dialogowe zamyka się, a użytkownik wraca do Panelu Ustawień, który również odzwierciedla nowy schemat.
+    - 7. Inne otwarte okna aplikacji mogą nie zaktualizować schematu natychmiast, ale zastosują go po ponownym otwarciu lub przy następnym uruchomieniu aplikacji. (Do doprecyzowania: MVP zakłada zmianę dla aktywnego okna, reszta przy ponownym otwarciu).
 
 ## 6. Metryki sukcesu
 
