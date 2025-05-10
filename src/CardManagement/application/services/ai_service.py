@@ -3,8 +3,8 @@
 import logging
 from typing import List, Optional, cast
 
-from ...infrastructure.api_clients.openrouter.client import OpenRouterAPIClient
-from ...infrastructure.api_clients.openrouter.exceptions import (
+from CardManagement.infrastructure.api_clients.openrouter.client import OpenRouterAPIClient
+from CardManagement.infrastructure.api_clients.openrouter.exceptions import (
     AIAPIAuthError,
     AIAPIConnectionError,
     AIAPIRequestError,
@@ -12,9 +12,9 @@ from ...infrastructure.api_clients.openrouter.exceptions import (
     AIRateLimitError,
     FlashcardGenerationError,
 )
-from ...infrastructure.api_clients.openrouter.types import FlashcardDTO
-from ....Shared.application.session_service import SessionService
-from ....Shared.infrastructure.config import DEFAULT_AI_MODEL
+from CardManagement.infrastructure.api_clients.openrouter.types import FlashcardDTO
+from Shared.application.session_service import SessionService
+from Shared.infrastructure.config import DEFAULT_AI_MODEL
 
 
 class AIService:
