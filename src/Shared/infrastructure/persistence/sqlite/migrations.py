@@ -5,7 +5,7 @@ import logging
 import os
 import sqlite3
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 from ...config import MIGRATIONS_DIR
 
@@ -21,7 +21,7 @@ def get_current_version(conn: sqlite3.Connection) -> int:
     """
     cursor = conn.cursor()
     cursor.execute("PRAGMA user_version")
-    return cursor.fetchone()[0]
+    return cast(int, cursor.fetchone()[0])
 
 
 def set_version(conn: sqlite3.Connection, version: int) -> None:

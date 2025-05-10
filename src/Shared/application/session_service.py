@@ -1,9 +1,7 @@
 from typing import Optional, Protocol
 import logging
 
-from Shared.domain.errors import AuthenticationError
 from UserProfile.domain.models.user import User
-from UserProfile.application.user_profile_service import UserProfileService
 
 
 class ProfileServiceProtocol(Protocol):
