@@ -54,7 +54,15 @@ class AIService:
 
         # Comment below clarifies that the value is already decrypted by the repository
         # Use cast to ensure proper type checking
-        return cast(str, user.encrypted_api_key)  # Already decrypted by repository
+        api_key = cast(str, user.encrypted_api_key)  # Already decrypted by repository
+
+        # Add debug logs for API key type
+        self.logger.debug(f"API key type in _get_user_api_key: {type(api_key)}")
+        self.logger.debug(f"API key: {api_key}")
+        if isinstance(api_key, bytes):
+            self.logger.warning("API key is bytes, this might cause issues in litellm")
+
+        return api_key
 
     def explain_error(self, error: Exception) -> str:
         """Convert an API error to a user-friendly message.
@@ -122,6 +130,12 @@ class AIService:
 
         # Get API key
         api_key = self._get_user_api_key()
+
+        # Add more diagnostic information about the API key
+        self.logger.debug(
+            f"API key in generate_flashcards - type: {type(api_key)}, length: {len(api_key) if api_key else 0}"
+        )
+        self.logger.info(f"API key: {api_key}")
 
         # Log the request (without sensitive data)
         self.logger.info(
