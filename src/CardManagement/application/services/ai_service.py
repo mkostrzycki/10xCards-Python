@@ -105,7 +105,8 @@ class AIService:
             masked_key = "****"
         self.logger.debug(f"Returning API key (masked): {masked_key}")
 
-        return api_key
+        # Jawne castowanie typu przed zwróceniem
+        return str(api_key)
 
     def explain_error(self, error: Exception) -> str:
         """Convert an API error to a user-friendly message.
@@ -121,9 +122,11 @@ class AIService:
         elif isinstance(error, AIAPIConnectionError):
             return "Nie można połączyć się z API. Sprawdź połączenie internetowe."
         elif isinstance(error, AIRateLimitError):
-            if error.retry_after:
-                return f"Przekroczono limit zapytań. Spróbuj ponownie za {error.retry_after} sekund."
-            return "Przekroczono limit zapytań. Spróbuj ponownie później."
+            retry_after = error.retry_after  # Extract retry_after to local variable
+            if retry_after is not None:
+                return f"Przekroczono limit zapytań. Spróbuj ponownie za {str(retry_after)} sekund."
+            else:
+                return "Przekroczono limit zapytań. Spróbuj ponownie później."
         elif isinstance(error, AIAPIRequestError):
             return f"Błąd zapytania: {str(error)}"
         elif isinstance(error, AIAPIServerError):
