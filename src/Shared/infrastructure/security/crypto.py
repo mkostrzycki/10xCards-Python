@@ -2,8 +2,9 @@
 
 import base64
 import logging
+import traceback
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -70,6 +71,7 @@ class CryptoManager:
             return encrypted
         except Exception as e:
             logging.error(f"Error encrypting API key: {str(e)}")
+            logging.error(f"Exception details: {traceback.format_exc()}")
             raise
 
     def decrypt_api_key(self, encrypted_key: bytes) -> str:
@@ -82,13 +84,20 @@ class CryptoManager:
             str: The decrypted API key.
 
         Raises:
-            cryptography.fernet.InvalidToken: If the key is invalid or corrupted.
+            InvalidToken: If the key is invalid or corrupted.
+            ValueError: If input type is invalid.
         """
         logging.info(f"Decrypting API key of length {len(encrypted_key)}")
-
+        logging.debug(f"Encrypted key type: {type(encrypted_key)}")
+        
+        # Debug the encrypted key in hex format
+        if isinstance(encrypted_key, bytes) and len(encrypted_key) > 0:
+            logging.debug(f"Encrypted key prefix (hex): {encrypted_key[:10].hex()}")
+        
         # Ensure input is bytes
         if not isinstance(encrypted_key, bytes):
-            logging.warning(f"Input encrypted key is not bytes, type: {type(encrypted_key)}, converting")
+            error_msg = f"Input encrypted key is not bytes, type: {type(encrypted_key)}"
+            logging.warning(error_msg)
             try:
                 if isinstance(encrypted_key, str):
                     # If it's a string, try to decode from hex or convert directly to bytes
@@ -101,16 +110,34 @@ class CryptoManager:
                 else:
                     encrypted_key = bytes(encrypted_key)
             except Exception as e:
-                logging.error(f"Failed to convert encrypted key to bytes: {str(e)}")
-                raise ValueError(f"Encrypted key must be bytes: {str(e)}")
+                detailed_error = f"Failed to convert encrypted key to bytes: {str(e)}"
+                logging.error(detailed_error)
+                logging.error(f"Exception details: {traceback.format_exc()}")
+                raise ValueError(detailed_error)
 
         try:
-            decrypted = self._fernet.decrypt(encrypted_key).decode()
+            # Perform the decryption
+            decrypted = self._fernet.decrypt(encrypted_key).decode("utf-8")
             logging.info(f"API key decrypted successfully, result length: {len(decrypted)}")
             return decrypted
+        except InvalidToken as e:
+            # Specific error for invalid tokens
+            detailed_error = f"Invalid token error: The key appears to be corrupted or was encrypted with a different key: {str(e)}"
+            logging.error(detailed_error)
+            logging.error(f"Exception details: {traceback.format_exc()}")
+            raise InvalidToken(detailed_error)
+        except UnicodeDecodeError as e:
+            # Handle encoding errors separately
+            detailed_error = f"Unicode decode error: The decrypted data is not valid UTF-8: {str(e)}"
+            logging.error(detailed_error)
+            logging.error(f"Exception details: {traceback.format_exc()}")
+            raise ValueError(detailed_error)
         except Exception as e:
-            logging.error(f"Error decrypting API key: {str(e)}")
-            raise
+            # Generic catch-all for other errors
+            detailed_error = f"Error decrypting API key: {str(e)}"
+            logging.error(detailed_error)
+            logging.error(f"Exception details: {traceback.format_exc()}")
+            raise ValueError(detailed_error)
 
 
 # Singleton instance for app-wide use
