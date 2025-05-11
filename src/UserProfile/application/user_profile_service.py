@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Optional
 import bcrypt
+import logging
 
 from UserProfile.domain.repositories.IUserRepository import IUserRepository
 from UserProfile.domain.models.user import User
@@ -203,9 +204,17 @@ class UserProfileService:
         if not user.encrypted_api_key:
             return None
 
-        # Decrypt the API key using the crypto manager
-        decrypted_key: str = crypto_manager.decrypt_api_key(user.encrypted_api_key)
-        return decrypted_key
+        try:
+            # Decrypt the API key using the crypto manager
+            decrypted_key: str = crypto_manager.decrypt_api_key(user.encrypted_api_key)
+            return decrypted_key
+        except Exception as e:
+            # If decryption fails, log the error and return None
+            logging.error(f"Failed to decrypt API key for user {user_id}: {str(e)}")
+            # Reset the encrypted API key as it seems to be corrupted
+            user.encrypted_api_key = None
+            self._user_repository.update(user)
+            return None
 
     def set_api_key(self, user_id: int, api_key: str) -> None:
         """Set or update the OpenRouter API key for a user.
@@ -218,18 +227,35 @@ class UserProfileService:
             UserNotFoundError: If no user exists with the given ID
             RepositoryError: If there's an error accessing the database
         """
+        logging.info(f"Setting API key for user {user_id}, key length: {len(api_key)}")
+
+        # Verify user exists
         user = self._user_repository.get_by_id(user_id)
         if not user:
+            logging.error(f"User not found: {user_id}")
             raise UserNotFoundError(user_id)
 
+        logging.info("User found, encrypting API key")
+
         # Encrypt the API key
-        encrypted_key = crypto_manager.encrypt_api_key(api_key)
+        try:
+            encrypted_key = crypto_manager.encrypt_api_key(api_key)
+            logging.info(f"API key encrypted, result length: {len(encrypted_key)}")
+        except Exception as e:
+            logging.error(f"Failed to encrypt API key: {str(e)}", exc_info=True)
+            raise
 
         # Update the user model
         user.encrypted_api_key = encrypted_key
+        logging.info("User model updated with encrypted key")
 
         # Save changes
-        self._user_repository.update(user)
+        try:
+            self._user_repository.update(user)
+            logging.info("User repository update completed successfully")
+        except Exception as e:
+            logging.error(f"Failed to update user in repository: {str(e)}", exc_info=True)
+            raise
 
     def get_user_settings(
         self, user_id: int, available_llm_models: List[str], available_app_themes: List[str]
@@ -252,16 +278,21 @@ class UserProfileService:
         if not user:
             raise UserNotFoundError(user_id)
 
-        # Get API key if present and mask it
+        # Handle API key masking with error protection
         api_key = None
-        if user.encrypted_api_key:
-            decrypted_key = self.get_api_key(user_id)
-            if decrypted_key:
-                # Mask the key - show first 4 and last 4 chars
-                if len(decrypted_key) <= 8:
+        try:
+            if user.encrypted_api_key:
+                decrypted_key = self.get_api_key(user_id)
+                if decrypted_key:
+                    # Mask the API key for display
+                    # Show first 4 and last 4 characters, mask the rest
                     api_key = "●" * len(decrypted_key)
-                else:
-                    api_key = decrypted_key[:4] + "●" * (len(decrypted_key) - 8) + decrypted_key[-4:]
+                    if len(decrypted_key) > 8:
+                        api_key = decrypted_key[:4] + "●" * (len(decrypted_key) - 8) + decrypted_key[-4:]
+        except Exception as e:
+            logging.error(f"Error processing API key in get_user_settings: {str(e)}")
+            # Don't let API key issues break the whole settings page
+            api_key = None
 
         # Ensure default_llm_model is valid or use first available
         current_llm_model = user.default_llm_model
