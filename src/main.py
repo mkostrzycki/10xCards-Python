@@ -378,6 +378,7 @@ class TenXCardsApp(ttk.Window):
                 card_service=card_service,
                 navigation_controller=navigation_controller,
                 show_toast=app_view.show_toast,
+                available_llm_models=AVAILABLE_LLM_MODELS,
             )
 
         # Register dynamic routes
