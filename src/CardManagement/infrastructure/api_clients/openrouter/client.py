@@ -44,6 +44,13 @@ class OpenRouterAPIClient:
         """Configure litellm settings."""
         # Ensure HTTPS is enforced
         litellm.api_base = "https://openrouter.ai/api/v1"
+        # Make sure we're using the right HTTP endpoint pattern
+        litellm.force_openai_route = True
+        # Konfigurujemy domyślne nagłówki dla OpenRouter
+        litellm.headers = {
+            "HTTP-Referer": "https://10xcards.app",  # Opcjonalny identyfikator aplikacji
+            "X-Title": "10xCards Flashcard Generator",  # Opcjonalny tytuł aplikacji
+        }
 
     def _handle_litellm_error(self, error: Exception) -> NoReturn:
         """Handle litellm exceptions and convert them to our custom exceptions.
@@ -178,14 +185,16 @@ class OpenRouterAPIClient:
         Returns:
             List[ChatMessage]: The formatted messages for the chat completion.
         """
-        return [
-            ChatMessage(
-                role="system",
-                content=FLASHCARD_GENERATION_PROMPT.format(
-                    text=raw_text, schema=json.dumps(FLASHCARD_SCHEMA, indent=2)
-                ),
-            )
-        ]
+        # Komunikat systemowy definiujący zadanie
+        system_message = ChatMessage(
+            role="system",
+            content=FLASHCARD_GENERATION_PROMPT.format(text=raw_text, schema=json.dumps(FLASHCARD_SCHEMA, indent=2)),
+        )
+
+        # Dodajemy również wiadomość od użytkownika, która jest wymagana przez modele Anthropic
+        user_message = ChatMessage(role="user", content="Wygeneruj fiszki z podanego tekstu zgodnie z instrukcjami.")
+
+        return [system_message, user_message]
 
     def _parse_flashcard_response(self, response: ChatCompletionDTO, deck_id: int) -> List[FlashcardDTO]:
         """Parse the API response into flashcard DTOs.
@@ -289,6 +298,11 @@ class OpenRouterAPIClient:
                 },
             )
 
+            # Upewnij się, że model ma poprawny prefix dla OpenRouter
+            if not selected_model.startswith("openrouter/"):
+                selected_model = f"openrouter/{selected_model}"
+                self.logger.debug(f"Added openrouter/ prefix to model: {selected_model}")
+
             # Prepare request parameters
             completion_params = {
                 "model": selected_model,
@@ -298,11 +312,46 @@ class OpenRouterAPIClient:
             if response_format:
                 completion_params["response_format"] = response_format.__dict__
 
+            # Add debug logs for API key type
+            self.logger.debug(f"API key type before request: {type(api_key)}, length: {len(api_key)}")
+            if isinstance(api_key, bytes):
+                self.logger.warning("API key is bytes type, converting to string")
+                api_key = api_key.decode("utf-8")
+                self.logger.debug(f"API key converted to string, new type: {type(api_key)}")
+
+            # Przygotuj nagłówki uwierzytelniania zgodnie z dokumentacją OpenRouter
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "HTTP-Referer": "https://10xcards.app",  # Opcjonalny identyfikator aplikacji
+                "X-Title": "10xCards Flashcard Generator",  # Opcjonalny tytuł aplikacji
+            }
+
+            # Dodaj logi diagnostyczne nagłówków (bez pełnego klucza API)
+            masked_headers = headers.copy()
+            if len(api_key) > 8:
+                masked_headers["Authorization"] = f"Bearer {api_key[:4]}...{api_key[-4:]}"
+            else:
+                masked_headers["Authorization"] = "Bearer ********"
+            self.logger.debug(f"Request headers: {masked_headers}")
+
             # Make API request with authentication
-            response: ModelResponse = litellm.completion(
-                **completion_params,
-                api_key=api_key,
-            )
+            self.logger.debug(f"Sending request to OpenRouter with model: {selected_model}")
+            self.logger.debug(f"API base URL: {litellm.api_base}")
+            self.logger.debug(f"Using OpenAI-compatible route: {litellm.force_openai_route}")
+            self.logger.debug(f"Message count: {len(messages)}")
+
+            # Ustawiamy również API key globalnie na potrzeby tego wywołania
+            # (przypisanie tymczasowe, które przywrócimy po wywołaniu)
+            original_api_key = litellm.api_key
+            litellm.api_key = api_key
+
+            try:
+                response: ModelResponse = litellm.completion(
+                    **completion_params, api_key=api_key, custom_headers=headers  # Dodajemy nagłówki bezpośrednio
+                )
+            finally:
+                # Przywracamy oryginalny api_key
+                litellm.api_key = original_api_key
 
             # Extract and convert the necessary fields from ModelResponse
             choices = (
@@ -392,8 +441,8 @@ class OpenRouterAPIClient:
         # Format the prompt
         messages = self._format_flashcard_prompt(raw_text)
 
-        # Set up response format for JSON
-        response_format = ResponseFormat(type="json_schema", json_schema=FLASHCARD_SCHEMA)
+        # Set up response format for JSON - używamy właściwej struktury zagnieżdżonej ze schematem
+        response_format = ResponseFormat(type="json_schema", json_schema={"schema": FLASHCARD_SCHEMA})
 
         try:
             # Make the API request
