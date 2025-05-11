@@ -12,8 +12,7 @@ BEGIN
     UPDATE Users SET updated_at = DATETIME('now')
     WHERE id = NEW.id AND (
         OLD.username != NEW.username OR 
-        OLD.encrypted_api_key != NEW.encrypted_api_key OR
-        OLD.settings != NEW.settings
+        OLD.encrypted_api_key != NEW.encrypted_api_key
     );
 END;
 
