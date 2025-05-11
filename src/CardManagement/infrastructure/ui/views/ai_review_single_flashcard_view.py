@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, List, Any, Protocol
+from typing import Callable, List, Any, Protocol, Optional
 
 import ttkbootstrap as ttk
 from ttkbootstrap.dialogs import MessageDialog
@@ -54,7 +54,7 @@ class AIReviewSingleFlashcardView(ttk.Frame):
         # State variables
         self.has_unsaved_changes = False
         self._init_complete = False
-        self.save_button = None  # Inicjalizacja zmiennej przed jej użyciem
+        self.save_button: Optional[ttk.Button] = None  # Inicjalizacja zmiennej przed jej użyciem
 
         # Get current flashcard DTO
         self.current_dto = self.generated_flashcards_dtos[self.current_flashcard_index]
