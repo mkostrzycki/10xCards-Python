@@ -216,18 +216,18 @@ class UserProfileService:
             self._user_repository.update(user)
             return None
 
-    def set_api_key(self, user_id: int, api_key: str) -> None:
+    def set_api_key(self, user_id: int, api_key: Optional[str]) -> None:
         """Set or update the OpenRouter API key for a user.
 
         Args:
             user_id: The ID of the user
-            api_key: The plain API key to encrypt and store
+            api_key: The plain API key to encrypt and store, or None to remove the current key
 
         Raises:
             UserNotFoundError: If no user exists with the given ID
             RepositoryError: If there's an error accessing the database
         """
-        logging.info(f"Setting API key for user {user_id}, key length: {len(api_key)}")
+        logging.info(f"Setting API key for user {user_id}, key: {'NULL' if api_key is None else f'length={len(api_key)}'}")
 
         # Verify user exists
         user = self._user_repository.get_by_id(user_id)
@@ -235,19 +235,22 @@ class UserProfileService:
             logging.error(f"User not found: {user_id}")
             raise UserNotFoundError(user_id)
 
-        logging.info("User found, encrypting API key")
+        logging.info(f"User found, {'removing' if api_key is None else 'encrypting'} API key")
 
-        # Encrypt the API key
-        try:
-            encrypted_key = crypto_manager.encrypt_api_key(api_key)
-            logging.info(f"API key encrypted, result length: {len(encrypted_key)}")
-        except Exception as e:
-            logging.error(f"Failed to encrypt API key: {str(e)}", exc_info=True)
-            raise
-
-        # Update the user model
-        user.encrypted_api_key = encrypted_key
-        logging.info("User model updated with encrypted key")
+        # Handling the case where we want to remove the API key
+        if api_key is None:
+            user.encrypted_api_key = None
+            logging.info("User model updated - API key removed")
+        else:
+            # Encrypt the API key
+            try:
+                encrypted_key = crypto_manager.encrypt_api_key(api_key)
+                logging.info(f"API key encrypted, result length: {len(encrypted_key)}")
+                user.encrypted_api_key = encrypted_key
+                logging.info("User model updated with encrypted key")
+            except Exception as e:
+                logging.error(f"Failed to encrypt API key: {str(e)}", exc_info=True)
+                raise
 
         # Save changes
         try:
