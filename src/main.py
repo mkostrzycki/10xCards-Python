@@ -191,24 +191,30 @@ class TenXCardsApp(ttk.Window):
     """Main application window for 10xCards."""
 
     def __init__(self, dependencies: Dict[str, Any]) -> None:
-        super().__init__(title="10xCards", themename="darkly")
-        self.minsize(800, 600)
-        self.geometry("800x600")
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        # Get dependencies
+        # Get dependencies before initializing the window
         db_provider = dependencies.get("db_provider")
         if db_provider is None:
             logging.error("Database provider not provided to TenXCardsApp")
-            self.destroy()
-            return
+            raise ValueError("Database provider not provided")
 
         session_service = dependencies.get("session_service")
         if session_service is None:
             logging.error("Session service not provided to TenXCardsApp")
-            self.destroy()
-            return
+            raise ValueError("Session service not provided")
+
+        # Check if user is already logged in and has theme preference
+        default_theme = "darkly"
+        user = session_service.get_current_user()
+        if user and user.app_theme:
+            default_theme = user.app_theme
+            logging.info(f"Using theme from user profile: {default_theme}")
+
+        # Initialize window with correct theme
+        super().__init__(title="10xCards", themename=default_theme)
+        self.minsize(800, 600)
+        self.geometry("800x600")
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
         # Get OpenRouter API client
         openrouter_api_client = dependencies.get("openrouter_api_client")
@@ -352,13 +358,58 @@ class TenXCardsApp(ttk.Window):
         # --- Bind Events ---
         self.bind("<<NavigateToDeckList>>", lambda e: navigation_controller.navigate("/decks"))
 
+        # Listener for theme changes - apply theme from user preferences after login
+        def on_user_logged_in(event=None):
+            user = session_service.get_current_user()
+            if user and user.app_theme:
+                logging.info(f"Applying user theme from preferences: {user.app_theme}")
+                try:
+                    # Apply theme with slight delay to ensure all widgets are ready
+                    def apply_theme():
+                        style = ttk.Style()
+                        current_theme = style.theme_use()
+                        if current_theme != user.app_theme:
+                            style.theme_use(user.app_theme)
+                            logging.info(f"Successfully applied theme: {user.app_theme}")
+
+                    # Schedule theme change with a short delay
+                    self.after(100, apply_theme)
+                except Exception as e:
+                    logging.error(f"Error applying theme from user preferences: {e}")
+
+        # Bind to login event and navigation events
+        self.bind("<<UserLoggedIn>>", on_user_logged_in)
+
         # Start with profiles view
         navigation_controller.navigate("/profiles")
 
 
 # --- Main Entrypoint ---
 def main() -> None:
+    """Main application entry point."""
+    # Set up logging first
     setup_logging()
+
+    # Dodaj handler do przechwytywania błędów tkinter
+    tkinter_error_log = logging.getLogger("tkinter_errors")
+    tkinter_error_log.setLevel(logging.ERROR)
+
+    # Zarejestruj oryginalny handler wyjątków Tkinter
+    import sys
+
+    original_excepthook = sys.excepthook
+
+    # Nowy handler wyjątków, który będzie logować błędy Tkinter
+    def log_tkinter_exceptions(exc_type, exc_value, exc_traceback):
+        if "tkinter" in str(exc_type) or "_tkinter" in str(exc_type):
+            tkinter_error_log.error("Tkinter error occurred", exc_info=(exc_type, exc_value, exc_traceback))
+        # Wywołaj oryginalny handler
+        original_excepthook(exc_type, exc_value, exc_traceback)
+
+    # Ustaw nowy handler wyjątków
+    sys.excepthook = log_tkinter_exceptions
+
+    # Sprawdź czy SECRET_KEY istnieje, a jeśli nie to wygeneruj nowy
     logging.info("Starting 10xCards application")
 
     # Initialize DB and run migrations
