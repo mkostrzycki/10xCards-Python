@@ -84,6 +84,8 @@ class SettingsView(ttk.Frame):
                 user.id, self.available_llm_models, self.available_app_themes
             )
         except Exception as e:
+            # Add detailed logging to diagnose the error
+            logging.error(f"Failed to load settings: {str(e)}", exc_info=True)
             self.show_toast("Błąd", f"Nie udało się załadować ustawień: {str(e)}")
             self.navigation_controller.show_deck_list()
 
@@ -243,13 +245,39 @@ class SettingsView(ttk.Frame):
     def _on_api_key_changed(self, user_id: int, api_key: str) -> None:
         """Handle API key change."""
         try:
+            logging.info(f"API key changed event for user {user_id} (length: {len(api_key)})")
+
+            if not api_key.strip():
+                logging.warning("Empty API key after stripping whitespace - rejecting")
+                self.show_toast("Błąd", "Klucz API nie może być pusty")
+                return
+
+            logging.info("About to call user_service.set_api_key")
             self.user_service.set_api_key(user_id, api_key)
+            logging.info("API key saved successfully via user_service.set_api_key")
+
+            # Odśwież dane sesji aby odzwierciedlić zmiany
+            logging.info("Refreshing session user data")
             self.session_service.refresh_current_user()
+
+            # Odśwież ustawienia widoku
+            logging.info("Refreshing settings view data")
             self.refresh_settings()
+
             # Update session info in the header
+            logging.info("Updating session info in header")
             self.navigation_controller.update_session_info()
+
+            # Pokażmy klucz w debugach aby sprawdzić czy jest prawidłowy (tylko pierwsze i ostatnie 4 znaki)
+            if len(api_key) > 8:
+                masked_key = f"{api_key[:4]}...{api_key[-4:]}"
+            else:
+                masked_key = "***"
+            logging.info(f"API key updated successfully (masked: {masked_key})")
+
             self.show_toast("Sukces", "Klucz API został zaktualizowany")
         except Exception as e:
+            logging.error(f"Error saving API key: {str(e)}", exc_info=True)
             self.show_toast("Błąd", f"Nie udało się zapisać klucza API: {str(e)}")
 
     def _open_select_llm_model_dialog(self) -> None:
