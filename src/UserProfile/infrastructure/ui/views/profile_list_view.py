@@ -61,9 +61,16 @@ class ProfileListView(ttk.Frame):
         title_label = ttk.Label(self, text="Wybierz profil", style="h1.TLabel", padding=(0, 10))
         title_label.pack(fill=tk.X, padx=10)
 
-        # Profile list
+        # Profile list - use frame to contain both treeview and scrollbar
+        profile_frame = ttk.Frame(self)
+        profile_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+        
+        # Scrollbar for profile list
+        scrollbar = ttk.Scrollbar(profile_frame, orient=tk.VERTICAL)
+        
         self._profile_list = ttk.Treeview(
-            self, columns=("username", "protected"), show="headings", selectmode="browse", height=10
+            profile_frame, columns=("username", "protected"), show="headings", 
+            selectmode="browse", height=10, yscrollcommand=scrollbar.set
         )
 
         self._profile_list.heading("username", text="Nazwa użytkownika")
@@ -71,12 +78,12 @@ class ProfileListView(ttk.Frame):
 
         self._profile_list.column("username", width=200)
         self._profile_list.column("protected", width=100, anchor=tk.CENTER)
-
-        # Scrollbar for profile list
-        scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._profile_list.yview)
-        self._profile_list.configure(yscrollcommand=scrollbar.set)
-
-        self._profile_list.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+        
+        # Configure the scrollbar to control the treeview
+        scrollbar.configure(command=self._profile_list.yview)
+        
+        # Place the treeview and scrollbar in the frame
+        self._profile_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Button bar
