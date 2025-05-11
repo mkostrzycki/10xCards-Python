@@ -68,11 +68,11 @@ class CreateProfileDialog(tk.Toplevel):
         button_bar = ttk.Frame(main_frame)
         button_bar.pack(fill=tk.X, pady=(10, 0))
 
-        cancel_btn = ttk.Button(button_bar, text="Anuluj", command=self._on_cancel, style="secondary.TButton")
-        cancel_btn.pack(side=tk.RIGHT, padx=(5, 0))
-
         create_btn = ttk.Button(button_bar, text="Utwórz", command=self._on_create_clicked, style="primary.TButton")
         create_btn.pack(side=tk.RIGHT)
+
+        cancel_btn = ttk.Button(button_bar, text="Anuluj", command=self._on_cancel, style="secondary.TButton")
+        cancel_btn.pack(side=tk.RIGHT, padx=(0, 5))
 
         # Bind events
         self._username_input.bind("<Return>", lambda e: self._on_create_clicked())

@@ -82,11 +82,11 @@ class FlashcardEditView(ttk.Frame):
         button_bar = ttk.Frame(content)
         button_bar.grid(row=2, column=0, sticky="e", pady=(10, 0))
 
-        self.cancel_btn = ttk.Button(button_bar, text="Anuluj", style="secondary.TButton", command=self._on_back)
-        self.cancel_btn.pack(side=RIGHT, padx=(5, 0))
-
         self.save_btn = ttk.Button(button_bar, text="Zapisz", style="primary.TButton", command=self._on_save)
         self.save_btn.pack(side=RIGHT)
+
+        self.cancel_btn = ttk.Button(button_bar, text="Anuluj", style="secondary.TButton", command=self._on_back)
+        self.cancel_btn.pack(side=RIGHT, padx=(0, 5))
 
         # Bind text change events
         self.front_text.bind("<<Modified>>", self._on_front_text_changed)

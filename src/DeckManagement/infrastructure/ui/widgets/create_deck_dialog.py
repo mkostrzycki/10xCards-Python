@@ -61,12 +61,12 @@ class CreateDeckDialog(ttk.Toplevel):
         button_frame = ttk.Frame(container)
         button_frame.grid(row=1, column=0, sticky="e", pady=(10, 0))
 
+        self.save_btn = ttk.Button(button_frame, text="Zapisz", style="primary.TButton", command=self._on_save_click)
+        self.save_btn.grid(row=0, column=1)
+
         ttk.Button(button_frame, text="Anuluj", style="secondary.TButton", command=self._on_cancel_click).grid(
             row=0, column=0, padx=(0, 5)
         )
-
-        self.save_btn = ttk.Button(button_frame, text="Zapisz", style="primary.TButton", command=self._on_save_click)
-        self.save_btn.grid(row=0, column=1)
 
         # Initial state
         self._update_save_button()

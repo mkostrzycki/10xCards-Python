@@ -24,7 +24,7 @@ class ChangeUsernameDialog(tk.Toplevel):
         """
         super().__init__(parent)
         self.title("Zmień nazwę profilu")
-        self.geometry("400x250")
+        self.geometry("450x300")  # Zwiększony rozmiar okna dialogowego
 
         # Make dialog modal
         self.transient(parent)
@@ -60,7 +60,7 @@ class ChangeUsernameDialog(tk.Toplevel):
 
         # Current username
         current_frame = ttk.Frame(container)
-        current_frame.pack(fill=tk.X, pady=(0, 15))
+        current_frame.pack(fill=tk.X, pady=(0, 10))
 
         ttk.Label(current_frame, text="Aktualna nazwa:").pack(side=tk.LEFT)
         ttk.Label(current_frame, text=self.current_username, style="primary.TLabel").pack(side=tk.LEFT, padx=(5, 0))
@@ -76,22 +76,22 @@ class ChangeUsernameDialog(tk.Toplevel):
 
         # Validation message
         error_label = ttk.Label(container, textvariable=self.error_message, style="danger.TLabel")
-        error_label.pack(fill=tk.X, pady=(0, 15))
+        error_label.pack(fill=tk.X, pady=(0, 10))
 
         # Help text
         help_text = "Nazwa profilu może zawierać maksymalnie 30 znaków."
         help_label = ttk.Label(container, text=help_text, style="secondary.TLabel")
-        help_label.pack(fill=tk.X, pady=(0, 15))
+        help_label.pack(fill=tk.X, pady=(0, 10))
 
-        # Buttons
+        # Buttons - umieszczam w ramce zajmującej dolną część okna
         button_frame = ttk.Frame(container)
-        button_frame.pack(fill=tk.X, pady=(10, 0))
+        button_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(20, 0))
 
         save_button = ttk.Button(button_frame, text="Zapisz", style="primary.TButton", command=self._validate_and_save)
-        save_button.pack(side=tk.RIGHT, padx=(10, 0))
+        save_button.pack(side=tk.RIGHT)
 
         cancel_button = ttk.Button(button_frame, text="Anuluj", style="secondary.TButton", command=self.destroy)
-        cancel_button.pack(side=tk.RIGHT)
+        cancel_button.pack(side=tk.RIGHT, padx=(0, 5))
 
         # Bind Enter key to save
         self.bind("<Return>", lambda e: self._validate_and_save())
