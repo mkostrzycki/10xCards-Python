@@ -456,7 +456,9 @@ def main() -> None:
     app_logger = logging.getLogger("app")
 
     # Setup OpenRouter API client and AI service
-    openrouter_api_client = OpenRouterAPIClient(logger=app_logger.getChild("openrouter"), default_model="gpt-4o-mini")
+    openrouter_api_client = OpenRouterAPIClient(
+        logger=app_logger.getChild("openrouter"), default_model="openrouter/openai/gpt-4o-mini"
+    )
     ai_service = AIService(
         api_client=openrouter_api_client, session_service=session_service, logger=app_logger.getChild("ai_service")
     )
