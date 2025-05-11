@@ -26,7 +26,7 @@ class SelectThemeDialog(tk.Toplevel):
         """
         super().__init__(parent)
         self.title("Wybierz schemat kolorystyczny")
-        self.geometry("450x350")
+        self.geometry("450x450")  # Zwiększona wysokość okna dialogowego
 
         # Make dialog modal
         self.transient(parent)
@@ -85,79 +85,36 @@ class SelectThemeDialog(tk.Toplevel):
         if self.current_theme in self.available_themes:
             self.theme_combobox.current(self.available_themes.index(self.current_theme))
 
-        # Preview frame
-        preview_frame = ttk.Labelframe(container, text="Podgląd", padding=10)
-        preview_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+        # Scrollable content frame for preview and message
+        content_frame = ttk.Frame(container)
+        content_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
 
-        # Create a small preview of the selected theme (buttons, label, entry)
-        self.preview_content = ttk.Frame(preview_frame)
-        self.preview_content.pack(fill=tk.BOTH, expand=True)
+        # Preview frame - pokazujemy informację zamiast podglądu, który powoduje błędy
+        preview_frame = ttk.Labelframe(content_frame, text="Informacja", padding=10)
+        preview_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
 
-        # Bind theme change on combobox selection
-        self.theme_combobox.bind("<<ComboboxSelected>>", self._on_theme_preview)
-
-        # Create initial preview
-        self._create_theme_preview()
+        info_message = (
+            "Po wybraniu schematu kolorystycznego z listy powyżej i kliknięciu przycisku 'Zastosuj', "
+            "zmiany zostaną natychmiast zastosowane do całej aplikacji.\n\n"
+            f"Aktualnie wybrany schemat: {self.current_theme}"
+        )
+        ttk.Label(preview_frame, text=info_message, wraplength=380, justify=tk.LEFT).pack(fill=tk.BOTH, expand=True)
 
         # Validation message
-        error_label = ttk.Label(container, textvariable=self.error_message, style="danger.TLabel")
-        error_label.pack(fill=tk.X, pady=(0, 10))
+        error_label = ttk.Label(content_frame, textvariable=self.error_message, style="danger.TLabel")
+        error_label.pack(fill=tk.X)
 
-        # Buttons
+        # Buttons - umieszczamy na dole kontenera
         button_frame = ttk.Frame(container)
-        button_frame.pack(fill=tk.X, pady=(10, 0))
+        button_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(10, 0))
+
+        cancel_button = ttk.Button(button_frame, text="Anuluj", style="secondary.TButton", command=self.destroy)
+        cancel_button.pack(side=tk.RIGHT, padx=(5, 0))
 
         apply_button = ttk.Button(
             button_frame, text="Zastosuj", style="primary.TButton", command=self._validate_and_save
         )
-        apply_button.pack(side=tk.RIGHT, padx=(10, 0))
-
-        cancel_button = ttk.Button(button_frame, text="Anuluj", style="secondary.TButton", command=self.destroy)
-        cancel_button.pack(side=tk.RIGHT)
-
-    def _create_theme_preview(self) -> None:
-        """Create a preview of UI elements with current theme."""
-        # Clear previous preview
-        for widget in self.preview_content.winfo_children():
-            widget.destroy()
-
-        # Sample label
-        ttk.Label(self.preview_content, text="Przykładowa etykieta").pack(pady=5, anchor=tk.W)
-
-        # Sample entry
-        ttk.Entry(self.preview_content, width=30).pack(pady=5, fill=tk.X)
-
-        # Sample buttons frame
-        buttons_frame = ttk.Frame(self.preview_content)
-        buttons_frame.pack(pady=5, fill=tk.X)
-
-        # Regular button
-        ttk.Button(buttons_frame, text="Przycisk").pack(side=tk.LEFT, padx=(0, 5))
-
-        # Primary button
-        ttk.Button(buttons_frame, text="Akcja", style="primary.TButton").pack(side=tk.LEFT, padx=5)
-
-        # Secondary button
-        ttk.Button(buttons_frame, text="Anuluj", style="secondary.TButton").pack(side=tk.LEFT, padx=5)
-
-        # Checkbutton
-        ttk.Checkbutton(self.preview_content, text="Opcja zaznaczania").pack(pady=5, anchor=tk.W)
-
-    def _on_theme_preview(self, event=None) -> None:
-        """Preview the selected theme."""
-        selected_theme = self.selected_theme_var.get()
-        if selected_theme in self.available_themes:
-            # Store current theme
-            current_theme = self.style.theme_use()
-
-            # Apply selected theme temporarily
-            self.style.theme_use(selected_theme)
-
-            # Refresh preview elements
-            self._create_theme_preview()
-
-            # Restore current theme (don't apply globally yet)
-            self.style.theme_use(current_theme)
+        apply_button.pack(side=tk.RIGHT)
 
     def _validate_and_save(self) -> None:
         """Validate the selection and save if valid."""
