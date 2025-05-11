@@ -301,28 +301,73 @@ class UserRepositoryImpl(IUserRepository):
         """
         try:
             logger.info(f"Updating user {user.id} with username: {user.username}")
+            logger.info(
+                f"User object dump: id={user.id}, username={user.username}, "
+                f"has_password={'YES' if user.hashed_password else 'NO'}, "
+                f"has_api_key={'YES' if user.encrypted_api_key else 'NO'}, "
+                f"default_llm_model={user.default_llm_model}, "
+                f"app_theme={user.app_theme}"
+            )
+
             conn = self._db_provider.get_connection()
             conn.execute("PRAGMA foreign_keys = ON")
 
-            # Logowanie dodatkowych informacji o zapisywanych wartościach
+            # Log detailed information about the values being saved
             logger.info(
                 f"User {user.id} preferences - default_llm_model: {user.default_llm_model}, app_theme: {user.app_theme}"
             )
 
-            cursor = conn.execute(
-                query,
-                (
-                    user.username,
-                    user.hashed_password,
-                    user.encrypted_api_key,
-                    user.default_llm_model,
-                    user.app_theme,
-                    user.id,
-                ),
+            # Add specific logging for API key
+            api_key_status = "NOT SET"
+            if user.encrypted_api_key is not None:
+                api_key_status = f"SET (length: {len(user.encrypted_api_key)}, type: {type(user.encrypted_api_key)})"
+                # Try to convert the key to hex for debugging
+                try:
+                    hex_sample = user.encrypted_api_key[:10].hex() if hasattr(user.encrypted_api_key, "hex") else "N/A"
+                    logger.info(f"API key start (hex): {hex_sample}...")
+                except Exception as e:
+                    logger.error(f"Could not convert API key to hex: {str(e)}")
+            logger.info(f"User {user.id} encrypted_api_key: {api_key_status}")
+
+            # Prepare parameters, ensuring proper type conversion
+            params = [
+                user.username,
+                user.hashed_password,
+                user.encrypted_api_key,  # This might need explicit conversion
+                user.default_llm_model,
+                user.app_theme,
+                user.id,
+            ]
+
+            # Ensure encrypted_api_key is bytes or None
+            if params[2] is not None and not isinstance(params[2], bytes):
+                logger.error(f"API key has wrong type: {type(params[2])}, converting to bytes")
+                try:
+                    if isinstance(params[2], str):
+                        params[2] = params[2].encode("utf-8")
+                    else:
+                        params[2] = bytes(params[2])
+                except Exception as e:
+                    logger.error(f"Failed to convert API key to bytes: {str(e)}")
+                    params[2] = None
+
+            # Log parameter types for debugging
+            logger.debug(
+                f"Parameter types: username={type(params[0])}, "
+                f"hashed_password={type(params[1])}, "
+                f"encrypted_api_key={type(params[2])}, "
+                f"default_llm_model={type(params[3])}, "
+                f"app_theme={type(params[4])}, "
+                f"id={type(params[5])}"
             )
+
+            cursor = conn.execute(query, params)
             conn.commit()
 
-            if cursor.rowcount == 0:  # Should never happen as we checked existence
+            row_count = cursor.rowcount
+            logger.info(f"Update affected {row_count} rows")
+
+            if row_count == 0:  # Should never happen as we checked existence
                 error_msg = f"Failed to update user {user.id}"
                 logger.error(error_msg)
                 raise RepositoryError(error_msg)
