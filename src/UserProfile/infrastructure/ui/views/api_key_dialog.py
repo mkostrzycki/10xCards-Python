@@ -4,6 +4,7 @@ import tkinter as tk
 import threading
 from typing import Callable, Optional, Union
 import logging
+import sys
 
 import ttkbootstrap as ttk
 
@@ -49,7 +50,7 @@ class APIKeyDialog(tk.Toplevel):
         self.api_client = api_client
         self.on_save = on_save
         self.current_key = current_key
-        self.validation_thread = None
+        self.validation_thread: Optional[threading.Thread] = None
 
         # Variables
         self.api_key_var = ttk.StringVar(value=self._mask_api_key() if current_key else "")
@@ -211,9 +212,10 @@ class APIKeyDialog(tk.Toplevel):
             is_valid, message = self.api_client.verify_key(api_key)
             # Schedule UI update on the main thread
             self.after(0, lambda: self._handle_validation_result(is_valid, message, api_key))
-        except Exception as e:
+        except Exception:
             # Schedule error handling on the main thread
-            self.after(0, lambda: self._handle_validation_error(str(e)))
+            error_msg = str(sys.exc_info()[1])
+            self.after(0, lambda: self._handle_validation_error(error_msg))
 
     def _handle_validation_result(self, is_valid: bool, message: str, api_key: str) -> None:
         """Process validation results on the main thread.
@@ -239,9 +241,9 @@ class APIKeyDialog(tk.Toplevel):
                     self.on_save(api_key)
                     # Close dialog after successful save
                     self.destroy()
-                except Exception as e:
-                    logging.error(f"Error saving API key: {str(e)}", exc_info=True)
-                    self.validation_message.set(f"Błąd zapisu klucza: {str(e)}")
+                except Exception:
+                    logging.error("Error saving API key", exc_info=True)
+                    self.validation_message.set("Błąd zapisu klucza. Sprawdź logi aplikacji.")
                     self._set_validating(False)
             else:
                 self.validation_message.set("Błąd wewnętrzny: Brak funkcji zapisującej.")
