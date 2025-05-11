@@ -111,6 +111,41 @@ class NavigationController:
         self.views[path] = view_instance
         logging.info(f"View registered for path {path}")
 
+    def navigate_to_view(self, view_class: type, **kwargs) -> None:
+        """Create and navigate to a view instance directly with parameters.
+
+        Args:
+            view_class: The view class to instantiate
+            **kwargs: Parameters to pass to the view constructor
+        """
+        if self.current_view:
+            self.current_view.grid_remove()
+
+        try:
+            # Create the view instance
+            new_view = view_class(parent=self.app_view.main_content, **kwargs)
+
+            # Sprawdź czy widok posiada wymagane atrybuty przed wyświetleniem
+            # (specjalnie dla AIReviewSingleFlashcardView)
+            if hasattr(view_class, "__name__") and view_class.__name__ == "AIReviewSingleFlashcardView":
+                if not hasattr(new_view, "save_button") or new_view.save_button is None:
+                    raise AttributeError("View initialization incomplete: missing save_button attribute")
+                if not hasattr(new_view, "_init_complete") or not new_view._init_complete:
+                    raise AttributeError("View initialization incomplete: _init_complete is False")
+
+            # Display the view
+            new_view.grid(row=0, column=0, sticky="nsew")
+            self.current_view = new_view
+            self.app_view._update_session_info()
+
+            # Trigger visibility event
+            self.current_view.event_generate("<Visibility>")
+            logging.info(f"Navigated to view {view_class.__name__} with params {kwargs}")
+
+        except Exception as e:
+            logging.error(f"Failed to create view {view_class.__name__}: {str(e)}")
+            self.app_view.show_toast("Błąd", str(e))
+
     def navigate(self, path: str) -> None:
         """Navigate to a registered view."""
         if self.current_view:
