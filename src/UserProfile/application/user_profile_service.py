@@ -92,6 +92,23 @@ class UserProfileService:
             raise AuthenticationError(f"Użytkownik '{username}' nie istnieje")
         return user
 
+    def get_profile_by_id(self, user_id: int) -> User:
+        """Get a user profile by ID.
+
+        Args:
+            user_id: The user ID to find
+
+        Returns:
+            User object if found
+
+        Raises:
+            AuthenticationError: If no user exists with the given ID
+        """
+        user = self._user_repository.get_by_id(user_id)
+        if not user:
+            raise AuthenticationError(f"Użytkownik o ID {user_id} nie istnieje")
+        return user
+
     def get_all_profiles_summary(self) -> List[UserProfileSummaryViewModel]:
         """Get a list of all user profiles with basic information.
 
