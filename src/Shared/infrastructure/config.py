@@ -55,9 +55,10 @@ DEFAULT_AI_MODEL: Final[str] = os.getenv("DEFAULT_AI_MODEL", "openrouter/openai/
 # Available LLM models
 AVAILABLE_LLM_MODELS: Final[List[str]] = [
     "openrouter/openai/gpt-4o-mini",
-    "openrouter/openai/gpt-4o",
-    "openrouter/anthropic/claude-3-haiku-20240307",
-    "openrouter/anthropic/claude-3-5-sonnet-20240620",
+    "openrouter/openai/gpt-4.1",
+    "openrouter/anthropic/claude-3.5-haiku",
+    "openrouter/anthropic/claude-3.7-sonnet",
+    "openrouter/google/gemini-2.5-flash-preview",
 ]
 
 # Available UI themes
