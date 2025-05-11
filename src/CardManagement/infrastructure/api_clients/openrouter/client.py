@@ -72,8 +72,7 @@ class OpenRouterAPIClient:
     def verify_key(self, api_key: str) -> Tuple[bool, str]:
         """Verify if the API key is valid by making a lightweight API call.
 
-        Makes a simple GET request to the /models endpoint to validate the key
-        without consuming significant quota.
+        Makes a simple test request to verify the key using a small model.
 
         Args:
             api_key: The OpenRouter API key to verify.
@@ -84,35 +83,91 @@ class OpenRouterAPIClient:
                 - A message providing details (error message or success)
         """
         self.logger.info("Verifying OpenRouter API key")
+        self.logger.debug(f"API key to verify: {api_key[:4]}...{api_key[-4:] if len(api_key) > 8 else ''}")
 
+        # Basic format validation for OpenRouter keys (typically start with "sk-or-")
+        if not api_key.startswith("sk-or-"):
+            self.logger.warning("API key validation failed: Invalid key format")
+            return False, "Nieprawidłowy format klucza API (powinien zaczynać się od 'sk-or-')"
+
+        # Włącz szczegółowe logowanie dla litellm na czas weryfikacji
+        debug_was_on = False
         try:
-            # Make a lightweight call to get available models
-            # In litellm 1.66.0, use the completion method with a lightweight model check
-            # instead of get_models which doesn't exist
-            litellm.completion(
-                model="openrouter/mistral-7b-instruct",
-                messages=[{"role": "user", "content": "Hello"}],
-                max_tokens=1,  # Minimal tokens to reduce cost
+            # Sprawdź, czy debug był już włączony
+            if hasattr(litellm, "_debug"):
+                debug_was_on = litellm._debug
+
+            # Włącz debug, jeśli nie jest już włączony
+            if not debug_was_on:
+                self.logger.info("Enabling litellm debug mode for API key verification")
+                litellm._turn_on_debug()
+
+            # Używamy minimalnego zapytania do OpenRouter - ważne użycie poprawnego formatu modelu z prefixem "openrouter/"
+            test_message = [{"role": "user", "content": "test"}]
+
+            # Log dla diagnostyki
+            self.logger.info("Sending test request to OpenRouter API")
+
+            response = litellm.completion(
+                model="openrouter/meta-llama/llama-3-8b-instruct",  # Poprawny format modelu dla OpenRouter
+                messages=test_message,
                 api_key=api_key,
+                max_tokens=1,  # Absolutne minimum tokenów
+                temperature=0.0,  # Minimalne zużycie zasobów
             )
 
-            # If we get here, the key is valid
-            self.logger.info("API key verification successful")
+            # Log z odpowiedzi API
+            self.logger.info("OpenRouter API test request successful")
+            self.logger.debug(f"Response model: {response.model}")
+            self.logger.debug(f"Response choices: {response.choices}")
+            self.logger.debug(f"Response usage: {response.usage}")
+
             return True, "API key valid"
 
         except litellm.exceptions.AuthenticationError as e:
-            self.logger.warning(f"API key verification failed: {str(e)}")
-            return False, "Invalid API key"
+            # Authentication error means invalid key
+            self.logger.warning(f"API key verification failed: Invalid authentication: {str(e)}")
+            return False, "Nieprawidłowy klucz API"
 
-        except (litellm.exceptions.Timeout, litellm.exceptions.APIConnectionError) as e:
-            error_msg = f"Could not verify API key: {str(e)}"
+        except litellm.exceptions.APIConnectionError as e:
+            # Connection issues
+            error_msg = f"Could not connect to OpenRouter API: {str(e)}"
             self.logger.error(error_msg)
-            return False, error_msg
+            return False, f"Błąd połączenia z API OpenRouter: {str(e)}"
+
+        except litellm.exceptions.BadRequestError as e:
+            # Bad request oznacza problem z zapytaniem - w kontekście weryfikacji klucza,
+            # najczęściej wskazuje to na nieprawidłowy klucz lub autoryzację
+            error_msg = f"Bad request to OpenRouter API: {str(e)}"
+            self.logger.error(error_msg)
+
+            # Sprawdź komunikat błędu dla lepszej diagnostyki
+            error_str = str(e).lower()
+
+            if "auth" in error_str or "key" in error_str or "credential" in error_str:
+                return False, "Nieprawidłowy klucz API lub brak uprawnień"
+            elif "rate limit" in error_str:
+                return False, f"Przekroczono limit zapytań dla klucza API: {str(e)}"
+            else:
+                # W przypadku innych błędów, zakładamy że klucz jest niepoprawny
+                return False, f"Błąd weryfikacji klucza API: {str(e)}"
+
+        except litellm.exceptions.RateLimitError as e:
+            # Rate limit error oznacza, że klucz jest prawidłowy, ale są limity
+            self.logger.warning(f"API key is valid but rate limited: {str(e)}")
+            return True, "API key poprawny, ale osiągnięto limit zapytań"
 
         except Exception as e:
+            # Catch-all for other errors
             error_msg = f"Unexpected error verifying API key: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
-            return False, error_msg
+            return False, f"Nieoczekiwany błąd: {str(e)}"
+
+        finally:
+            # Przywróć poprzedni stan debug
+            if not debug_was_on and hasattr(litellm, "_turn_off_debug"):
+                self.logger.info("Restoring original litellm debug mode")
+                litellm._turn_off_debug()
 
     def _format_flashcard_prompt(self, raw_text: str) -> List[ChatMessage]:
         """Format the flashcard generation prompt with the input text.
