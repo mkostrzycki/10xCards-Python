@@ -18,7 +18,7 @@ class ToastNotification:
 class ToastContainer(ttk.Frame):
     """Widget for displaying toast notifications."""
 
-    DISPLAY_TIME = 3.0  # seconds
+    DISPLAY_TIME = 10.0  # seconds
     FADE_TIME = 0.5  # seconds
     MAX_TOASTS = 3
     TOAST_HEIGHT = 60
