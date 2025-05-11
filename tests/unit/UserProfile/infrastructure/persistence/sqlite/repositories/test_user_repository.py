@@ -166,11 +166,17 @@ def test_update_user_success(mocker: MockerFixture, repository, mock_db_provider
     # Execute
     repository.update(user_to_update)
 
-    # Verify SQL query was executed with correct parameters - note that the current implementation
-    # of update() doesn't include default_llm_model and app_theme yet
+    # Verify SQL query was executed with correct parameters - updated to match actual implementation
     mock_db_provider.get_connection.return_value.execute.assert_any_call(
         mocker.ANY,
-        (user_to_update.username, user_to_update.hashed_password, user_to_update.encrypted_api_key, user_to_update.id),
+        [
+            user_to_update.username,
+            user_to_update.hashed_password,
+            user_to_update.encrypted_api_key,
+            user_to_update.default_llm_model,
+            user_to_update.app_theme,
+            user_to_update.id
+        ],
     )
 
 
