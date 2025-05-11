@@ -1,7 +1,7 @@
 """Settings View for user profile and application preferences."""
 
 import tkinter as tk
-from typing import Callable, List, Optional, Dict, Any
+from typing import Callable, List, Optional
 import logging
 
 import ttkbootstrap as ttk
@@ -19,7 +19,6 @@ from UserProfile.application.user_profile_service import (
 from CardManagement.infrastructure.api_clients.openrouter.client import OpenRouterAPIClient
 from UserProfile.infrastructure.ui.views.api_key_dialog import APIKeyDialog
 from Shared.ui.widgets.header_bar import HeaderBar
-from UserProfile.domain.repositories.exceptions import UserNotFoundError
 from Shared.domain.errors import AuthenticationError
 
 
@@ -455,7 +454,9 @@ class SettingsView(ttk.Frame):
             row=0, column=0, sticky="w", pady=(0, 5)
         )
         self.current_password_var = ttk.StringVar()
-        self.current_password_entry = ttk.Entry(self.security_tab, textvariable=self.current_password_var, show="•", width=30)
+        self.current_password_entry = ttk.Entry(
+            self.security_tab, textvariable=self.current_password_var, show="•", width=30
+        )
         self.current_password_entry.grid(row=0, column=1, sticky="w", pady=(0, 10))
 
         # New password
@@ -471,7 +472,9 @@ class SettingsView(ttk.Frame):
             row=2, column=0, sticky="w", pady=(0, 5)
         )
         self.confirm_password_var = ttk.StringVar()
-        self.confirm_password_entry = ttk.Entry(self.security_tab, textvariable=self.confirm_password_var, show="•", width=30)
+        self.confirm_password_entry = ttk.Entry(
+            self.security_tab, textvariable=self.confirm_password_var, show="•", width=30
+        )
         self.confirm_password_entry.grid(row=2, column=1, sticky="w", pady=(0, 20))
 
         # Buttons
@@ -548,13 +551,13 @@ class SettingsView(ttk.Frame):
         # Napraw klucz API button
         self.repair_api_key_frame = ttk.LabelFrame(self.api_tab, text="Rozwiązywanie problemów", padding=10)
         self.repair_api_key_frame.grid(row=5, column=0, columnspan=2, sticky="ew", pady=(20, 0))
-        
+
         repair_text = (
             "Jeśli masz problemy z funkcjami AI (błędy uwierzytelniania pomimo prawidłowego klucza API), "
             "może to wynikać z problemu z szyfrowaniem. Kliknij poniżej, aby zresetować klucz."
         )
         ttk.Label(self.repair_api_key_frame, text=repair_text, wraplength=450, justify="left").pack(pady=(0, 10))
-        
+
         self.repair_api_key_btn = ttk.Button(
             self.repair_api_key_frame,
             text="Zresetuj klucz API",
@@ -573,7 +576,11 @@ class SettingsView(ttk.Frame):
         )
         self.llm_model_var = ttk.StringVar()
         self.llm_model_combobox = ttk.Combobox(
-            self.appearance_tab, textvariable=self.llm_model_var, values=self.available_llm_models, state="readonly", width=30
+            self.appearance_tab,
+            textvariable=self.llm_model_var,
+            values=self.available_llm_models,
+            state="readonly",
+            width=30,
         )
         self.llm_model_combobox.grid(row=0, column=1, sticky="w", pady=(0, 20))
 
@@ -583,7 +590,11 @@ class SettingsView(ttk.Frame):
         )
         self.theme_var = ttk.StringVar()
         self.theme_combobox = ttk.Combobox(
-            self.appearance_tab, textvariable=self.theme_var, values=self.available_app_themes, state="readonly", width=30
+            self.appearance_tab,
+            textvariable=self.theme_var,
+            values=self.available_app_themes,
+            state="readonly",
+            width=30,
         )
         self.theme_combobox.grid(row=1, column=1, sticky="w", pady=(0, 20))
 
@@ -749,7 +760,8 @@ class SettingsView(ttk.Frame):
 
             # Ask for confirmation
             confirm = Messagebox.yesno(
-                title="Potwierdzenie", message="Czy na pewno chcesz usunąć hasło? Dostęp do profilu będzie niezabezpieczony."
+                title="Potwierdzenie",
+                message="Czy na pewno chcesz usunąć hasło? Dostęp do profilu będzie niezabezpieczony.",
             )
             if not confirm:
                 return
@@ -798,7 +810,7 @@ class SettingsView(ttk.Frame):
                     return
 
             # Save API key
-            api_key_dto = UpdateUserApiKeyDTO(user_id=user_id, api_key=api_key)
+            UpdateUserApiKeyDTO(user_id=user_id, api_key=api_key)
             self.user_profile_service.set_api_key(user_id, api_key)
 
             # Clear field and refresh
@@ -816,25 +828,25 @@ class SettingsView(ttk.Frame):
             if not user_id:
                 self.show_toast("Błąd", "Nie jesteś zalogowany")
                 return
-                
+
             # Ask for confirmation
             confirm = Messagebox.yesno(
-                title="Potwierdzenie", 
-                message="Ta operacja usunie aktualny klucz API i będziesz musiał wprowadzić go ponownie. Kontynuować?"
+                title="Potwierdzenie",
+                message="Ta operacja usunie aktualny klucz API i będziesz musiał wprowadzić go ponownie. Kontynuować?",
             )
             if not confirm:
                 return
-                
+
             # Reset API key by setting to None
             self.user_profile_service.set_api_key(user_id, None)
-            
+
             # Refresh settings display
             self._load_user_settings()
-            
+
             # Focus on API key entry for immediate input
             self.tabs.select(2)  # Select API tab
             self.api_key_entry.focus_set()
-            
+
             self.show_toast("Sukces", "Klucz API został zresetowany. Wprowadź nowy klucz.")
         except Exception as e:
             self.show_toast("Błąd", f"Nie udało się zresetować klucza API: {str(e)}")

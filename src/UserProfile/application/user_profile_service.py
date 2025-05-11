@@ -227,7 +227,9 @@ class UserProfileService:
             UserNotFoundError: If no user exists with the given ID
             RepositoryError: If there's an error accessing the database
         """
-        logging.info(f"Setting API key for user {user_id}, key: {'NULL' if api_key is None else f'length={len(api_key)}'}")
+        logging.info(
+            f"Setting API key for user {user_id}, key: {'NULL' if api_key is None else f'length={len(api_key)}'}"
+        )
 
         # Verify user exists
         user = self._user_repository.get_by_id(user_id)

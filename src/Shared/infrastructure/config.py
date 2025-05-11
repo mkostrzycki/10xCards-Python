@@ -40,11 +40,11 @@ def get_secret_key() -> str:
     # Try to load from environment first
     load_dotenv()
     key = os.getenv("SECRET_KEY")
-    
+
     if not key:
         env_file = APP_ROOT / ".env"
         env_dist_file = APP_ROOT / ".env.dist"
-        
+
         # Check if .env file exists
         if not env_file.exists():
             # Create .env from .env.dist if it exists
@@ -56,16 +56,16 @@ def get_secret_key() -> str:
                 with open(env_file, "w") as f:
                     f.write("# Application secrets\n")
                 logging.info(f"Created empty .env file at {env_file}")
-        
+
         # Generate a new secret key
         key = secrets.token_urlsafe(32)
-        
+
         # Add or update SECRET_KEY in .env file
         env_content = ""
         if env_file.exists():
             with open(env_file, "r") as f:
                 env_content = f.read()
-        
+
         # Check if SECRET_KEY already exists in the file
         if "SECRET_KEY=" in env_content:
             # Replace existing SECRET_KEY line
@@ -82,20 +82,20 @@ def get_secret_key() -> str:
             if env_content and not env_content.endswith("\n"):
                 env_content += "\n"
             env_content += f"SECRET_KEY={key}\n"
-        
+
         # Write the updated content back to the file
         with open(env_file, "w") as f:
             f.write(env_content)
-        
+
         # Reload environment variables to pick up the new key
         load_dotenv()
-        
+
         logging.warning(
             "SECRET_KEY not found in environment. Generated new key and saved to .env file: %s\n"
             "This key will be used for all future application runs.",
             key,
         )
-    
+
     return key
 
 

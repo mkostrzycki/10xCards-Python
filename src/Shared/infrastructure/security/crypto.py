@@ -89,11 +89,11 @@ class CryptoManager:
         """
         logging.info(f"Decrypting API key of length {len(encrypted_key)}")
         logging.debug(f"Encrypted key type: {type(encrypted_key)}")
-        
+
         # Debug the encrypted key in hex format
         if isinstance(encrypted_key, bytes) and len(encrypted_key) > 0:
             logging.debug(f"Encrypted key prefix (hex): {encrypted_key[:10].hex()}")
-        
+
         # Ensure input is bytes
         if not isinstance(encrypted_key, bytes):
             error_msg = f"Input encrypted key is not bytes, type: {type(encrypted_key)}"
@@ -122,7 +122,9 @@ class CryptoManager:
             return decrypted
         except InvalidToken as e:
             # Specific error for invalid tokens
-            detailed_error = f"Invalid token error: The key appears to be corrupted or was encrypted with a different key: {str(e)}"
+            detailed_error = (
+                f"Invalid token error: The key appears to be corrupted or was encrypted with a different key: {str(e)}"
+            )
             logging.error(detailed_error)
             logging.error(f"Exception details: {traceback.format_exc()}")
             raise InvalidToken(detailed_error)

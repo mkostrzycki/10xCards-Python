@@ -66,7 +66,7 @@ class TestCryptoManager:
         mock_pbkdf2_instance.derive.return_value = b"derived_key"
 
         # Create the manager
-        manager = CryptoManager()
+        CryptoManager()
 
         # Verify PBKDF2HMAC was called with correct parameters
         mock_pbkdf2.assert_called_once()

@@ -17,22 +17,22 @@ def step_impl_sample_api_key(context, api_key):
 
 @when("the API key is encrypted")
 def step_impl_encrypt_api_key(context):
-    assert hasattr(context, 'raw_api_key'), "Raw API key not set in context"
-    assert hasattr(context, 'crypto_manager'), "CryptoManager not set in context"
+    assert hasattr(context, "raw_api_key"), "Raw API key not set in context"
+    assert hasattr(context, "crypto_manager"), "CryptoManager not set in context"
     context.encrypted_api_key = context.crypto_manager.encrypt_api_key(context.raw_api_key)
     assert isinstance(context.encrypted_api_key, bytes), "Encrypted key should be bytes"
 
 
 @when("the encrypted API key is decrypted")
 def step_impl_decrypt_api_key(context):
-    assert hasattr(context, 'encrypted_api_key'), "Encrypted API key not set in context"
-    assert hasattr(context, 'crypto_manager'), "CryptoManager not set in context"
+    assert hasattr(context, "encrypted_api_key"), "Encrypted API key not set in context"
+    assert hasattr(context, "crypto_manager"), "CryptoManager not set in context"
     context.decrypted_api_key = context.crypto_manager.decrypt_api_key(context.encrypted_api_key)
 
 
 @when("the encrypted API key is tampered with")
 def step_impl_tamper_key(context):
-    assert hasattr(context, 'encrypted_api_key'), "Encrypted API key not set in context"
+    assert hasattr(context, "encrypted_api_key"), "Encrypted API key not set in context"
     # Tamper the key by changing some bytes
     # For example, flip some bits in the middle of the key
     key_list = list(context.encrypted_api_key)
@@ -47,15 +47,17 @@ def step_impl_tamper_key(context):
 
 @then("the decrypted API key should match the original sample API key")
 def step_impl_assert_keys_match(context):
-    assert hasattr(context, 'raw_api_key'), "Raw API key not set in context"
-    assert hasattr(context, 'decrypted_api_key'), "Decrypted API key not set in context"
-    assert context.decrypted_api_key == context.raw_api_key, f"Decrypted key '{context.decrypted_api_key}' does not match original '{context.raw_api_key}'"
+    assert hasattr(context, "raw_api_key"), "Raw API key not set in context"
+    assert hasattr(context, "decrypted_api_key"), "Decrypted API key not set in context"
+    assert (
+        context.decrypted_api_key == context.raw_api_key
+    ), f"Decrypted key '{context.decrypted_api_key}' does not match original '{context.raw_api_key}'"
 
 
 @then("attempting to decrypt the tampered key should raise an error")
 def step_impl_assert_decryption_error(context):
-    assert hasattr(context, 'tampered_key'), "Tampered key not set in context"
-    assert hasattr(context, 'crypto_manager'), "CryptoManager not set in context"
+    assert hasattr(context, "tampered_key"), "Tampered key not set in context"
+    assert hasattr(context, "crypto_manager"), "CryptoManager not set in context"
     try:
         context.crypto_manager.decrypt_api_key(context.tampered_key)
         # If no exception is raised, the test should fail
