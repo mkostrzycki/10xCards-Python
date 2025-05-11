@@ -1,9 +1,8 @@
--- Migration: Initial Schema Setup
+-- Migration: Merged Schema
 -- Version: 1
--- Description: Creates the initial database schema for 10xCards MVP including Users, Decks, and Flashcards tables
--- with their relationships, indexes, and triggers for updated_at columns.
+-- Description: Merged schema containing all changes from previous migrations
 -- Author: AI Assistant
--- Date: 2025-04-13
+-- Date: 2025-05-11
 
 -- Enable foreign key constraints
 PRAGMA foreign_keys = ON;
@@ -13,7 +12,9 @@ CREATE TABLE Users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     hashed_password TEXT,  -- NULL allowed for potential OAuth/external auth
-    hashed_api_key TEXT,   -- NULL allowed if user hasn't set up AI integration
+    encrypted_api_key BLOB,   -- Binary storage for encrypted API key
+    default_llm_model TEXT NULL,  -- User's preferred LLM model
+    app_theme TEXT NULL,   -- User's preferred UI theme
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -47,14 +48,17 @@ CREATE TABLE Flashcards (
 CREATE INDEX idx_decks_user_id ON Decks(user_id);
 CREATE INDEX idx_flashcards_deck_id ON Flashcards(deck_id);
 
--- Create triggers to automatically update updated_at timestamps
-
--- Users table updated_at trigger
-CREATE TRIGGER update_users_updated_at
+-- Create triggers for Users table
+CREATE TRIGGER update_users_timestamp 
 AFTER UPDATE ON Users
-FOR EACH ROW
 BEGIN
-    UPDATE Users SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+    UPDATE Users SET updated_at = DATETIME('now')
+    WHERE id = NEW.id AND (
+        OLD.username != NEW.username OR 
+        OLD.encrypted_api_key IS NOT NEW.encrypted_api_key OR
+        OLD.default_llm_model != NEW.default_llm_model OR
+        OLD.app_theme != NEW.app_theme
+    );
 END;
 
 -- Decks table updated_at trigger
@@ -73,5 +77,5 @@ BEGIN
     UPDATE Flashcards SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
 END;
 
--- Set initial schema version
+-- Set schema version
 PRAGMA user_version = 1;
