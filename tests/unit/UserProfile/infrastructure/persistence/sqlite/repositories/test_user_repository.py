@@ -175,7 +175,7 @@ def test_update_user_success(mocker: MockerFixture, repository, mock_db_provider
             user_to_update.encrypted_api_key,
             user_to_update.default_llm_model,
             user_to_update.app_theme,
-            user_to_update.id
+            user_to_update.id,
         ],
     )
 
