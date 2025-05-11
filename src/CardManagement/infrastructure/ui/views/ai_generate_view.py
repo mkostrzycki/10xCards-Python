@@ -38,7 +38,7 @@ class AIGenerateView(ttk.Frame):
         card_service: CardService,
         navigation_controller: NavigationControllerProtocol,
         show_toast: Callable[[str, str], None],
-        available_llm_models: List[str] = None,
+        available_llm_models: List[str] = [],
     ):
         super().__init__(parent)
         self.deck_id = deck_id
@@ -47,7 +47,7 @@ class AIGenerateView(ttk.Frame):
         self.card_service = card_service
         self.navigation_controller = navigation_controller
         self.show_toast = show_toast
-        self.available_llm_models = available_llm_models or []
+        self.available_llm_models = available_llm_models
 
         # State variables
         self.is_generating = False
