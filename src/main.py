@@ -33,6 +33,7 @@ class NavigationProtocol(Protocol):
     def show_deck_list(self) -> None: ...
     def show_profile_list(self) -> None: ...
     def show_settings(self) -> None: ...
+    def update_session_info(self) -> None: ...
 
 
 class AppView(ttk.Frame):
@@ -178,6 +179,11 @@ class NavigationController:
     def show_settings(self) -> None:
         """Navigate to the user settings view."""
         self.navigate("/settings")
+
+    def update_session_info(self) -> None:
+        """Update the session info in the app view."""
+        self.app_view._update_session_info()
+        logging.info("Session info updated in header")
 
 
 # --- Main Application Class ---
