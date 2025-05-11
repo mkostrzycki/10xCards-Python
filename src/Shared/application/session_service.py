@@ -8,6 +8,7 @@ from Shared.domain.errors import AuthenticationError
 class ProfileServiceProtocol(Protocol):
     def get_profile_by_username(self, username: str) -> User: ...
     def authenticate_user(self, user_id: int, password: str) -> bool: ...
+    def get_profile_by_id(self, user_id: int) -> User: ...
 
 
 class SessionService:
@@ -75,14 +76,14 @@ class SessionService:
 
         This is useful when user data has been updated outside the session.
         """
-        if not self._current_user:
+        if not self._current_user or not self._current_user.id:
             return
 
         try:
-            # Get fresh user data
-            username = self._current_user.username
-            self._current_user = self._profile_service.get_profile_by_username(username)
-            logging.info(f"User data refreshed: {username}")
+            # Get fresh user data using ID instead of username
+            user_id = self._current_user.id
+            self._current_user = self._profile_service.get_profile_by_id(user_id)
+            logging.info(f"User data refreshed for ID: {user_id}")
         except Exception as e:
             logging.error(f"Failed to refresh user data: {str(e)}")
             # Keep current user data if refresh fails
