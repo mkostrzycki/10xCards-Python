@@ -24,6 +24,7 @@ from CardManagement.infrastructure.api_clients.openrouter.client import OpenRout
 from CardManagement.infrastructure.ui.views.card_list_view import CardListView
 from CardManagement.infrastructure.ui.views.flashcard_edit_view import FlashcardEditView
 from CardManagement.infrastructure.ui.views.ai_generate_view import AIGenerateView
+from Shared.ui.widgets.toast_container import ToastContainer
 
 
 class NavigationProtocol(Protocol):
@@ -68,6 +69,9 @@ class AppView(ttk.Frame):
             self.header, text="Ustawienia", style="secondary.TButton", command=self._show_settings
         )
 
+        # Create toast container (for in-app notifications)
+        self.toast_container = ToastContainer(self)
+
         # Update session info
         self._update_session_info()
 
@@ -89,13 +93,8 @@ class AppView(ttk.Frame):
             self.navigation_controller.show_settings()
 
     def show_toast(self, title: str, message: str) -> None:
-        """Show a toast notification."""
-        from ttkbootstrap.toast import ToastNotification
-
-        toast = ToastNotification(
-            title=title, message=message, duration=3000, position=(10, 50, "se")  # Bottom-right corner
-        )
-        toast.show_toast()
+        """Show a toast notification using our custom toast container."""
+        self.toast_container.show_toast(title, message)
 
 
 class NavigationController:
