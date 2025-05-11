@@ -28,6 +28,7 @@ class AIGenerateView(ttk.Frame):
         card_service: CardService,
         navigation_controller: Any,
         show_toast: Callable[[str, str], None],
+        available_llm_models: List[str] = None,
     ):
         super().__init__(parent)
         self.deck_id = deck_id
@@ -36,6 +37,7 @@ class AIGenerateView(ttk.Frame):
         self.card_service = card_service
         self.navigation_controller = navigation_controller
         self.show_toast = show_toast
+        self.available_llm_models = available_llm_models or []
 
         # State variables
         self.is_generating = False
@@ -85,8 +87,9 @@ class AIGenerateView(ttk.Frame):
 
         ttk.Label(models_frame, text="Model AI:").grid(row=0, column=0, padx=(0, 10))
 
-        self.model_var = ttk.StringVar(value="gpt-4o-mini")
-        models = ["gpt-4o-mini", "gpt-4o", "claude-3-haiku-20240307", "claude-3-5-sonnet-20240620"]
+        default_model = self.available_llm_models[0] if self.available_llm_models else ""
+        self.model_var = ttk.StringVar(value=default_model)
+        models = self.available_llm_models
         self.model_combobox = ttk.Combobox(
             models_frame, textvariable=self.model_var, values=models, state="readonly", width=30
         )
