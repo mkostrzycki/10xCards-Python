@@ -1,6 +1,7 @@
 """Cryptographic utilities for secure data storage."""
 
 import base64
+import logging
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -45,7 +46,31 @@ class CryptoManager:
         Returns:
             bytes: The encrypted API key.
         """
-        return self._fernet.encrypt(api_key.encode())
+        logging.info(f"Encrypting API key of length {len(api_key)}")
+        try:
+            # Ensure input is str and convert to bytes
+            if not isinstance(api_key, str):
+                logging.warning(f"Input API key is not a string, type: {type(api_key)}, converting")
+                api_key = str(api_key)
+
+            # Encrypt using Fernet
+            input_bytes = api_key.encode("utf-8")
+            logging.debug(f"Input converted to bytes, length: {len(input_bytes)}")
+
+            encrypted = self._fernet.encrypt(input_bytes)
+
+            # Ensure output is bytes
+            if not isinstance(encrypted, bytes):
+                logging.error(f"Encryption produced non-bytes output: {type(encrypted)}")
+                # Try to convert if not bytes
+                encrypted = bytes(encrypted)
+
+            logging.info(f"API key encrypted successfully, result length: {len(encrypted)}")
+            logging.debug(f"Encrypted key start (hex): {encrypted[:10].hex()}...")
+            return encrypted
+        except Exception as e:
+            logging.error(f"Error encrypting API key: {str(e)}")
+            raise
 
     def decrypt_api_key(self, encrypted_key: bytes) -> str:
         """Decrypt an encrypted API key.
@@ -59,7 +84,33 @@ class CryptoManager:
         Raises:
             cryptography.fernet.InvalidToken: If the key is invalid or corrupted.
         """
-        return self._fernet.decrypt(encrypted_key).decode()
+        logging.info(f"Decrypting API key of length {len(encrypted_key)}")
+
+        # Ensure input is bytes
+        if not isinstance(encrypted_key, bytes):
+            logging.warning(f"Input encrypted key is not bytes, type: {type(encrypted_key)}, converting")
+            try:
+                if isinstance(encrypted_key, str):
+                    # If it's a string, try to decode from hex or convert directly to bytes
+                    try:
+                        encrypted_key = bytes.fromhex(encrypted_key)
+                        logging.info("Converted hex string to bytes")
+                    except ValueError:
+                        encrypted_key = encrypted_key.encode("utf-8")
+                        logging.info("Converted string to bytes using UTF-8")
+                else:
+                    encrypted_key = bytes(encrypted_key)
+            except Exception as e:
+                logging.error(f"Failed to convert encrypted key to bytes: {str(e)}")
+                raise ValueError(f"Encrypted key must be bytes: {str(e)}")
+
+        try:
+            decrypted = self._fernet.decrypt(encrypted_key).decode()
+            logging.info(f"API key decrypted successfully, result length: {len(decrypted)}")
+            return decrypted
+        except Exception as e:
+            logging.error(f"Error decrypting API key: {str(e)}")
+            raise
 
 
 # Singleton instance for app-wide use
