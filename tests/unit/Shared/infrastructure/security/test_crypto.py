@@ -5,22 +5,22 @@ import pytest
 
 from cryptography.fernet import Fernet, InvalidToken
 
-from Shared.infrastructure.security.crypto import CryptoManager, crypto_manager
+from src.Shared.infrastructure.security.crypto import CryptoManager, crypto_manager
 
 
 @pytest.fixture
 def patch_logging(mocker):
     """Patch all logging methods."""
-    mocker.patch("Shared.infrastructure.security.crypto.logging.info")
-    mocker.patch("Shared.infrastructure.security.crypto.logging.warning")
-    mocker.patch("Shared.infrastructure.security.crypto.logging.debug")
-    mocker.patch("Shared.infrastructure.security.crypto.logging.error")
+    mocker.patch("src.Shared.infrastructure.security.crypto.logging.info")
+    mocker.patch("src.Shared.infrastructure.security.crypto.logging.warning")
+    mocker.patch("src.Shared.infrastructure.security.crypto.logging.debug")
+    mocker.patch("src.Shared.infrastructure.security.crypto.logging.error")
 
 
 @pytest.fixture
 def patch_secret_key(mocker):
     """Patch the get_secret_key function."""
-    return mocker.patch("Shared.infrastructure.security.crypto.get_secret_key", return_value="test_secret_key")
+    return mocker.patch("src.Shared.infrastructure.security.crypto.get_secret_key", return_value="test_secret_key")
 
 
 @pytest.fixture
@@ -57,8 +57,8 @@ class TestCryptoManager:
 
     def test_setup_fernet_creates_fernet_instance(self, patch_basic_dependencies, mocker):
         """Test that _setup_fernet creates a Fernet instance with the correct key."""
-        mock_fernet = mocker.patch("Shared.infrastructure.security.crypto.Fernet")
-        mock_pbkdf2 = mocker.patch("Shared.infrastructure.security.crypto.PBKDF2HMAC")
+        mock_fernet = mocker.patch("src.Shared.infrastructure.security.crypto.Fernet")
+        mock_pbkdf2 = mocker.patch("src.Shared.infrastructure.security.crypto.PBKDF2HMAC")
 
         # Mock the key derivation
         mock_pbkdf2_instance = mocker.Mock()
