@@ -13,7 +13,7 @@ load_dotenv()
 # Application paths
 APP_ROOT: Final[Path] = Path(__file__).parent.parent.parent.parent
 DATA_DIR: Final[Path] = APP_ROOT / "data"
-MIGRATIONS_DIR: Final[Path] = APP_ROOT / "infrastructure" / "persistence" / "sqlite" / "migrations"
+MIGRATIONS_DIR: Final[Path] = Path(__file__).parent / "persistence" / "sqlite" / "migrations"
 
 # Database
 DATABASE_PATH: Final[Path] = DATA_DIR / "10xcards.db"
