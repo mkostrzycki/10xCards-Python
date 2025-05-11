@@ -5,7 +5,6 @@ import logging
 from typing import List, Optional, Any, NoReturn, Tuple, cast
 
 import litellm
-from litellm import ModelResponse
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .exceptions import (
@@ -45,9 +44,9 @@ class OpenRouterAPIClient:
         # Ensure HTTPS is enforced
         litellm.api_base = "https://openrouter.ai/api/v1"
         # Make sure we're using the right HTTP endpoint pattern
-        litellm.force_openai_route = True
-        # Konfigurujemy domyślne nagłówki dla OpenRouter
-        litellm.headers = {
+        # litellm.force_openai_route = True
+        # Przygotowujemy domyślne nagłówki dla OpenRouter, które będziemy przekazywać w wywołaniach
+        self.default_headers = {
             "HTTP-Referer": "https://10xcards.app",  # Opcjonalny identyfikator aplikacji
             "X-Title": "10xCards Flashcard Generator",  # Opcjonalny tytuł aplikacji
         }
@@ -121,6 +120,7 @@ class OpenRouterAPIClient:
                 api_key=api_key,
                 max_tokens=1,  # Absolutne minimum tokenów
                 temperature=0.0,  # Minimalne zużycie zasobów
+                custom_headers=self.default_headers,  # Dodajemy nagłówki
             )
 
             # Log z odpowiedzi API
@@ -303,55 +303,27 @@ class OpenRouterAPIClient:
                 selected_model = f"openrouter/{selected_model}"
                 self.logger.debug(f"Added openrouter/ prefix to model: {selected_model}")
 
-            # Prepare request parameters
+            # Build completion params
             completion_params = {
                 "model": selected_model,
-                "messages": [msg.__dict__ for msg in messages],
-                **params,
+                "messages": messages,
+                "max_tokens": 1000,  # Default to 1000 if not specified
+                "temperature": 0.3,
+                **params,  # Include any additional params passed to the function
             }
+
             if response_format:
-                completion_params["response_format"] = response_format.__dict__
+                completion_params["response_format"] = response_format
 
-            # Add debug logs for API key type
-            self.logger.debug(f"API key type before request: {type(api_key)}, length: {len(api_key)}")
-            if isinstance(api_key, bytes):
-                self.logger.warning("API key is bytes type, converting to string")
-                api_key = api_key.decode("utf-8")
-                self.logger.debug(f"API key converted to string, new type: {type(api_key)}")
+            # Log detailed request information, but remove the API key for security
+            safe_params = {**completion_params}
+            if "api_key" in safe_params:
+                safe_params["api_key"] = "sk-...redacted..."
 
-            # Przygotuj nagłówki uwierzytelniania zgodnie z dokumentacją OpenRouter
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "HTTP-Referer": "https://10xcards.app",  # Opcjonalny identyfikator aplikacji
-                "X-Title": "10xCards Flashcard Generator",  # Opcjonalny tytuł aplikacji
-            }
+            self.logger.debug(f"OpenRouter chat completion request params: {json.dumps(safe_params, default=str)}")
 
-            # Dodaj logi diagnostyczne nagłówków (bez pełnego klucza API)
-            masked_headers = headers.copy()
-            if len(api_key) > 8:
-                masked_headers["Authorization"] = f"Bearer {api_key[:4]}...{api_key[-4:]}"
-            else:
-                masked_headers["Authorization"] = "Bearer ********"
-            self.logger.debug(f"Request headers: {masked_headers}")
-
-            # Make API request with authentication
-            self.logger.debug(f"Sending request to OpenRouter with model: {selected_model}")
-            self.logger.debug(f"API base URL: {litellm.api_base}")
-            self.logger.debug(f"Using OpenAI-compatible route: {litellm.force_openai_route}")
-            self.logger.debug(f"Message count: {len(messages)}")
-
-            # Ustawiamy również API key globalnie na potrzeby tego wywołania
-            # (przypisanie tymczasowe, które przywrócimy po wywołaniu)
-            original_api_key = litellm.api_key
-            litellm.api_key = api_key
-
-            try:
-                response: ModelResponse = litellm.completion(
-                    **completion_params, api_key=api_key, custom_headers=headers  # Dodajemy nagłówki bezpośrednio
-                )
-            finally:
-                # Przywracamy oryginalny api_key
-                litellm.api_key = original_api_key
+            # Make API call
+            response = litellm.completion(**completion_params, api_key=api_key, custom_headers=self.default_headers)
 
             # Extract and convert the necessary fields from ModelResponse
             choices = (
