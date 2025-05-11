@@ -2,7 +2,7 @@
 
 import logging
 import traceback
-from typing import List, Optional, cast
+from typing import List, Optional
 
 from cryptography.fernet import InvalidToken
 
@@ -60,31 +60,33 @@ class AIService:
         if isinstance(user.encrypted_api_key, bytes):
             try:
                 self.logger.debug("Encrypted API key is bytes, attempting to decrypt")
-                self.logger.debug(f"Encrypted key type: {type(user.encrypted_api_key)}, length: {len(user.encrypted_api_key)}")
-                
+                self.logger.debug(
+                    f"Encrypted key type: {type(user.encrypted_api_key)}, length: {len(user.encrypted_api_key)}"
+                )
+
                 # Try to show some info about the encrypted data for diagnosis
                 try:
                     if len(user.encrypted_api_key) > 0:
                         self.logger.debug(f"Encrypted key prefix (hex): {user.encrypted_api_key[:10].hex()}")
                 except Exception as hex_err:
                     self.logger.debug(f"Could not display key prefix: {str(hex_err)}")
-                
+
                 # Attempt decryption
                 api_key = crypto_manager.decrypt_api_key(user.encrypted_api_key)
                 self.logger.debug(f"API key decrypted successfully, length: {len(api_key)}")
-                
+
             except InvalidToken as e:
                 self.logger.error(f"Invalid token during API key decryption: {str(e)}")
                 self.logger.debug(f"Exception details: {traceback.format_exc()}")
                 # This is likely a key mismatch - the encryption key changed
                 self.logger.info("Suggesting user to reset API key in settings")
                 raise AIAPIAuthError("API key could not be decoded. Please reset your API key in profile settings.")
-                
+
             except ValueError as e:
                 self.logger.error(f"Value error during API key decryption: {str(e)}")
                 self.logger.debug(f"Exception details: {traceback.format_exc()}")
                 raise AIAPIAuthError(f"API key format error: {str(e)}. Please reset your API key in profile settings.")
-                
+
             except Exception as e:
                 self.logger.error(f"Failed to decrypt API key: {str(e)}")
                 self.logger.debug(f"Exception details: {traceback.format_exc()}")
@@ -176,7 +178,7 @@ class AIService:
         self.logger.debug(
             f"API key in generate_flashcards - type: {type(api_key)}, length: {len(api_key) if api_key else 0}"
         )
-        
+
         # Log request information (without sensitive data)
         self.logger.info(
             "Generating flashcards",
