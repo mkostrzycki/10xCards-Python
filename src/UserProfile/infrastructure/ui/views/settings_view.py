@@ -181,6 +181,8 @@ class SettingsView(ttk.Frame):
             self.user_service.update_username(dto)
             self.session_service.refresh_current_user()
             self.refresh_settings()
+            # Update session info in the header
+            self.navigation_controller.update_session_info()
             self.show_toast("Sukces", "Nazwa profilu została zmieniona")
         except Exception as e:
             self.show_toast("Błąd", str(e))
@@ -212,6 +214,8 @@ class SettingsView(ttk.Frame):
             self.user_service.set_user_password(dto)
             self.session_service.refresh_current_user()
             self.refresh_settings()
+            # Update session info in the header
+            self.navigation_controller.update_session_info()
             if new_password:
                 self.show_toast("Sukces", "Hasło zostało zmienione")
             else:
@@ -241,6 +245,8 @@ class SettingsView(ttk.Frame):
             self.user_service.set_api_key(user_id, api_key)
             self.session_service.refresh_current_user()
             self.refresh_settings()
+            # Update session info in the header
+            self.navigation_controller.update_session_info()
             self.show_toast("Sukces", "Klucz API został zaktualizowany")
         except Exception as e:
             self.show_toast("Błąd", f"Nie udało się zapisać klucza API: {str(e)}")
@@ -275,6 +281,8 @@ class SettingsView(ttk.Frame):
             self.user_service.update_user_preferences(dto)
             self.session_service.refresh_current_user()
             self.refresh_settings()
+            # Update session info in the header
+            self.navigation_controller.update_session_info()
             self.show_toast("Sukces", "Domyślny model LLM został zmieniony")
         except Exception as e:
             self.show_toast("Błąd", str(e))
@@ -314,6 +322,8 @@ class SettingsView(ttk.Frame):
 
             self.session_service.refresh_current_user()
             self.refresh_settings()
+            # Update session info in the header
+            self.navigation_controller.update_session_info()
             self.show_toast("Sukces", "Schemat kolorystyczny został zmieniony")
         except Exception as e:
             self.show_toast("Błąd", str(e))
