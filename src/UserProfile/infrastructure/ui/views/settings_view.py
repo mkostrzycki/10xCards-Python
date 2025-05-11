@@ -2,6 +2,7 @@
 
 import tkinter as tk
 from typing import Callable, List, Optional
+import logging
 
 import ttkbootstrap as ttk
 
@@ -313,17 +314,38 @@ class SettingsView(ttk.Frame):
             return
 
         try:
+            # Zapisz preferencje użytkownika
             dto = UpdateUserPreferencesDTO(user_id=self.settings_model.user_id, app_theme=theme_name)
             self.user_service.update_user_preferences(dto)
 
-            # Apply theme immediately
-            style = ttk.Style()
-            style.theme_use(theme_name)
-
+            # Odśwież dane sesji i ustawień
             self.session_service.refresh_current_user()
             self.refresh_settings()
+
             # Update session info in the header
             self.navigation_controller.update_session_info()
+
+            # Zastosuj temat po krótkim opóźnieniu, aby dialog miał czas się zamknąć
+            def apply_theme_after_delay():
+                try:
+                    style = ttk.Style()
+                    style.theme_use(theme_name)
+                    logging.info(f"Theme changed to {theme_name}")
+                except Exception as style_error:
+                    # Łapiemy błędy wynikające z samej zmiany stylu
+                    error_msg = f"Błąd podczas zmiany stylu: {str(style_error)}"
+                    logging.error(error_msg)
+                    self.show_toast(
+                        "Ostrzeżenie", "Wystąpił błąd przy zmianie wyglądu aplikacji, ale ustawienia zostały zapisane"
+                    )
+                    # Kontynuujemy, ponieważ preferencje zostały zapisane pomyślnie
+                    # Styl zostanie poprawnie zastosowany przy ponownym uruchomieniu aplikacji
+
+            # Opóźnij zmianę stylu o 100ms
+            self.after(100, apply_theme_after_delay)
+
             self.show_toast("Sukces", "Schemat kolorystyczny został zmieniony")
         except Exception as e:
+            error_msg = f"Błąd przy zapisywaniu schematu kolorystycznego: {str(e)}"
+            logging.error(error_msg)
             self.show_toast("Błąd", str(e))

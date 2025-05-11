@@ -122,6 +122,10 @@ class ProfileLoginView(ttk.Frame):
         try:
             # Attempt login through session service
             self._session_service.login(self._state.username, password)
+
+            # Generate UserLoggedIn event to update theme
+            self.winfo_toplevel().event_generate("<<UserLoggedIn>>")
+
             self._router.show_deck_list()
         except AuthenticationError as e:
             self._show_error(str(e))

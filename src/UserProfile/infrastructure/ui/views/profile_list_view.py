@@ -207,6 +207,9 @@ class ProfileListView(ttk.Frame):
                 # For unprotected profiles, log in directly
                 self._session_service.login(profile.username)
                 self._router.show_deck_list()
+
+                # Generate UserLoggedIn event to update theme
+                self.winfo_toplevel().event_generate("<<UserLoggedIn>>")
         except AuthenticationError as e:
             self._show_toast("Błąd", str(e))
             self._router.show_profile_list()
