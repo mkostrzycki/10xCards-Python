@@ -10,4 +10,5 @@
     -   Presenter explicitly calling View update methods (e.g., `view.display_decks(decks)`).
     -   (Optional, if more complex state management is needed): Views subscribing to specific events/signals emitted by Presenters or Application Services.
 -   **Layout:** Use Tkinter's geometry managers (`pack`, `grid`, `place`) effectively. Prefer `grid` for complex layouts.
--   **Styling:** Utilize `ttkbootstrap` themes and styles for a modern look and feel. Keep styling consistent. 
+-   **Styling:** Utilize `ttkbootstrap` themes and styles for a modern look and feel. Keep styling consistent.
+-   **Button Order:** In dialogs and forms, place the primary action button (e.g., "Save", "OK", "Submit") on the right side and secondary/cancel actions to its left. This maintains consistency with common UI patterns.
