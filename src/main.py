@@ -181,28 +181,28 @@ class NavigationController:
 
     def show_login(self, profile) -> None:
         """Navigate to the login view for a password-protected profile.
-        
+
         Args:
             profile: Profile to log into
         """
         from UserProfile.infrastructure.ui.views.profile_login_view import ProfileLoginView
-        
+
         login_view = ProfileLoginView(
             self.app_view.main_content,
             profile,
             self.app_view.session_service._profile_service,
             self.app_view.session_service,
             self,
-            self.app_view.show_toast
+            self.app_view.show_toast,
         )
-        
+
         # Temporarily register and navigate to the login view
         temp_path = f"/login/{profile.id}"
         self.views[temp_path] = login_view
-        
+
         if self.current_view:
             self.current_view.grid_remove()
-            
+
         login_view.grid(row=0, column=0, sticky="nsew")
         self.current_view = login_view
         self.app_view._update_session_info()
