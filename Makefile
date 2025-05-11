@@ -50,6 +50,13 @@ test:
 	pytest $(TEST_DIR)/unit
 	@echo "Tests complete."
 
+# Run tests with coverage
+test-coverage:
+	@echo "Running tests with coverage analysis..."
+	source .venv/bin/activate && \
+	pytest $(TEST_DIR)/unit --cov=$(SRC_DIR) --cov-report=term-missing --cov-report=html
+	@echo "Coverage report generated. View detailed HTML report in htmlcov/index.html"
+
 # Run behavioral tests
 test-bdd:
 	@echo "Running behavioral tests with behave..."
@@ -62,4 +69,5 @@ clean:
 	@echo "Cleaning up..."
 	find . -type f -name '*.py[co]' -delete
 	find . -type d -name '__pycache__' -delete
+	rm -rf .coverage htmlcov
 	@echo "Cleanup complete."
