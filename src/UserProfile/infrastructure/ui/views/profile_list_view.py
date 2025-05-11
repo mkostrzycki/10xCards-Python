@@ -55,6 +55,9 @@ class ProfileListView(ttk.Frame):
         self._setup_ui()
         self._load_profiles()
 
+        # Bind visibility event to refresh the list when view becomes visible
+        self.bind("<Visibility>", self._on_visibility)
+
     def _setup_ui(self) -> None:
         """Set up the UI components."""
         # Title
@@ -64,13 +67,17 @@ class ProfileListView(ttk.Frame):
         # Profile list - use frame to contain both treeview and scrollbar
         profile_frame = ttk.Frame(self)
         profile_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
-        
+
         # Scrollbar for profile list
         scrollbar = ttk.Scrollbar(profile_frame, orient=tk.VERTICAL)
-        
+
         self._profile_list = ttk.Treeview(
-            profile_frame, columns=("username", "protected"), show="headings", 
-            selectmode="browse", height=10, yscrollcommand=scrollbar.set
+            profile_frame,
+            columns=("username", "protected"),
+            show="headings",
+            selectmode="browse",
+            height=10,
+            yscrollcommand=scrollbar.set,
         )
 
         self._profile_list.heading("username", text="Nazwa użytkownika")
@@ -78,10 +85,10 @@ class ProfileListView(ttk.Frame):
 
         self._profile_list.column("username", width=200)
         self._profile_list.column("protected", width=100, anchor=tk.CENTER)
-        
+
         # Configure the scrollbar to control the treeview
         scrollbar.configure(command=self._profile_list.yview)
-        
+
         # Place the treeview and scrollbar in the frame
         self._profile_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -207,3 +214,7 @@ class ProfileListView(ttk.Frame):
             self._show_toast("Błąd", "Wystąpił nieoczekiwany błąd podczas logowania.")
             logging.error(f"Unexpected error during login: {str(e)}")
             self._router.show_profile_list()
+
+    def _on_visibility(self, event: tk.Event) -> None:
+        """Handle visibility event - refresh profiles when view becomes visible."""
+        self._load_profiles()
