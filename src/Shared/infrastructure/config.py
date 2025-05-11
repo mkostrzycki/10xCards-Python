@@ -50,14 +50,14 @@ def get_secret_key() -> str:
 
 # OpenRouter API Configuration
 OPENROUTER_API_BASE: Final[str] = "https://openrouter.ai/api/v1"
-DEFAULT_AI_MODEL: Final[str] = os.getenv("DEFAULT_AI_MODEL", "gpt-4o-mini")
+DEFAULT_AI_MODEL: Final[str] = os.getenv("DEFAULT_AI_MODEL", "openrouter/openai/gpt-4o-mini")
 
 # Available LLM models
 AVAILABLE_LLM_MODELS: Final[List[str]] = [
-    "gpt-4o-mini",
-    "gpt-4o",
-    "claude-3-haiku-20240307",
-    "claude-3-5-sonnet-20240620",
+    "openrouter/openai/gpt-4o-mini",
+    "openrouter/openai/gpt-4o",
+    "openrouter/anthropic/claude-3-haiku-20240307",
+    "openrouter/anthropic/claude-3-5-sonnet-20240620",
 ]
 
 # Available UI themes
