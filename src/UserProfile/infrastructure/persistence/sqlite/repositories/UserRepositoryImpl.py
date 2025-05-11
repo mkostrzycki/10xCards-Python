@@ -60,6 +60,8 @@ class UserRepositoryImpl(IUserRepository):
                 username=row["username"],
                 hashed_password=row["hashed_password"],
                 encrypted_api_key=row["encrypted_api_key"],
+                default_llm_model=row["default_llm_model"] if "default_llm_model" in row.keys() else None,
+                app_theme=row["app_theme"] if "app_theme" in row.keys() else None,
                 created_at=datetime.fromisoformat(row["created_at"]),
                 updated_at=datetime.fromisoformat(row["updated_at"]),
             )
@@ -292,14 +294,32 @@ class UserRepositoryImpl(IUserRepository):
             UPDATE Users
             SET username = ?,
                 hashed_password = ?,
-                encrypted_api_key = ?
+                encrypted_api_key = ?,
+                default_llm_model = ?,
+                app_theme = ?
             WHERE id = ?
         """
         try:
             logger.info(f"Updating user {user.id} with username: {user.username}")
             conn = self._db_provider.get_connection()
             conn.execute("PRAGMA foreign_keys = ON")
-            cursor = conn.execute(query, (user.username, user.hashed_password, user.encrypted_api_key, user.id))
+
+            # Logowanie dodatkowych informacji o zapisywanych wartościach
+            logger.info(
+                f"User {user.id} preferences - default_llm_model: {user.default_llm_model}, app_theme: {user.app_theme}"
+            )
+
+            cursor = conn.execute(
+                query,
+                (
+                    user.username,
+                    user.hashed_password,
+                    user.encrypted_api_key,
+                    user.default_llm_model,
+                    user.app_theme,
+                    user.id,
+                ),
+            )
             conn.commit()
 
             if cursor.rowcount == 0:  # Should never happen as we checked existence
