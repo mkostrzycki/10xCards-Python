@@ -1,7 +1,10 @@
 """AI service for flashcard generation."""
 
 import logging
+import traceback
 from typing import List, Optional, cast
+
+from cryptography.fernet import InvalidToken
 
 from CardManagement.infrastructure.api_clients.openrouter.client import OpenRouterAPIClient
 from CardManagement.infrastructure.api_clients.openrouter.exceptions import (
@@ -15,6 +18,7 @@ from CardManagement.infrastructure.api_clients.openrouter.exceptions import (
 from CardManagement.infrastructure.api_clients.openrouter.types import FlashcardDTO
 from Shared.application.session_service import SessionService
 from Shared.infrastructure.config import DEFAULT_AI_MODEL
+from Shared.infrastructure.security.crypto import crypto_manager
 
 
 class AIService:
@@ -52,15 +56,52 @@ class AIService:
         if not user.encrypted_api_key:
             raise AIAPIAuthError("API key not set. Please set your OpenRouter API key in profile settings.")
 
-        # Comment below clarifies that the value is already decrypted by the repository
-        # Use cast to ensure proper type checking
-        api_key = cast(str, user.encrypted_api_key)  # Already decrypted by repository
+        # Decrypt the API key if it's bytes
+        if isinstance(user.encrypted_api_key, bytes):
+            try:
+                self.logger.debug("Encrypted API key is bytes, attempting to decrypt")
+                self.logger.debug(f"Encrypted key type: {type(user.encrypted_api_key)}, length: {len(user.encrypted_api_key)}")
+                
+                # Try to show some info about the encrypted data for diagnosis
+                try:
+                    if len(user.encrypted_api_key) > 0:
+                        self.logger.debug(f"Encrypted key prefix (hex): {user.encrypted_api_key[:10].hex()}")
+                except Exception as hex_err:
+                    self.logger.debug(f"Could not display key prefix: {str(hex_err)}")
+                
+                # Attempt decryption
+                api_key = crypto_manager.decrypt_api_key(user.encrypted_api_key)
+                self.logger.debug(f"API key decrypted successfully, length: {len(api_key)}")
+                
+            except InvalidToken as e:
+                self.logger.error(f"Invalid token during API key decryption: {str(e)}")
+                self.logger.debug(f"Exception details: {traceback.format_exc()}")
+                # This is likely a key mismatch - the encryption key changed
+                self.logger.info("Suggesting user to reset API key in settings")
+                raise AIAPIAuthError("API key could not be decoded. Please reset your API key in profile settings.")
+                
+            except ValueError as e:
+                self.logger.error(f"Value error during API key decryption: {str(e)}")
+                self.logger.debug(f"Exception details: {traceback.format_exc()}")
+                raise AIAPIAuthError(f"API key format error: {str(e)}. Please reset your API key in profile settings.")
+                
+            except Exception as e:
+                self.logger.error(f"Failed to decrypt API key: {str(e)}")
+                self.logger.debug(f"Exception details: {traceback.format_exc()}")
+                raise AIAPIAuthError("Unexpected error with API key. Please reset your API key in profile settings.")
+        else:
+            # This branch should not normally be reached
+            api_key = str(user.encrypted_api_key)
+            self.logger.warning(f"Unexpected API key type: {type(user.encrypted_api_key)}, converting to string")
 
         # Add debug logs for API key type
-        self.logger.debug(f"API key type in _get_user_api_key: {type(api_key)}")
-        self.logger.debug(f"API key: {api_key}")
-        if isinstance(api_key, bytes):
-            self.logger.warning("API key is bytes, this might cause issues in litellm")
+        self.logger.debug(f"Final API key type: {type(api_key)}")
+        # Don't log the full API key in production, just a masked version
+        if len(api_key) > 8:
+            masked_key = f"{api_key[:4]}...{api_key[-4:]}"
+        else:
+            masked_key = "****"
+        self.logger.debug(f"Returning API key (masked): {masked_key}")
 
         return api_key
 
@@ -131,13 +172,12 @@ class AIService:
         # Get API key
         api_key = self._get_user_api_key()
 
-        # Add more diagnostic information about the API key
+        # Add more diagnostic information about the API key (be careful not to log the actual key)
         self.logger.debug(
             f"API key in generate_flashcards - type: {type(api_key)}, length: {len(api_key) if api_key else 0}"
         )
-        self.logger.info(f"API key: {api_key}")
-
-        # Log the request (without sensitive data)
+        
+        # Log request information (without sensitive data)
         self.logger.info(
             "Generating flashcards",
             extra={
