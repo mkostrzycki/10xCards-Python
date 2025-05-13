@@ -129,7 +129,7 @@ class StudyPresenter:
         """Handle ending the study session."""
         self.study_service.end_session()
         # Navigate back to the deck view
-        self.navigation_controller.navigate(f"/decks/{self.deck_id}")
+        self.navigation_controller.navigate(f"/decks/{self.deck_id}/cards")
         logger.info(f"Study session for deck {self.deck_id} ended")
 
     def _update_view_with_card(self, flashcard: Flashcard, show_answer: bool) -> None:
