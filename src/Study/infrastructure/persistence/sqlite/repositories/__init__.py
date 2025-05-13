@@ -1,1 +1,1 @@
-"""Study SQLite repository implementations.""" 
+"""Study SQLite repository implementations."""

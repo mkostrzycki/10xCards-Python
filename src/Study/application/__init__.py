@@ -1,1 +1,1 @@
-"""Study application layer.""" 
+"""Study application layer."""

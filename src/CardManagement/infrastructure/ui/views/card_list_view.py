@@ -88,13 +88,10 @@ class CardListView(ttk.Frame):
             self, on_add=self._on_add_flashcard, on_generate_ai=self._on_generate_ai, disabled=self.loading
         )
         self.button_panel.grid(row=2, column=0, sticky="ew", padx=5, pady=(0, 5))
-        
+
         # Start Study Button
         self.start_study_btn = ttk.Button(
-            self.button_panel, 
-            text="Rozpocznij naukę", 
-            style="success.TButton", 
-            command=self._on_start_study_click
+            self.button_panel, text="Rozpocznij naukę", style="success.TButton", command=self._on_start_study_click
         )
         self.start_study_btn.pack(side=ttk.LEFT, padx=5)
 
@@ -113,7 +110,7 @@ class CardListView(ttk.Frame):
     def _on_generate_ai(self) -> None:
         """Handle generate with AI button click"""
         self.navigation_controller.navigate(f"/decks/{self.deck_id}/cards/generate-ai")
-        
+
     def _on_start_study_click(self) -> None:
         """Handle start study button click"""
         try:

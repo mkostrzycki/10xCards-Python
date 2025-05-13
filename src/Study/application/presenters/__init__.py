@@ -1,1 +1,1 @@
-"""Study application presenters.""" 
+"""Study application presenters."""

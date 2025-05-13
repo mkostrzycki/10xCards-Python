@@ -1,1 +1,1 @@
-"""Study infrastructure layer.""" 
+"""Study infrastructure layer."""

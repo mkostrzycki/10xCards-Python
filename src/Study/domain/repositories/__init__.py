@@ -1,1 +1,1 @@
-"""Study domain repositories.""" 
+"""Study domain repositories."""

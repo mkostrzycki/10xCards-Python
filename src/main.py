@@ -421,7 +421,7 @@ class TenXCardsApp(ttk.Window):
                 show_toast=app_view.show_toast,
                 available_llm_models=AVAILABLE_LLM_MODELS,
             )
-            
+
         def create_study_session_view(deck_id: int) -> StudySessionView:
             user = session_service.get_current_user()
             if not user or not user.id:
@@ -429,7 +429,7 @@ class TenXCardsApp(ttk.Window):
             deck = deck_service.get_deck(deck_id, user.id)
             if not deck:
                 raise ValueError("Talia nie istnieje")
-                
+
             # Create presenter first
             presenter = StudyPresenter(
                 view=None,  # Will be set after view creation
@@ -437,19 +437,15 @@ class TenXCardsApp(ttk.Window):
                 navigation_controller=navigation_controller,
                 session_service=session_service,
                 deck_id=deck_id,
-                deck_name=deck.name
+                deck_name=deck.name,
             )
-            
+
             # Create view with presenter
-            view = StudySessionView(
-                parent=app_view.main_content,
-                presenter=presenter,
-                deck_name=deck.name
-            )
-            
+            view = StudySessionView(parent=app_view.main_content, presenter=presenter, deck_name=deck.name)
+
             # Set view in presenter
             presenter.view = view
-            
+
             return view
 
         # Register dynamic routes

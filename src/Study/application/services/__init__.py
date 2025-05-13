@@ -1,1 +1,1 @@
-"""Study application services.""" 
+"""Study application services."""

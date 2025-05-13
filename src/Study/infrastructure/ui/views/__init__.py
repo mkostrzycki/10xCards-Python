@@ -1,1 +1,1 @@
-"""Study UI views.""" 
+"""Study UI views."""

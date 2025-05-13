@@ -1,1 +1,1 @@
-"""Study SQLite persistence infrastructure.""" 
+"""Study SQLite persistence infrastructure."""

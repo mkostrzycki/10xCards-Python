@@ -1,1 +1,1 @@
-"""Study UI infrastructure.""" 
+"""Study UI infrastructure."""

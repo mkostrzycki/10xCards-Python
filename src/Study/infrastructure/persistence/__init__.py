@@ -1,1 +1,1 @@
-"""Study persistence infrastructure.""" 
+"""Study persistence infrastructure."""

@@ -1,1 +1,1 @@
-"""Study context for spaced repetition system.""" 
+"""Study context for spaced repetition system."""

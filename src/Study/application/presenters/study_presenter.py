@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class StudySessionViewInterface(Protocol):
     """Interface for the study session view."""
-    
+
     def display_card_front(self, front_text: str) -> None: ...
     def display_card_back(self, back_text: str) -> None: ...
     def show_rating_buttons(self) -> None: ...
@@ -26,13 +26,13 @@ class StudySessionViewInterface(Protocol):
 
 class NavigationControllerInterface(Protocol):
     """Interface for the navigation controller."""
-    
+
     def navigate(self, route: str) -> None: ...
 
 
 class StudyPresenter:
     """Presenter for the study session view."""
-    
+
     def __init__(
         self,
         view: StudySessionViewInterface,
@@ -40,10 +40,10 @@ class StudyPresenter:
         navigation_controller: NavigationControllerInterface,
         session_service: SessionService,
         deck_id: int,
-        deck_name: str
+        deck_name: str,
     ):
         """Initialize the study presenter.
-        
+
         Args:
             view: The study session view.
             study_service: The study service.
@@ -58,17 +58,17 @@ class StudyPresenter:
         self.session_service = session_service
         self.deck_id = deck_id
         self.deck_name = deck_name
-        
+
         # State
         self.current_flashcard_id: Optional[int] = None
         self.answer_shown: bool = False
-        
+
     def initialize_session(self) -> None:
         """Initialize the study session."""
         try:
             # Start the session and get the first card
             first_card = self.study_service.start_session(self.deck_id)
-            
+
             if first_card:
                 flashcard, _ = first_card
                 self.current_flashcard_id = flashcard.id
@@ -82,7 +82,7 @@ class StudyPresenter:
             error_msg = f"Failed to initialize study session: {str(e)}"
             logger.error(error_msg, exc_info=True)
             self.view.show_error_message(error_msg)
-    
+
     def handle_show_answer(self) -> None:
         """Handle the show answer button click."""
         if not self.answer_shown:
@@ -92,24 +92,24 @@ class StudyPresenter:
                 self._update_view_with_card(flashcard, show_answer=True)
                 self.answer_shown = True
                 logger.debug(f"Showing answer for flashcard {flashcard.id}")
-    
+
     def handle_rate_card(self, rating: int) -> None:
         """Handle rating a card.
-        
+
         Args:
             rating: The rating value (1-4).
         """
         if not self.current_flashcard_id:
             logger.error("Attempted to rate card but no current flashcard")
             return
-        
+
         try:
             # Record the review
             self.study_service.record_review(self.current_flashcard_id, rating)
-            
+
             # Move to the next card
             next_card = self.study_service.proceed_to_next_card()
-            
+
             if next_card:
                 flashcard, _ = next_card
                 self.current_flashcard_id = flashcard.id
@@ -124,23 +124,23 @@ class StudyPresenter:
             error_msg = f"Failed to process rating: {str(e)}"
             logger.error(error_msg, exc_info=True)
             self.view.show_error_message(error_msg)
-    
+
     def handle_end_session(self) -> None:
         """Handle ending the study session."""
         self.study_service.end_session()
         # Navigate back to the deck view
         self.navigation_controller.navigate(f"/decks/{self.deck_id}")
         logger.info(f"Study session for deck {self.deck_id} ended")
-    
+
     def _update_view_with_card(self, flashcard: Flashcard, show_answer: bool) -> None:
         """Update the view with the current card.
-        
+
         Args:
             flashcard: The flashcard to display.
             show_answer: Whether to show the answer.
         """
         self.view.display_card_front(flashcard.front_text)
-        
+
         if show_answer:
             self.view.display_card_back(flashcard.back_text)
             self.view.show_rating_buttons()
@@ -149,7 +149,7 @@ class StudyPresenter:
             self.view.display_card_back("")
             self.view.hide_rating_buttons()
             self.view.enable_show_answer_button()
-    
+
     def _update_progress(self) -> None:
         """Update the progress display in the view."""
         current, total = self.study_service.get_session_progress()

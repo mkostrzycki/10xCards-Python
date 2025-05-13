@@ -302,7 +302,7 @@ class DeckListView(ttk.Frame):
 
             # Update UI
             self.deck_table.set_items(self.decks)
-            
+
             # Disable study button until a deck is selected
             self.start_study_btn.configure(state="disabled")
         except Exception as e:

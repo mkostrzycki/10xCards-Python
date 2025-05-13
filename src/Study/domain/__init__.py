@@ -1,1 +1,1 @@
-"""Study domain layer.""" 
+"""Study domain layer."""

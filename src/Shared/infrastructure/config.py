@@ -125,9 +125,25 @@ AVAILABLE_APP_THEMES: Final[List[str]] = [
 # FSRS Configuration
 # Default parameters from py-fsrs documentation
 FSRS_DEFAULT_PARAMETERS: Final[Tuple[float, ...]] = (
-    0.40255, 1.18385, 3.173, 15.69105, 7.1949, 0.5345, 1.4604, 0.0046,
-    1.54575, 0.1192, 1.01925, 1.9395, 0.11, 0.29605, 2.2698, 0.2315,
-    2.9898, 0.51655, 0.6621
+    0.40255,
+    1.18385,
+    3.173,
+    15.69105,
+    7.1949,
+    0.5345,
+    1.4604,
+    0.0046,
+    1.54575,
+    0.1192,
+    1.01925,
+    1.9395,
+    0.11,
+    0.29605,
+    2.2698,
+    0.2315,
+    2.9898,
+    0.51655,
+    0.6621,
 )
 FSRS_DEFAULT_DESIRED_RETENTION: Final[float] = 0.9
 FSRS_DEFAULT_LEARNING_STEPS_MINUTES: Final[List[int]] = [1, 10]
@@ -135,10 +151,11 @@ FSRS_DEFAULT_RELEARNING_STEPS_MINUTES: Final[List[int]] = [10]
 FSRS_MAXIMUM_INTERVAL: Final[int] = 36500  # Default from py-fsrs
 FSRS_ENABLE_FUZZING: Final[bool] = True  # Default from py-fsrs
 
+
 # Function to get all config as a dictionary
 def get_config() -> dict:
     """Get all configuration as a dictionary.
-    
+
     Returns:
         dict: All configuration values.
     """
