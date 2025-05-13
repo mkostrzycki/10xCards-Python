@@ -5,7 +5,7 @@ import secrets
 import logging
 import shutil
 from pathlib import Path
-from typing import Final, List
+from typing import Final, List, Tuple
 
 from dotenv import load_dotenv
 
@@ -15,7 +15,7 @@ load_dotenv()
 
 # Application paths
 APP_ROOT: Final[Path] = Path(__file__).parent.parent.parent.parent
-DATA_DIR: Final[Path] = APP_ROOT / "data"
+DATA_DIR: Final[Path] = Path(APP_ROOT) / "data"
 MIGRATIONS_DIR: Final[Path] = Path(__file__).parent / "persistence" / "sqlite" / "migrations"
 
 # Database
@@ -121,3 +121,39 @@ AVAILABLE_APP_THEMES: Final[List[str]] = [
     "cosmo",  # Light blue theme
     "yeti",  # Modern light theme
 ]
+
+# FSRS Configuration
+# Default parameters from py-fsrs documentation
+FSRS_DEFAULT_PARAMETERS: Final[Tuple[float, ...]] = (
+    0.40255, 1.18385, 3.173, 15.69105, 7.1949, 0.5345, 1.4604, 0.0046,
+    1.54575, 0.1192, 1.01925, 1.9395, 0.11, 0.29605, 2.2698, 0.2315,
+    2.9898, 0.51655, 0.6621
+)
+FSRS_DEFAULT_DESIRED_RETENTION: Final[float] = 0.9
+FSRS_DEFAULT_LEARNING_STEPS_MINUTES: Final[List[int]] = [1, 10]
+FSRS_DEFAULT_RELEARNING_STEPS_MINUTES: Final[List[int]] = [10]
+FSRS_MAXIMUM_INTERVAL: Final[int] = 36500  # Default from py-fsrs
+FSRS_ENABLE_FUZZING: Final[bool] = True  # Default from py-fsrs
+
+# Function to get all config as a dictionary
+def get_config() -> dict:
+    """Get all configuration as a dictionary.
+    
+    Returns:
+        dict: All configuration values.
+    """
+    return {
+        "APP_ROOT": str(APP_ROOT),
+        "DATA_DIR": str(DATA_DIR),
+        "DATABASE_PATH": str(DATABASE_PATH),
+        "OPENROUTER_API_BASE": OPENROUTER_API_BASE,
+        "DEFAULT_AI_MODEL": DEFAULT_AI_MODEL,
+        "AVAILABLE_LLM_MODELS": AVAILABLE_LLM_MODELS,
+        "AVAILABLE_APP_THEMES": AVAILABLE_APP_THEMES,
+        "FSRS_DEFAULT_PARAMETERS": FSRS_DEFAULT_PARAMETERS,
+        "FSRS_DEFAULT_DESIRED_RETENTION": FSRS_DEFAULT_DESIRED_RETENTION,
+        "FSRS_DEFAULT_LEARNING_STEPS_MINUTES": FSRS_DEFAULT_LEARNING_STEPS_MINUTES,
+        "FSRS_DEFAULT_RELEARNING_STEPS_MINUTES": FSRS_DEFAULT_RELEARNING_STEPS_MINUTES,
+        "FSRS_MAXIMUM_INTERVAL": FSRS_MAXIMUM_INTERVAL,
+        "FSRS_ENABLE_FUZZING": FSRS_ENABLE_FUZZING,
+    }
