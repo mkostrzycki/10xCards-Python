@@ -46,7 +46,9 @@ class SessionService:
             self._current_user = user
             logging.info(f"User logged in: {username}")
         except Exception as e:
-            logging.error(f"Unexpected error during login: {str(e)}")
+            # Only log errors that are not authentication errors
+            if not isinstance(e, AuthenticationError):
+                logging.error(f"Unexpected error during login: {str(e)}")
             raise
 
     def logout(self) -> None:
