@@ -3,13 +3,16 @@
 import json
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import List, Optional, Tuple, Any
+from typing import List, Optional, Tuple
 
 from CardManagement.domain.models.Flashcard import Flashcard
 from CardManagement.domain.repositories.IFlashcardRepository import IFlashcardRepository
 from Study.domain.repositories.IReviewLogRepository import IReviewLogRepository
 from Shared.application.session_service import SessionService
 from Shared.infrastructure.config import get_config
+
+# Standardowy import biblioteki fsrs
+from fsrs import Scheduler, Card as FSRSCard, Rating as FSRSRating
 
 logger = logging.getLogger(__name__)
 
@@ -43,25 +46,16 @@ class StudyService:
         self._enable_fuzzing = self._config.get("FSRS_ENABLE_FUZZING", True)
 
         # Scheduler will be initialized during start_session
-        self.scheduler: Any = None
+        self.scheduler: Optional[Scheduler] = None
 
         # Session state
-        self.current_study_session_queue: List[Tuple[Flashcard, Any]] = []
+        self.current_study_session_queue: List[Tuple[Flashcard, FSRSCard]] = []
         self.current_card_index: int = -1
         self.current_deck_id: Optional[int] = None
 
-        # Dynamically import fsrs to avoid issues if the library is not available during type checking
-        try:
-            global Scheduler, FSRSCard, FSRSRating, FSRSReviewLog, State
-            from fsrs import Scheduler, Card as FSRSCard, Rating as FSRSRating, ReviewLog as FSRSReviewLog, State
+        logger.info("Study service initialized")
 
-            logger.info("Successfully imported FSRS library")
-        except ImportError as e:
-            logger.error(f"Failed to import FSRS library: {e}")
-            # Allow the class to be defined but scheduler will be None
-            # This will cause runtime errors if methods are called without the library
-
-    def start_session(self, deck_id: int) -> Optional[Tuple[Flashcard, Any]]:
+    def start_session(self, deck_id: int) -> Optional[Tuple[Flashcard, FSRSCard]]:
         """Start a new study session for a deck.
 
         Args:
@@ -107,7 +101,7 @@ class StudyService:
             logger.info(f"Started study session for deck {deck_id} but no cards are due")
             return None
 
-    def get_current_card_for_review(self) -> Optional[Tuple[Flashcard, Any]]:
+    def get_current_card_for_review(self) -> Optional[Tuple[Flashcard, FSRSCard]]:
         """Get the current card in the study session.
 
         Returns:
@@ -124,7 +118,7 @@ class StudyService:
             )
             return None
 
-    def record_review(self, flashcard_id: int, rating_value: int) -> Tuple[Flashcard, Any]:
+    def record_review(self, flashcard_id: int, rating_value: int) -> Tuple[Flashcard, FSRSCard]:
         """Record a review for the current card with the given rating.
 
         Args:
@@ -196,7 +190,7 @@ class StudyService:
             logger.error(f"Error recording review: {e}", exc_info=True)
             raise RuntimeError(f"Failed to record review: {str(e)}") from e
 
-    def proceed_to_next_card(self) -> Optional[Tuple[Flashcard, Any]]:
+    def proceed_to_next_card(self) -> Optional[Tuple[Flashcard, FSRSCard]]:
         """Move to the next card in the study session.
 
         Returns:
@@ -244,13 +238,7 @@ class StudyService:
 
         Args:
             user_id: ID of the current user (for future personalized parameters).
-
-        Raises:
-            RuntimeError: If FSRS library is not available.
         """
-        if "Scheduler" not in globals():
-            raise RuntimeError("FSRS library not loaded. Cannot initialize scheduler.")
-
         # TODO: In the future, load user-specific parameters from a repository
         # For now, use default parameters from config
 
@@ -268,7 +256,7 @@ class StudyService:
 
         logger.debug(f"Initialized FSRS scheduler with default parameters for user {user_id}")
 
-    def _load_and_prepare_fsrs_cards(self, deck_id: int, user_id: int) -> List[Tuple[Flashcard, Any]]:
+    def _load_and_prepare_fsrs_cards(self, deck_id: int, user_id: int) -> List[Tuple[Flashcard, FSRSCard]]:
         """Load flashcards from the repository and prepare FSRS card objects.
 
         Args:
@@ -277,13 +265,7 @@ class StudyService:
 
         Returns:
             List of tuples containing (Flashcard, FSRSCard).
-
-        Raises:
-            RuntimeError: If FSRS library is not available.
         """
-        if "FSRSCard" not in globals():
-            raise RuntimeError("FSRS library not loaded. Cannot prepare cards.")
-
         flashcards = self.flashcard_repo.list_by_deck_id(deck_id)
         result = []
 
@@ -313,7 +295,9 @@ class StudyService:
         logger.debug(f"Loaded and prepared {len(result)} cards for deck {deck_id}")
         return result
 
-    def _filter_and_sort_due_cards(self, all_session_cards: List[Tuple[Flashcard, Any]]) -> List[Tuple[Flashcard, Any]]:
+    def _filter_and_sort_due_cards(
+        self, all_session_cards: List[Tuple[Flashcard, FSRSCard]]
+    ) -> List[Tuple[Flashcard, FSRSCard]]:
         """Filter cards that are due for review and sort them.
 
         Args:
