@@ -24,6 +24,10 @@ from CardManagement.infrastructure.api_clients.openrouter.client import OpenRout
 from CardManagement.infrastructure.ui.views.card_list_view import CardListView
 from CardManagement.infrastructure.ui.views.flashcard_edit_view import FlashcardEditView
 from CardManagement.infrastructure.ui.views.ai_generate_view import AIGenerateView
+from Study.application.services.study_service import StudyService
+from Study.application.presenters.study_presenter import StudyPresenter
+from Study.infrastructure.ui.views.study_session_view import StudySessionView
+from Study.infrastructure.persistence.sqlite.repositories.ReviewLogRepositoryImpl import ReviewLogRepositoryImpl
 from Shared.ui.widgets.toast_container import ToastContainer
 
 
@@ -293,11 +297,13 @@ class TenXCardsApp(ttk.Window):
         user_repo = UserRepositoryImpl(db_provider)
         deck_repo = DeckRepositoryImpl(db_provider)
         card_repo = FlashcardRepositoryImpl(db_provider)
+        review_log_repo = ReviewLogRepositoryImpl(db_provider)
 
         # Services
         profile_service = UserProfileService(user_repo)
         deck_service = DeckService(deck_repo)
         card_service = CardService(card_repo)
+        study_service = StudyService(card_repo, review_log_repo, session_service)
 
         # AI Service setup
         ai_service = dependencies.get("ai_service")
@@ -415,12 +421,43 @@ class TenXCardsApp(ttk.Window):
                 show_toast=app_view.show_toast,
                 available_llm_models=AVAILABLE_LLM_MODELS,
             )
+            
+        def create_study_session_view(deck_id: int) -> StudySessionView:
+            user = session_service.get_current_user()
+            if not user or not user.id:
+                raise ValueError("Musisz być zalogowany aby rozpocząć naukę")
+            deck = deck_service.get_deck(deck_id, user.id)
+            if not deck:
+                raise ValueError("Talia nie istnieje")
+                
+            # Create presenter first
+            presenter = StudyPresenter(
+                view=None,  # Will be set after view creation
+                study_service=study_service,
+                navigation_controller=navigation_controller,
+                session_service=session_service,
+                deck_id=deck_id,
+                deck_name=deck.name
+            )
+            
+            # Create view with presenter
+            view = StudySessionView(
+                parent=app_view.main_content,
+                presenter=presenter,
+                deck_name=deck.name
+            )
+            
+            # Set view in presenter
+            presenter.view = view
+            
+            return view
 
         # Register dynamic routes
         navigation_controller.register_view("/decks/{deck_id}/cards", create_card_list_view)
         navigation_controller.register_view("/decks/{deck_id}/cards/new", create_new_card_view)
         navigation_controller.register_view("/decks/{deck_id}/cards/{flashcard_id}/edit", create_edit_card_view)
         navigation_controller.register_view("/decks/{deck_id}/cards/generate-ai", create_ai_generate_view)
+        navigation_controller.register_view("/study/session/{deck_id}", create_study_session_view)
 
         # --- Bind Events ---
         self.bind("<<NavigateToDeckList>>", lambda e: navigation_controller.navigate("/decks"))
