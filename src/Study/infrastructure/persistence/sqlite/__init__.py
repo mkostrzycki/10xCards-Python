@@ -1,0 +1,1 @@
+"""Study SQLite persistence infrastructure.""" 
