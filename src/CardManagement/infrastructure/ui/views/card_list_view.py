@@ -88,6 +88,15 @@ class CardListView(ttk.Frame):
             self, on_add=self._on_add_flashcard, on_generate_ai=self._on_generate_ai, disabled=self.loading
         )
         self.button_panel.grid(row=2, column=0, sticky="ew", padx=5, pady=(0, 5))
+        
+        # Start Study Button
+        self.start_study_btn = ttk.Button(
+            self.button_panel, 
+            text="Rozpocznij naukę", 
+            style="success.TButton", 
+            command=self._on_start_study_click
+        )
+        self.start_study_btn.pack(side=ttk.LEFT, padx=5)
 
     def _bind_events(self) -> None:
         """Bind keyboard shortcuts and events"""
@@ -99,17 +108,19 @@ class CardListView(ttk.Frame):
 
     def _on_add_flashcard(self) -> None:
         """Handle add flashcard button click"""
-        if self.dialog_open:
-            return
-
         self.navigation_controller.navigate(f"/decks/{self.deck_id}/cards/new")
 
     def _on_generate_ai(self) -> None:
         """Handle generate with AI button click"""
-        if self.dialog_open:
-            return
-
         self.navigation_controller.navigate(f"/decks/{self.deck_id}/cards/generate-ai")
+        
+    def _on_start_study_click(self) -> None:
+        """Handle start study button click"""
+        try:
+            self.navigation_controller.navigate(f"/study/session/{self.deck_id}")
+        except Exception as e:
+            self.show_toast("Błąd", f"Nie udało się rozpocząć nauki: {str(e)}")
+            logging.error(f"Error starting study session: {str(e)}", exc_info=True)
 
     def _on_edit_flashcard(self, flashcard_id: int) -> None:
         """Handle flashcard edit request"""
