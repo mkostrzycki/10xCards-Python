@@ -322,4 +322,5 @@ class DeckListView(ttk.Frame):
             self.show_toast("Błąd", "Musisz być zalogowany aby przeglądać talie.")
             self.navigation_controller.navigate("/profiles")
             return None
-        return user.id
+
+        return int(user.id)
