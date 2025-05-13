@@ -232,7 +232,7 @@ class TestHandleEndSession:
 
         # Assert
         mock_study_service.end_session.assert_called_once()
-        mock_navigation_controller.navigate.assert_called_once_with("/decks/10")
+        mock_navigation_controller.navigate.assert_called_once_with("/decks/10/cards")
 
 
 class TestHelperMethods:
