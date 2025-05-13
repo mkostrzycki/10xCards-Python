@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS ReviewLogs (
     reviewed_at TEXT NOT NULL,      -- ISO8601 datetime string
     scheduler_params_at_review TEXT NOT NULL, -- JSON of fsrs.Scheduler.parameters active at review time
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_profile_id) REFERENCES UserProfiles(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_profile_id) REFERENCES Users(id) ON DELETE CASCADE,
     FOREIGN KEY (flashcard_id) REFERENCES Flashcards(id) ON DELETE CASCADE
 );
 
