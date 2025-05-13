@@ -59,13 +59,13 @@ class ReviewLogRepositoryImpl(IReviewLogRepository):
 
             query = """
                 INSERT INTO ReviewLogs (
-                    user_profile_id, flashcard_id, review_log_data, 
+                    user_profile_id, flashcard_id, review_log_data,
                     fsrs_rating, reviewed_at, scheduler_params_at_review
                 ) VALUES (?, ?, ?, ?, ?, ?)
             """
             params = (user_id, flashcard_id, review_log_json, rating, reviewed_at_str, scheduler_params_json)
 
-            cursor = self._execute_query(query, params)
+            self._execute_query(query, params)
             conn.commit()
 
             logger.debug(f"Added review log for user {user_id}, flashcard {flashcard_id}, rating {rating}")

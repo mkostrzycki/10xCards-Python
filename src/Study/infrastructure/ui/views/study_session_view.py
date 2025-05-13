@@ -5,7 +5,6 @@ import tkinter as tk
 from typing import Dict
 
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
 from ttkbootstrap.dialogs import Messagebox
 
 from Study.application.presenters.study_presenter import StudyPresenter
