@@ -20,11 +20,11 @@ try:
     # AuthenticationError for session_service
     from src.Shared.domain.errors import AuthenticationError as SrcAuthError
     from Shared.domain.errors import AuthenticationError as DirectAuthError
-    
+
     # Make sure the same class is used regardless of import style
     if SrcAuthError is not DirectAuthError:
         builtins.AuthenticationError = SrcAuthError
-    
+
     # OpenRouter exceptions
     from src.CardManagement.infrastructure.api_clients.openrouter.exceptions import (
         AIAPIAuthError as SrcAIAPIAuthError,
@@ -42,7 +42,7 @@ try:
         AIRateLimitError as DirectAIRateLimitError,
         FlashcardGenerationError as DirectFlashcardGenerationError,
     )
-    
+
     # Make sure the same classes are used regardless of import style
     if SrcAIAPIAuthError is not DirectAIAPIAuthError:
         builtins.AIAPIAuthError = SrcAIAPIAuthError
@@ -56,6 +56,6 @@ try:
         builtins.AIRateLimitError = SrcAIRateLimitError
     if SrcFlashcardGenerationError is not DirectFlashcardGenerationError:
         builtins.FlashcardGenerationError = SrcFlashcardGenerationError
-        
+
 except ImportError:
     pass  # Skip if imports not available yet
