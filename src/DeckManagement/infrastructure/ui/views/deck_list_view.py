@@ -99,7 +99,7 @@ class DeckListView(ttk.Frame, IDeckListView):
             return
 
         self.dialog_open = True
-        CreateDeckDialog(self, on_confirm=self._handle_deck_creation, on_cancel=self._handle_dialog_cancelled)
+        CreateDeckDialog(self, on_save=self._handle_deck_creation, on_cancel=self._handle_dialog_cancelled)
 
     def _show_delete_confirmation(self, deck_id: int) -> None:
         """Show confirmation dialog for deck deletion"""
