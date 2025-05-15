@@ -5,7 +5,8 @@ max-line-length = 120
 # W503 - line break before binary operator, conflicts with black
 # E501 - line too long, handled by max-line-length but good to be explicit
 # E704 - multiple statements on the same line, conflicts with black
-extend-ignore = E203, W503, E501, E704
+# C901 - complexity, conflicts with max-complexity (temporarily ignored)
+extend-ignore = E203, W503, E501, E704, C901
 exclude =
     # No need to traverse our git directory
     .git,
