@@ -53,6 +53,7 @@ class FlashcardEditPresenter:
         if not self._flashcard_id:
             return
 
+        self._is_loading = True
         self._view.show_loading(True)
         try:
             flashcard = self._card_service.get_flashcard(self._flashcard_id)
@@ -69,6 +70,7 @@ class FlashcardEditPresenter:
             self._view.show_toast("Błąd", error_msg)
             self.navigate_back()
         finally:
+            self._is_loading = False
             self._view.show_loading(False)
 
     def handle_text_change(self, front_text: str, back_text: str) -> None:
@@ -93,6 +95,7 @@ class FlashcardEditPresenter:
         if self._is_saving:
             return
 
+        self._is_saving = True
         self._view.show_saving(True)
         try:
             if self._flashcard_id:
@@ -117,6 +120,7 @@ class FlashcardEditPresenter:
             logger.error(error_msg, exc_info=True)
             self._view.show_toast("Błąd", error_msg)
         finally:
+            self._is_saving = False
             self._view.show_saving(False)
 
     def delete(self) -> None:
@@ -131,6 +135,7 @@ class FlashcardEditPresenter:
         if not self._flashcard_id:
             return
 
+        self._is_saving = True
         self._view.show_saving(True)
         try:
             self._card_service.delete_flashcard(flashcard_id=self._flashcard_id)
@@ -143,6 +148,7 @@ class FlashcardEditPresenter:
             logger.error(error_msg, exc_info=True)
             self._view.show_toast("Błąd", error_msg)
         finally:
+            self._is_saving = False
             self._view.show_saving(False)
 
     def navigate_back(self) -> None:

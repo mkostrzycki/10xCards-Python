@@ -194,3 +194,6 @@ class FlashcardEditView(ttk.Frame, IFlashcardEditView):
     def update_save_button_state(self, is_enabled: bool) -> None:
         """Update save button state."""
         self.save_btn.configure(state="normal" if is_enabled else "disabled")
+        # Also update delete button if it exists (only in edit mode)
+        if hasattr(self, "delete_btn") and not self.presenter._is_saving:
+            self.delete_btn.configure(state="normal")
