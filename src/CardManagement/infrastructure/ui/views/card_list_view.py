@@ -7,9 +7,9 @@ from CardManagement.domain.models.Flashcard import Flashcard
 from CardManagement.application.card_service import CardService
 from Shared.application.session_service import SessionService
 from Shared.ui.widgets.header_bar import HeaderBar
+from Shared.ui.widgets.confirmation_dialog import ConfirmationDialog
 from CardManagement.infrastructure.ui.widgets.flashcard_table import FlashcardTable
 from CardManagement.infrastructure.ui.widgets.button_panel import ButtonPanel
-from CardManagement.infrastructure.ui.widgets.delete_confirmation_dialog import DeleteConfirmationDialog
 
 
 class FlashcardViewModel:
@@ -138,9 +138,22 @@ class CardListView(ttk.Frame):
 
         self.dialog_open = True
         self.deleting_id = flashcard_id
-        DeleteConfirmationDialog(
-            self, flashcard.front_text, self._handle_flashcard_deletion, self._handle_deletion_cancel
+
+        # Create preview of flashcard text
+        preview = (flashcard.front_text[:30] + "...") if len(flashcard.front_text) > 30 else flashcard.front_text
+        message = f"Czy na pewno usunąć fiszkę '{preview}'?"
+
+        dialog = ConfirmationDialog(
+            self,
+            "Usuń fiszkę",
+            message,
+            confirm_text="Usuń",
+            confirm_style="danger.TButton",
+            cancel_text="Anuluj",
+            on_confirm=self._handle_flashcard_deletion,
+            on_cancel=self._handle_deletion_cancel,
         )
+        dialog.show()
 
     def _find_flashcard_by_id(self, flashcard_id: int) -> Optional[FlashcardViewModel]:
         """Find a flashcard by its ID

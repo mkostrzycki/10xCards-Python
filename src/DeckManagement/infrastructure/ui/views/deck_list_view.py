@@ -10,9 +10,9 @@ from DeckManagement.domain.models.Deck import Deck
 from DeckManagement.application.deck_service import DeckService
 from Shared.application.session_service import SessionService
 from Shared.ui.widgets.header_bar import HeaderBar
+from Shared.ui.widgets.confirmation_dialog import ConfirmationDialog
 from DeckManagement.infrastructure.ui.widgets.deck_table import DeckTable, DeckTableItem
 from DeckManagement.infrastructure.ui.widgets.create_deck_dialog import CreateDeckDialog
-from DeckManagement.infrastructure.ui.widgets.delete_confirmation_dialog import DeleteConfirmationDialog
 
 
 class DeckViewModel(DeckTableItem):
@@ -224,14 +224,27 @@ class DeckListView(ttk.Frame):
         if not self._ensure_user_authenticated("usunąć talię"):
             return
 
-        # Find deck name
+        # Find deck
         deck_to_delete = self._find_deck_by_id(deck_id)
         if not deck_to_delete:
             return
 
         self.dialog_open = True
         self.deleting_deck_id = deck_id
-        DeleteConfirmationDialog(self, deck_to_delete.name, self._handle_deck_deletion, self._handle_deletion_cancel)
+
+        message = f"Czy na pewno usunąć talię '{deck_to_delete.name}' i wszystkie jej fiszki?"
+
+        dialog = ConfirmationDialog(
+            self,
+            "Usuń talię",
+            message,
+            confirm_text="Usuń",
+            confirm_style="danger.TButton",
+            cancel_text="Anuluj",
+            on_confirm=self._handle_deck_deletion,
+            on_cancel=self._handle_deletion_cancel,
+        )
+        dialog.show()
 
     def _find_deck_by_id(self, deck_id: int) -> Optional[DeckViewModel]:
         """Find a deck by its ID
