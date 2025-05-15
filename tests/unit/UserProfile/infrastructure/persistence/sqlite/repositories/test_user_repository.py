@@ -70,7 +70,14 @@ def test_add_user_success(mocker: MockerFixture, repository, mock_db_provider, s
 
     # Verify SQL query was executed with correct parameters
     mock_db_provider.get_connection.return_value.execute.assert_any_call(
-        mocker.ANY, (sample_user.username, sample_user.hashed_password, sample_user.encrypted_api_key)
+        mocker.ANY,
+        (
+            sample_user.username,
+            sample_user.hashed_password,
+            sample_user.encrypted_api_key,
+            sample_user.default_llm_model,
+            sample_user.app_theme,
+        ),
     )
 
 
