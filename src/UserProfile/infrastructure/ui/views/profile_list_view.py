@@ -76,7 +76,7 @@ class ProfileListView(ttk.Frame):
             columns=("username", "protected"),
             show="headings",
             selectmode="browse",
-            height=10,
+            height=25,
             yscrollcommand=scrollbar.set,
         )
 

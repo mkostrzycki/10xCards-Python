@@ -39,7 +39,7 @@ class DeckTable(ttk.Frame):
         self.grid_columnconfigure(0, weight=1)
 
         # Create Treeview
-        self.tree = ttk.Treeview(self, columns=("name", "created_at"), show="headings", selectmode="browse")
+        self.tree = ttk.Treeview(self, columns=("name", "created_at"), show="headings", selectmode="browse", height=25)
 
         # Configure columns
         self.tree.heading("name", text="Nazwa", anchor=W)
