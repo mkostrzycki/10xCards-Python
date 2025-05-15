@@ -47,15 +47,15 @@ class StudySessionView(ttk.Frame):
         self.card_frame = ttk.Frame(self, padding=20)
 
         # Front side
-        self.front_label = ttk.Label(self.card_frame, text="Pytanie", font=("TkDefaultFont", 12, "bold"))
-        self.front_text = ttk.Text(self.card_frame, wrap="word", width=50, height=5, font=("TkDefaultFont", 12))
+        self.front_label = ttk.Label(self.card_frame, text="Przód", font=("TkDefaultFont", 12, "bold"))
+        self.front_text = ttk.Text(self.card_frame, wrap="word", width=50, height=3, font=("TkDefaultFont", 12))
         self.front_text.configure(state="disabled")
 
         # Separator
         self.separator = ttk.Separator(self.card_frame, orient="horizontal")
 
         # Back side
-        self.back_label = ttk.Label(self.card_frame, text="Odpowiedź", font=("TkDefaultFont", 12, "bold"))
+        self.back_label = ttk.Label(self.card_frame, text="Tył", font=("TkDefaultFont", 12, "bold"))
         self.back_text = ttk.Text(self.card_frame, wrap="word", width=50, height=5, font=("TkDefaultFont", 12))
         self.back_text.configure(state="disabled")
 
@@ -64,7 +64,7 @@ class StudySessionView(ttk.Frame):
 
         # Show answer button
         self.show_answer_button = ttk.Button(
-            self.buttons_frame, text="Pokaż odpowiedź", command=self._on_show_answer, style="primary.TButton", width=20
+            self.buttons_frame, text="Pokaż tył karty", command=self._on_show_answer, style="primary.TButton", width=20
         )
 
         # Rating buttons frame
