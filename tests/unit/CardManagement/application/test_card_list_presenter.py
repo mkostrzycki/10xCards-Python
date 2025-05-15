@@ -178,7 +178,7 @@ def test_generate_with_ai(presenter, mock_navigation):
     presenter.generate_with_ai()
 
     # Assert
-    mock_navigation.navigate.assert_called_once_with("/decks/1/cards/generate-ai")
+    mock_navigation.navigate.assert_called_once_with("/decks/1/cards/generate")
 
 
 def test_start_study_session(presenter, mock_navigation):
