@@ -1,9 +1,9 @@
 import logging
 from typing import Callable, List, Any, Protocol, Optional
+from tkinter.scrolledtext import ScrolledText
 
 import ttkbootstrap as ttk
-from ttkbootstrap.dialogs import MessageDialog
-from ttkbootstrap.scrolled import ScrolledText
+from ttkbootstrap.dialogs import Messagebox
 
 from CardManagement.application.services.ai_service import AIService
 from CardManagement.application.card_service import CardService
@@ -55,6 +55,7 @@ class AIReviewSingleFlashcardView(ttk.Frame):
         self.has_unsaved_changes = False
         self._init_complete = False
         self.save_button: Optional[ttk.Button] = None  # Inicjalizacja zmiennej przed jej użyciem
+        self._active_toplevel_bindings: List[tuple[str, str]] = []  # Store (sequence, binding_id)
 
         # Get current flashcard DTO
         self.current_dto = self.generated_flashcards_dtos[self.current_flashcard_index]
@@ -84,34 +85,35 @@ class AIReviewSingleFlashcardView(ttk.Frame):
         self.content_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
         self.content_frame.grid_columnconfigure(1, weight=1)
 
-        # Front text
+        # Front text area
         ttk.Label(self.content_frame, text="Przód:", font=("TkDefaultFont", 12)).grid(
             row=0, column=0, sticky="nw", pady=(0, 5)
         )
-        self.front_text = ScrolledText(self.content_frame, height=6, width=50, padding=(0, 0, 5, 0))
-        self.front_text.grid(row=0, column=1, sticky="ew", pady=(0, 10))
+        self.front_text = ScrolledText(self.content_frame, height=6, width=50, wrap=ttk.WORD)
+        self.front_text.grid(row=0, column=1, sticky="nsw", pady=(0, 2))
         self.front_text.insert("1.0", self.current_dto.front)
 
-        # Back text
+        self.front_char_count = ttk.Label(self.content_frame, text=f"0/{self.FRONT_TEXT_MAX_LENGTH}")
+        self.front_char_count.grid(row=1, column=1, sticky="ne", pady=(0, 10))  # Below front_text
+
+        # Back text area
         ttk.Label(self.content_frame, text="Tył:", font=("TkDefaultFont", 12)).grid(
-            row=1, column=0, sticky="nw", pady=(0, 5)
+            row=2, column=0, sticky="nw", pady=(0, 5)  # Adjusted row
         )
-        self.back_text = ScrolledText(self.content_frame, height=10, width=50, padding=(0, 0, 5, 0))
-        self.back_text.grid(row=1, column=1, sticky="ew", pady=(0, 10))
+        self.back_text = ScrolledText(self.content_frame, height=10, width=50, wrap=ttk.WORD)
+        self.back_text.grid(row=2, column=1, sticky="nsw", pady=(0, 2))
         self.back_text.insert("1.0", self.current_dto.back)
+
+        self.back_char_count = ttk.Label(self.content_frame, text=f"0/{self.BACK_TEXT_MAX_LENGTH}")
+        self.back_char_count.grid(row=3, column=1, sticky="ne", pady=(0, 10))  # Below back_text, adjusted row
 
         # Optional: Display tags if available
         if self.current_dto.tags:
-            ttk.Label(self.content_frame, text="Tagi:").grid(row=2, column=0, sticky="nw", pady=(0, 5))
+            ttk.Label(self.content_frame, text="Tagi:").grid(row=4, column=0, sticky="nw", pady=(0, 5))  # Adjusted row
             tags_text = ", ".join(self.current_dto.tags)
-            ttk.Label(self.content_frame, text=tags_text).grid(row=2, column=1, sticky="w", pady=(0, 10))
-
-        # Add character count indicators
-        self.front_char_count = ttk.Label(self.content_frame, text=f"0/{self.FRONT_TEXT_MAX_LENGTH}")
-        self.front_char_count.grid(row=0, column=2, sticky="ne", padx=(5, 0))
-
-        self.back_char_count = ttk.Label(self.content_frame, text=f"0/{self.BACK_TEXT_MAX_LENGTH}")
-        self.back_char_count.grid(row=1, column=2, sticky="ne", padx=(5, 0))
+            ttk.Label(self.content_frame, text=tags_text).grid(
+                row=4, column=1, sticky="w", pady=(0, 10)
+            )  # Adjusted row
 
         # Update character counts initially
         self._update_char_count(self.front_text, self.front_char_count, self.FRONT_TEXT_MAX_LENGTH)
@@ -119,7 +121,7 @@ class AIReviewSingleFlashcardView(ttk.Frame):
 
         # Button frame
         self.button_frame = ttk.Frame(self)
-        self.button_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=10)
+        self.button_frame.grid(row=5, column=0, sticky="ew", padx=10, pady=10)
         self.button_frame.grid_columnconfigure(0, weight=1)
         self.button_frame.grid_columnconfigure(1, weight=1)
 
@@ -145,17 +147,48 @@ class AIReviewSingleFlashcardView(ttk.Frame):
         # Bind text changes to update character counts and track changes
         self.front_text.bind(
             "<<Modified>>",
-            lambda e: self._on_text_changed(self.front_text, self.front_char_count, self.FRONT_TEXT_MAX_LENGTH),
+            self._handle_front_text_changed,
         )
         self.back_text.bind(
             "<<Modified>>",
-            lambda e: self._on_text_changed(self.back_text, self.back_char_count, self.BACK_TEXT_MAX_LENGTH),
+            self._handle_back_text_changed,
         )
 
-        # Keyboard shortcuts
-        self.bind("<Control-s>", lambda e: self._on_save_and_continue())
-        self.bind("<Control-d>", lambda e: self._on_discard_and_continue())
-        self.bind("<Escape>", lambda e: self._on_back())
+        # Keyboard shortcuts - bound to toplevel window for global effect within this view context
+        toplevel = self.winfo_toplevel()
+        if toplevel and toplevel.winfo_exists():
+            # Save and Continue
+            event_sequence_save = "<Control-s>"
+            binding_id_save = toplevel.bind(event_sequence_save, self._handle_save_shortcut, add="+")
+            self._active_toplevel_bindings.append((event_sequence_save, binding_id_save))
+
+            # Discard and Continue
+            event_sequence_discard = "<Control-d>"
+            binding_id_discard = toplevel.bind(event_sequence_discard, self._handle_discard_shortcut, add="+")
+            self._active_toplevel_bindings.append((event_sequence_discard, binding_id_discard))
+
+            # Back (Escape)
+            event_sequence_escape = "<Escape>"
+            binding_id_escape = toplevel.bind(event_sequence_escape, self._handle_escape_shortcut, add="+")
+            self._active_toplevel_bindings.append((event_sequence_escape, binding_id_escape))
+        else:
+            logging.warning("Toplevel window not available for binding keyboard shortcuts.")
+
+    # Helper methods for event bindings to satisfy linter E731
+    def _handle_front_text_changed(self, event: Any) -> None:
+        self._on_text_changed(self.front_text, self.front_char_count, self.FRONT_TEXT_MAX_LENGTH)
+
+    def _handle_back_text_changed(self, event: Any) -> None:
+        self._on_text_changed(self.back_text, self.back_char_count, self.BACK_TEXT_MAX_LENGTH)
+
+    def _handle_save_shortcut(self, event: Any) -> None:
+        self._on_save_and_continue()
+
+    def _handle_discard_shortcut(self, event: Any) -> None:
+        self._on_discard_and_continue()
+
+    def _handle_escape_shortcut(self, event: Any) -> None:
+        self._on_back()
 
     def _on_text_changed(self, text_widget: ScrolledText, count_label: ttk.Label, max_length: int) -> None:
         """Handle text change events for both front and back text fields."""
@@ -203,7 +236,7 @@ class AIReviewSingleFlashcardView(ttk.Frame):
     def _on_back(self) -> None:
         """Handle back button click."""
         if self.has_unsaved_changes:
-            confirm = MessageDialog.yesno(
+            confirm = Messagebox.yesno(
                 title="Anulować przeglądanie?",
                 message="Masz niezapisane zmiany. Czy na pewno chcesz przerwać przeglądanie fiszek?",
                 parent=self,
@@ -261,12 +294,13 @@ class AIReviewSingleFlashcardView(ttk.Frame):
 
     def _on_discard_and_continue(self) -> None:
         """Discard the current flashcard and move to the next one."""
-        if self.has_unsaved_changes:
-            confirm = MessageDialog.yesno(
-                title="Odrzucić fiszkę?", message="Czy na pewno chcesz odrzucić tę fiszkę?", parent=self
-            )
-            if not confirm:
-                return
+        confirm = Messagebox.yesno(
+            title="Odrzucić fiszkę?",
+            message="Czy na pewno chcesz odrzucić tę fiszkę?",
+            parent=self,
+        )
+        if not confirm:
+            return
 
         self._proceed_to_next_flashcard()
 
@@ -301,3 +335,25 @@ class AIReviewSingleFlashcardView(ttk.Frame):
             total_count = len(self.generated_flashcards_dtos)
             self.show_toast("Zakończono", f"Zakończono przeglądanie {total_count} wygenerowanych fiszek")
             self.navigation_controller.navigate(f"/decks/{self.deck_id}/cards")
+
+    def destroy(self) -> None:
+        """Override destroy to unbind toplevel events."""
+        if hasattr(self, "_active_toplevel_bindings") and self._active_toplevel_bindings:
+            try:
+                toplevel = self.winfo_toplevel()
+                if toplevel and toplevel.winfo_exists():  # Check if toplevel still exists
+                    for seq, binding_id in self._active_toplevel_bindings:
+                        try:
+                            toplevel.unbind(seq, binding_id)
+                            logging.debug(f"Successfully unbound {seq} (ID: {binding_id}) from toplevel.")
+                        except ttk.tk.TclError as e:
+                            logging.debug(f"Error unbinding {seq} (ID: {binding_id}) from toplevel: {e}")
+                        except Exception as e_gen:  # Catch any other potential error during unbind
+                            logging.warning(f"Generic error unbinding {seq} (ID: {binding_id}): {e_gen}")
+            except Exception as e:
+                # Catch errors from winfo_toplevel() if self is in a detached state
+                logging.warning(f"Exception during toplevel unbinding preparation in destroy: {e}")
+
+            self._active_toplevel_bindings = []  # Clear the list
+
+        super().destroy()
