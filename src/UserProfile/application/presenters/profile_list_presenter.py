@@ -110,11 +110,8 @@ class ProfileListPresenter:
 
         try:
             if profile.is_password_protected:
-                # TODO: Navigate to login view (implement login view first)
-                # self._navigation.navigate(f"/login/{profile.id}")
-                self._view.show_toast(
-                    "Info", f"Logowanie na hasło jeszcze nie zaimplementowane dla profilu: {profile.username}"
-                )
+                # Nawiguj do widoku logowania
+                self._navigation.navigate(f"/profiles/{profile.id}/login")
             else:
                 # For unprotected profiles, log in directly
                 self._session_service.login(profile.username)

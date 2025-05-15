@@ -9,7 +9,7 @@ from Shared.infrastructure.persistence.sqlite.migrations import run_migrations
 from Shared.infrastructure.config import DATABASE_PATH, AVAILABLE_LLM_MODELS, AVAILABLE_APP_THEMES
 from Shared.application.session_service import SessionService
 from UserProfile.infrastructure.persistence.sqlite.repositories.UserRepositoryImpl import UserRepositoryImpl
-from UserProfile.application.user_profile_service import UserProfileService
+from UserProfile.application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
 from UserProfile.infrastructure.ui.views.profile_list_view import ProfileListView
 from UserProfile.infrastructure.ui.views.settings_view import SettingsView
 from DeckManagement.infrastructure.persistence.sqlite.repositories.DeckRepositoryImpl import DeckRepositoryImpl
@@ -56,23 +56,30 @@ class AppView(ttk.Frame):
         self.session_service = session_service
         self.navigation_controller = navigation_controller
 
-        # Create header frame
-        self.header = ttk.Frame(self)
-        self.header.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
-        self.grid_rowconfigure(1, weight=1)  # Main content row
-        self.grid_columnconfigure(0, weight=1)
+        # Configure grid weights for proper layout
+        self.grid_rowconfigure(0, weight=0)  # Header row - fixed height
+        self.grid_rowconfigure(1, weight=1)  # Main content row - expands
+        self.grid_columnconfigure(0, weight=1)  # Single column - expands
+
+        # Create header frame with distinct style
+        self.header = ttk.Frame(self, style="AppHeader.TFrame")
+        self.header.grid(row=0, column=0, sticky="ew", padx=0, pady=0)
+
+        # Dodaj minimalną wysokość i wypełnienie dla paska nagłówka
+        self.header.config(height=40)  # Minimalna wysokość
+        self.header.pack_propagate(False)  # Zapobiega zmniejszaniu się ramki
 
         # Create main content frame
         self.main_content = ttk.Frame(self)
         self.main_content.grid(row=1, column=0, sticky="nsew")
 
-        # Create session info label
-        self.session_info = ttk.Label(self.header, text="", style="secondary.TLabel")
-        self.session_info.pack(side=ttk.RIGHT, padx=5)
+        # Create session info label with right alignment
+        self.session_info = ttk.Label(self.header, text="", style="AppHeader.TLabel")
+        self.session_info.pack(side=ttk.RIGHT, padx=10, pady=5)
 
         # Settings button (shown only when logged in)
         self.settings_button = ttk.Button(
-            self.header, text="Ustawienia", style="secondary.TButton", command=self._show_settings
+            self.header, text="Ustawienia", style="AppHeader.TButton", command=self._show_settings
         )
 
         # Create toast container (for in-app notifications)
@@ -81,13 +88,17 @@ class AppView(ttk.Frame):
         # Update session info
         self._update_session_info()
 
+        # Bind to login/logout events for session info updates
+        parent.bind("<<UserLoggedIn>>", lambda e: self._update_session_info())
+        parent.bind("<<UserLoggedOut>>", lambda e: self._update_session_info())
+
     def _update_session_info(self) -> None:
         """Update the session info label based on current session state."""
         user = self.session_service.get_current_user()
         if user:
             self.session_info.configure(text=f"Zalogowany jako: {user.username}")
             # Show settings button when logged in
-            self.settings_button.pack(side=ttk.RIGHT, padx=5, before=self.session_info)
+            self.settings_button.pack(side=ttk.RIGHT, padx=10, pady=5, before=self.session_info)
         else:
             self.session_info.configure(text="")
             # Hide settings button when not logged in
@@ -112,6 +123,14 @@ class NavigationController(NavigationControllerProtocol):
         self.dynamic_view_factories: Dict[str, Callable] = {}
         self.current_view: Optional[ttk.Frame] = None
 
+    def show_login(self, profile: UserProfileSummaryViewModel) -> None:
+        """Show the profile login view.
+
+        Args:
+            profile: Profile to log into
+        """
+        self.navigate(f"/profiles/{profile.id}/login")
+
     def register_view(self, path: str, view: ttk.Frame) -> None:
         """Register a static view.
 
@@ -130,6 +149,23 @@ class NavigationController(NavigationControllerProtocol):
         """
         self.dynamic_view_factories[path_pattern] = view_factory
 
+    def show_settings(self) -> None:
+        """Navigate to settings view."""
+        self.navigate("/settings")
+
+    def show_deck_list(self) -> None:
+        """Navigate to deck list view."""
+        self.navigate("/decks")
+
+    def show_profile_list(self) -> None:
+        """Navigate to profile list view."""
+        self.navigate("/profiles")
+
+    def update_session_info(self) -> None:
+        """Update the session info in AppView."""
+        if hasattr(self.app_view, "_update_session_info"):
+            self.app_view._update_session_info()
+
     def navigate(self, path: str) -> None:
         """Navigate to a specific path.
 
@@ -141,10 +177,52 @@ class NavigationController(NavigationControllerProtocol):
             self._show_view(self.views[path])
             return
 
+        # Handle profile login
+        import re
+
+        if re.match(r"^/profiles/\d+/login$", path):
+            parts = path.split("/")
+            try:
+                profile_id = int(parts[2])
+
+                # Uzyskaj dostęp do profile_service
+                profile_service = self.app_view.session_service._profile_service
+
+                # Pobierz profil bezpośrednio metodą profile_service
+                try:
+                    user = profile_service.get_profile_by_id(profile_id)
+
+                    from UserProfile.application.user_profile_service import UserProfileSummaryViewModel
+                    from UserProfile.infrastructure.ui.views.profile_login_view import ProfileLoginView
+
+                    # Stwórz model widoku
+                    profile = UserProfileSummaryViewModel(
+                        id=profile_id, username=user.username, is_password_protected=bool(user.hashed_password)
+                    )
+
+                    # Stwórz widok logowania
+                    view = ProfileLoginView(
+                        parent=self.app_view.main_content,
+                        profile=profile,
+                        profile_service=profile_service,
+                        session_service=self.app_view.session_service,
+                        router=self,
+                        toast_callback=self.app_view.show_toast,
+                    )
+                    self._show_view(view)
+                    return
+                except Exception as e:
+                    self.app_view.show_toast("Błąd", f"Nie można znaleźć profilu: {str(e)}")
+                    self.navigate("/profiles")
+                    return
+
+            except Exception as e:
+                self.app_view.show_toast("Błąd", str(e))
+                self.navigate("/profiles")
+                return
+
         # Check if any dynamic view pattern matches
         for pattern, factory in self.dynamic_view_factories.items():
-            import re
-
             if pattern.endswith("/:id") and re.match(f"^{pattern[:-4]}/\\d+$", path):
                 # Extract ID and create view
                 id_str = path.split("/")[-1]
@@ -237,11 +315,14 @@ class NavigationController(NavigationControllerProtocol):
         if self.current_view is not None:
             self.current_view.grid_forget()
 
-        # Show new view
+        # Show new view in the main_content area, not replacing the whole AppView
         view.grid(row=0, column=0, sticky="nsew")
         self.app_view.main_content.grid_rowconfigure(0, weight=1)
         self.app_view.main_content.grid_columnconfigure(0, weight=1)
         self.current_view = view
+
+        # Update session info whenever view changes
+        self.app_view._update_session_info()
 
     def navigate_to_view(self, view_class: Type, **kwargs) -> None:
         """Navigate to a view of specified class, passing keyword arguments.
@@ -304,6 +385,18 @@ class TenXCardsApp(ttk.Window):
         self.resizable(False, False)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
+
+        # Configure AppHeader style
+        style = ttk.Style()
+        header_bg = style.colors.primary
+        header_fg = style.colors.info
+
+        # Tworzenie bardziej wyraźnego stylu dla nagłówka
+        style.configure("AppHeader.TFrame", background=header_bg, relief="raised", borderwidth=1)
+        style.configure(
+            "AppHeader.TLabel", background=header_bg, foreground=header_fg, font=("TkDefaultFont", 10, "bold")
+        )
+        style.configure("AppHeader.TButton", background=header_bg)
 
         # Get OpenRouter API client
         openrouter_api_client = dependencies.get("openrouter_api_client")
@@ -498,6 +591,8 @@ class TenXCardsApp(ttk.Window):
                         if current_theme != user.app_theme:
                             style.theme_use(user.app_theme)
                             logging.info(f"Successfully applied theme: {user.app_theme}")
+                        # Update session info to show logged in user
+                        navigation_controller.update_session_info()
 
                     # Schedule theme change with a short delay
                     self.after(100, apply_theme)
@@ -506,6 +601,7 @@ class TenXCardsApp(ttk.Window):
 
         # Bind to login event and navigation events
         self.bind("<<UserLoggedIn>>", on_user_logged_in)
+        self.bind("<<UserLoggedOut>>", lambda e: navigation_controller.update_session_info())
 
         # Start with profiles view
         navigation_controller.navigate("/profiles")
