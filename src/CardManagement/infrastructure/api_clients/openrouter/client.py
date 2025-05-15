@@ -17,7 +17,7 @@ from .exceptions import (
     OpenRouterError,
 )
 from .prompts import FLASHCARD_GENERATION_PROMPT, FLASHCARD_SCHEMA
-from .types import ChatMessage, ResponseFormat, ChatCompletionDTO, FlashcardDTO
+from .types import ChatMessage, ChatCompletionDTO, FlashcardDTO
 
 
 class OpenRouterAPIClient:
@@ -212,10 +212,14 @@ class OpenRouterAPIClient:
         try:
             # Get the content from the first choice
             if not response.choices or "content" not in response.choices[0]:
-                raise FlashcardGenerationError("Invalid API response format")
+                raise FlashcardGenerationError("Invalid API response format: No content in choices")
 
             # Parse the JSON content
             content = response.choices[0]["content"]
+            if not content:
+                raise FlashcardGenerationError("Invalid API response format: Empty content string")
+
+            self.logger.debug(f"Attempting to parse AI response content: {content[:500]}...")  # Log a snippet
             data = json.loads(content)
 
             # Validate against our schema
@@ -243,8 +247,15 @@ class OpenRouterAPIClient:
             return flashcards
 
         except json.JSONDecodeError as e:
-            raise FlashcardGenerationError(f"Invalid JSON in response: {str(e)}")
+            self.logger.error(f"Failed to decode JSON from AI response. Error: {str(e)}")
+            self.logger.error(f"Problematic AI response content: {content}")  # Log the full problematic content
+            raise FlashcardGenerationError(
+                f"AI returned an invalid JSON format that could not be parsed. Details: {str(e)}"
+            )
+        except FlashcardGenerationError:  # Re-raise our own exceptions
+            raise
         except Exception as e:
+            self.logger.error(f"Unexpected error parsing flashcards: {str(e)}", exc_info=True)
             raise FlashcardGenerationError(f"Error parsing flashcards: {str(e)}")
 
     @retry(
@@ -258,7 +269,7 @@ class OpenRouterAPIClient:
         messages: List[ChatMessage],
         *,
         model: Optional[str] = None,
-        response_format: Optional[ResponseFormat] = None,
+        response_format: Optional[dict] = None,
         **params: Any,
     ) -> ChatCompletionDTO:
         """Send a chat completion request to OpenRouter API.
@@ -303,10 +314,13 @@ class OpenRouterAPIClient:
                 selected_model = f"openrouter/{selected_model}"
                 self.logger.debug(f"Added openrouter/ prefix to model: {selected_model}")
 
+            # Convert ChatMessage objects to dictionaries
+            formatted_messages = [{"role": msg.role, "content": msg.content} for msg in messages]
+
             # Build completion params
             completion_params = {
                 "model": selected_model,
-                "messages": messages,
+                "messages": formatted_messages,
                 "max_tokens": 1000,  # Default to 1000 if not specified
                 "temperature": 0.3,
                 **params,  # Include any additional params passed to the function
@@ -413,8 +427,11 @@ class OpenRouterAPIClient:
         # Format the prompt
         messages = self._format_flashcard_prompt(raw_text)
 
-        # Set up response format for JSON - używamy właściwej struktury zagnieżdżonej ze schematem
-        response_format = ResponseFormat(type="json_schema", json_schema={"schema": FLASHCARD_SCHEMA})
+        # Set up response format for JSON - use a dictionary directly as expected by litellm
+        response_format_dict = {
+            "type": "json_object",  # or "json_object", depending on what litellm expects for schema-based JSON
+            "json_schema": {"schema": FLASHCARD_SCHEMA},
+        }
 
         try:
             # Make the API request
@@ -422,7 +439,7 @@ class OpenRouterAPIClient:
                 api_key=api_key,
                 messages=messages,
                 model=model,
-                response_format=response_format,
+                response_format=response_format_dict,  # Pass the dictionary here
                 temperature=temperature,
             )
 
