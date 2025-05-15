@@ -7,27 +7,49 @@ from src.CardManagement.domain.models.Flashcard import Flashcard
 
 
 @pytest.fixture
-def mock_view(mocker):
-    """Mock dla widoku sesji nauki."""
-    return mocker.Mock()
+def mock_view():
+    """Mock dla widoku."""
+    view = Mock()
+    view.display_card_front = Mock()
+    view.display_card_back = Mock()
+    view.show_rating_buttons = Mock()
+    view.hide_rating_buttons = Mock()
+    view.enable_show_answer_button = Mock()
+    view.disable_show_answer_button = Mock()
+    view.update_progress = Mock()
+    view.show_session_complete_message = Mock()
+    view.show_error_message = Mock()
+    return view
 
 
 @pytest.fixture
-def mock_study_service(mocker):
-    """Mock dla serwisu nauki."""
-    return mocker.Mock()
+def mock_study_service():
+    """Mock dla study service."""
+    service = Mock()
+    service.start_session = Mock()
+    service.get_current_card_for_review = Mock()
+    service.record_review = Mock()
+    service.proceed_to_next_card = Mock()
+    service.get_session_progress = Mock(return_value=(1, 10))
+    service.end_session = Mock()
+    return service
 
 
 @pytest.fixture
-def mock_navigation_controller(mocker):
+def mock_navigation():
     """Mock dla kontrolera nawigacji."""
-    return mocker.Mock()
+    controller = Mock()
+    controller.navigate = Mock()
+    return controller
 
 
 @pytest.fixture
-def mock_session_service(mocker):
-    """Mock dla serwisu sesji."""
-    return mocker.Mock()
+def mock_session_service():
+    """Mock dla session service."""
+    service = Mock()
+    service.is_authenticated = Mock(return_value=True)
+    service.get_current_user = Mock(return_value=Mock(id=1))
+    return service
 
 
 @pytest.fixture
@@ -47,12 +69,12 @@ def sample_flashcard():
 
 
 @pytest.fixture
-def study_presenter(mock_view, mock_study_service, mock_navigation_controller, mock_session_service):
+def study_presenter(mock_view, mock_study_service, mock_navigation, mock_session_service):
     """Presenter do testów."""
     return StudyPresenter(
         view=mock_view,
         study_service=mock_study_service,
-        navigation_controller=mock_navigation_controller,
+        navigation=mock_navigation,
         session_service=mock_session_service,
         deck_id=10,
         deck_name="Python Basics",
@@ -226,13 +248,13 @@ class TestHandleRateCard:
 class TestHandleEndSession:
     """Testy dla metody handle_end_session."""
 
-    def test_handle_end_session(self, study_presenter, mock_study_service, mock_navigation_controller):
+    def test_handle_end_session(self, study_presenter, mock_study_service, mock_navigation):
         # Act
         study_presenter.handle_end_session()
 
         # Assert
         mock_study_service.end_session.assert_called_once()
-        mock_navigation_controller.navigate.assert_called_once_with("/decks/10/cards")
+        mock_navigation.navigate.assert_called_once_with("/decks/10/cards")
 
 
 class TestHelperMethods:
