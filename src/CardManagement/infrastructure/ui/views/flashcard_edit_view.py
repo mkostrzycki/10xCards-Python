@@ -1,8 +1,9 @@
 import logging
 from typing import Callable, Optional, Any
+from tkinter import messagebox
 
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import RIGHT
+from ttkbootstrap.constants import RIGHT, LEFT
 
 from CardManagement.application.card_service import CardService
 from Shared.ui.widgets.header_bar import HeaderBar
@@ -88,6 +89,11 @@ class FlashcardEditView(ttk.Frame):
         self.cancel_btn = ttk.Button(button_bar, text="Anuluj", style="secondary.TButton", command=self._on_back)
         self.cancel_btn.pack(side=RIGHT, padx=(0, 5))
 
+        # Delete button (only in edit mode)
+        if self.flashcard_id:
+            self.delete_btn = ttk.Button(button_bar, text="Usuń", style="danger.TButton", command=self._on_delete)
+            self.delete_btn.pack(side=LEFT, padx=(0, 5))
+
         # Bind text change events
         self.front_text.bind("<<Modified>>", self._on_front_text_changed)
         self.back_text.bind("<<Modified>>", self._on_back_text_changed)
@@ -96,6 +102,8 @@ class FlashcardEditView(ttk.Frame):
         """Bind keyboard shortcuts and events"""
         self.bind("<BackSpace>", lambda e: self._on_back())
         self.bind("<Control-Return>", lambda e: self._on_save())
+        if self.flashcard_id:
+            self.bind("<Delete>", lambda e: self._on_delete())
 
     def _on_front_text_changed(self, event=None) -> None:
         """Handle front text changes"""
@@ -173,6 +181,47 @@ class FlashcardEditView(ttk.Frame):
             logging.error(f"Error saving flashcard: {str(e)}")
             self.saving = False
             self._update_save_button()
+
+    def _on_delete(self) -> None:
+        """Handle delete button click"""
+        if not self.flashcard_id:
+            return
+
+        if self.saving:
+            return
+
+        # Confirmation dialog
+        confirm = messagebox.askyesno(
+            title="Potwierdź usunięcie",
+            message="Czy na pewno chcesz usunąć fiszkę?",
+            parent=self,
+        )
+
+        if not confirm:
+            return
+
+        self.saving = True
+        self._update_save_button()
+        if hasattr(self, "delete_btn"):
+            self.delete_btn.configure(state="disabled")
+
+        try:
+            self.card_service.delete_flashcard(flashcard_id=self.flashcard_id)
+            self.show_toast("Sukces", "Fiszka została usunięta")
+            self.navigation_controller.navigate(f"/decks/{self.deck_id}/cards")
+        except ValueError as e:
+            self.show_toast("Błąd", str(e))
+            self.saving = False
+            self._update_save_button()
+            if hasattr(self, "delete_btn"):
+                self.delete_btn.configure(state="normal")
+        except Exception as e:
+            self.show_toast("Błąd", f"Wystąpił błąd podczas usuwania: {str(e)}")
+            logging.error(f"Error deleting flashcard {self.flashcard_id}: {str(e)}")
+            self.saving = False
+            self._update_save_button()
+            if hasattr(self, "delete_btn"):
+                self.delete_btn.configure(state="normal")
 
     def load_flashcard(self) -> None:
         """Load flashcard data for editing"""
