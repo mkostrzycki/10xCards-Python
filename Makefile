@@ -13,7 +13,7 @@ TEST_DIR = tests
 .PHONY: all install format lint check test test-bdd clean
 
 # Default target
-all: lint check test test-bdd
+all: format lint check test test-bdd
 
 # Install dependencies
 install: requirements-dev.txt
