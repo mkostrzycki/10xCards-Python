@@ -13,6 +13,8 @@ from CardManagement.infrastructure.api_clients.openrouter.exceptions import (
     FlashcardGenerationError,
 )
 from CardManagement.infrastructure.ui.views.ai_review_single_flashcard_view import AIReviewSingleFlashcardView
+from Shared.application.session_service import SessionService
+from UserProfile.application.user_profile_service import UserProfileService
 from Shared.ui.widgets.header_bar import HeaderBar
 
 
@@ -36,6 +38,8 @@ class AIGenerateView(ttk.Frame):
         deck_name: str,
         ai_service: AIService,
         card_service: CardService,
+        user_profile_service: UserProfileService,
+        session_service: SessionService,
         navigation_controller: NavigationControllerProtocol,
         show_toast: Callable[[str, str], None],
         available_llm_models: List[str] = [],
@@ -48,6 +52,8 @@ class AIGenerateView(ttk.Frame):
         self.navigation_controller = navigation_controller
         self.show_toast = show_toast
         self.available_llm_models = available_llm_models
+        self.user_profile_service = user_profile_service
+        self.session_service = session_service
 
         # State variables
         self.is_generating = False
@@ -109,6 +115,31 @@ class AIGenerateView(ttk.Frame):
         ttk.Label(models_frame, text="Model AI:").grid(row=0, column=0, padx=(0, 10))
 
         default_model = self.available_llm_models[0] if self.available_llm_models else ""
+        # Attempt to get user's preferred model
+        try:
+            current_user = self.session_service.get_current_user()
+            if current_user and current_user.id is not None:
+                # We need available_app_themes for get_user_settings, but it's not used here.
+                # Passing an empty list or a sensible default.
+                # TODO: Consider making available_app_themes optional in get_user_settings
+                # or find a better way to provide it if it becomes necessary for model selection.
+                user_settings = self.user_profile_service.get_user_settings(
+                    user_id=current_user.id,
+                    available_llm_models=self.available_llm_models,
+                    available_app_themes=[],  # Placeholder, as it's not directly used for model selection logic here
+                )
+                if user_settings.current_llm_model and user_settings.current_llm_model in self.available_llm_models:
+                    default_model = user_settings.current_llm_model
+                elif user_settings.current_llm_model:
+                    self.logger.warning(
+                        f"User's preferred model '{user_settings.current_llm_model}' is not in available models. "
+                        f"Using default: {default_model}"
+                    )
+            else:
+                self.logger.info("No logged-in user found, using default model.")
+        except Exception as e:
+            self.logger.error(f"Error fetching user's preferred model: {e}. Using default model.", exc_info=True)
+
         self.model_var = ttk.StringVar(value=default_model)
         models = self.available_llm_models
         self.model_combobox = ttk.Combobox(
@@ -156,14 +187,21 @@ class AIGenerateView(ttk.Frame):
         )
         self.cancel_generation_button.grid(row=0, column=2, padx=(10, 0))
 
+        # Initialize character count
+        self._on_text_changed()
+
     def _bind_events(self) -> None:
         """Bind keyboard shortcuts and events"""
         self.bind("<BackSpace>", lambda e: self._on_back())
         self.bind("<Escape>", lambda e: self._on_back())
         self.bind("<Control-Return>", lambda e: self._on_generate())
 
-        # Bind text changes for character count
-        self.text_input.bind("<<Modified>>", self._on_text_changed)
+        # Bind text changes for character count to the inner text widget
+        if hasattr(self.text_input, "text") and self.text_input.text:
+            self.text_input.text.bind("<<Modified>>", self._on_text_changed)
+        else:
+            # Fallback for safety, though ScrolledText should have .text
+            self.text_input.bind("<<Modified>>", self._on_text_changed)
 
     def _on_text_changed(self, event=None) -> None:
         """Update character count when text changes."""
@@ -176,7 +214,10 @@ class AIGenerateView(ttk.Frame):
             self.char_count.configure(foreground="red")
             self.generate_button.configure(state="disabled")
         else:
-            self.char_count.configure(foreground="black")
+            # Get default foreground color from ttk style for the current theme
+            style = ttk.Style()
+            default_fg = style.lookup("TLabel", "foreground")
+            self.char_count.configure(foreground=default_fg)
             self.generate_button.configure(state="normal")
 
         # Reset the modified flag
