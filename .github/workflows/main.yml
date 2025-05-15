@@ -33,7 +33,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y xvfb # Install xvfb
 
       - name: Lint with Flake8
-        run: flake8 src tests --ignore=C901 # C901 - complexity, temporarily ignored
+        run: flake8 src tests
 
       - name: Type check with Mypy
         run: mypy src tests
