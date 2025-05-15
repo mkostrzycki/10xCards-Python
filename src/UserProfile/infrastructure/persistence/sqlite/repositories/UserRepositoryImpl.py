@@ -58,8 +58,8 @@ class UserRepositoryImpl(IUserRepository):
             return User(
                 id=row["id"],
                 username=row["username"],
-                hashed_password=row["hashed_password"],
-                encrypted_api_key=row["encrypted_api_key"],
+                hashed_password=row["hashed_password"] if "hashed_password" in row.keys() else None,
+                encrypted_api_key=row["encrypted_api_key"] if "encrypted_api_key" in row.keys() else None,
                 default_llm_model=row["default_llm_model"] if "default_llm_model" in row.keys() else None,
                 app_theme=row["app_theme"] if "app_theme" in row.keys() else None,
                 created_at=datetime.fromisoformat(row["created_at"]),
@@ -120,14 +120,20 @@ class UserRepositoryImpl(IUserRepository):
             raise InvalidUserDataError("Username is required")
 
         query = """
-            INSERT INTO Users (username, hashed_password, encrypted_api_key)
-            VALUES (?, ?, ?)
+            INSERT INTO Users (username, hashed_password, encrypted_api_key, default_llm_model, app_theme)
+            VALUES (?, ?, ?, ?, ?)
         """
         try:
             logger.info(f"Adding new user with username: {user.username}")
             conn = self._db_provider.get_connection()
             conn.execute("PRAGMA foreign_keys = ON")
-            cursor = conn.execute(query, (user.username, user.hashed_password, user.encrypted_api_key))
+            cursor = conn.execute(query, (
+                user.username, 
+                user.hashed_password, 
+                user.encrypted_api_key,
+                user.default_llm_model,
+                user.app_theme
+            ))
             conn.commit()
 
             # Get the newly created user with timestamps
@@ -171,7 +177,7 @@ class UserRepositoryImpl(IUserRepository):
             InvalidUserDataError: If retrieved data is invalid
         """
         query = """
-            SELECT id, username, hashed_password, encrypted_api_key, created_at, updated_at
+            SELECT id, username, hashed_password, encrypted_api_key, default_llm_model, app_theme, created_at, updated_at
             FROM Users
             WHERE id = ?
         """
@@ -211,7 +217,7 @@ class UserRepositoryImpl(IUserRepository):
             InvalidUserDataError: If retrieved data is invalid
         """
         query = """
-            SELECT id, username, hashed_password, encrypted_api_key, created_at, updated_at
+            SELECT id, username, hashed_password, encrypted_api_key, default_llm_model, app_theme, created_at, updated_at
             FROM Users
             WHERE username = ?
         """
@@ -248,7 +254,7 @@ class UserRepositoryImpl(IUserRepository):
             InvalidUserDataError: If retrieved data is invalid
         """
         query = """
-            SELECT id, username, hashed_password, encrypted_api_key, created_at, updated_at
+            SELECT id, username, hashed_password, encrypted_api_key, default_llm_model, app_theme, created_at, updated_at
             FROM Users
             ORDER BY username
         """
