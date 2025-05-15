@@ -406,7 +406,6 @@ class TenXCardsApp(ttk.Window):
                 deck_name=deck.name,
                 card_service=card_service,
                 navigation_controller=navigation_controller,
-                show_toast=app_view.show_toast,
             )
 
         def create_edit_card_view(deck_id: int, flashcard_id: int) -> FlashcardEditView:
@@ -422,7 +421,6 @@ class TenXCardsApp(ttk.Window):
                 deck_name=deck.name,
                 card_service=card_service,
                 navigation_controller=navigation_controller,
-                show_toast=app_view.show_toast,
                 flashcard_id=flashcard_id,
             )
 
@@ -442,7 +440,6 @@ class TenXCardsApp(ttk.Window):
                 user_profile_service=profile_service,
                 session_service=session_service,
                 navigation_controller=navigation_controller,
-                show_toast=app_view.show_toast,
                 available_llm_models=AVAILABLE_LLM_MODELS,
             )
 
@@ -472,11 +469,17 @@ class TenXCardsApp(ttk.Window):
 
             return view
 
+        def create_ai_review_flashcard_view(**kwargs) -> AIReviewSingleFlashcardView:
+            """Create view for reviewing AI-generated flashcards."""
+            # All necessary parameters are passed via kwargs from AIGeneratePresenter._navigate_to_review
+            return AIReviewSingleFlashcardView(parent=app_view.main_content, **kwargs)
+
         # Register dynamic routes
         navigation_controller.register_dynamic_view("/decks/:id/cards", create_card_list_view)
         navigation_controller.register_dynamic_view("/decks/:id/cards/new", create_new_card_view)
         navigation_controller.register_dynamic_view("/decks/:id/cards/:card_id/edit", create_edit_card_view)
         navigation_controller.register_dynamic_view("/decks/:id/cards/generate", create_ai_generate_view)
+        navigation_controller.register_dynamic_view("/decks/:id/cards/review", create_ai_review_flashcard_view)
         navigation_controller.register_dynamic_view("/study/session/:id", create_study_session_view)
 
         # --- Bind Events ---
