@@ -321,7 +321,7 @@ class OpenRouterAPIClient:
             completion_params = {
                 "model": selected_model,
                 "messages": formatted_messages,
-                "max_tokens": 1000,  # Default to 1000 if not specified
+                "max_tokens": 3000,  # Increased from 1000
                 "temperature": 0.3,
                 **params,  # Include any additional params passed to the function
             }
@@ -335,6 +335,7 @@ class OpenRouterAPIClient:
                 safe_params["api_key"] = "sk-...redacted..."
 
             self.logger.debug(f"OpenRouter chat completion request params: {json.dumps(safe_params, default=str)}")
+            self.logger.debug(f"Custom headers for OpenRouter: {json.dumps(self.default_headers, default=str)}")
 
             # Make API call
             response = litellm.completion(**completion_params, api_key=api_key, custom_headers=self.default_headers)
@@ -429,8 +430,7 @@ class OpenRouterAPIClient:
 
         # Set up response format for JSON - use a dictionary directly as expected by litellm
         response_format_dict = {
-            "type": "json_object",  # or "json_object", depending on what litellm expects for schema-based JSON
-            "json_schema": {"schema": FLASHCARD_SCHEMA},
+            "type": "json_object",
         }
 
         try:
@@ -439,7 +439,7 @@ class OpenRouterAPIClient:
                 api_key=api_key,
                 messages=messages,
                 model=model,
-                response_format=response_format_dict,  # Pass the dictionary here
+                response_format=response_format_dict,
                 temperature=temperature,
             )
 
