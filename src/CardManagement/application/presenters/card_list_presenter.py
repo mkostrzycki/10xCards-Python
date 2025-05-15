@@ -101,7 +101,7 @@ class CardListPresenter:
 
     def generate_with_ai(self) -> None:
         """Navigate to AI generation view."""
-        self.navigation.navigate(f"/decks/{self.deck_id}/cards/generate-ai")
+        self.navigation.navigate(f"/decks/{self.deck_id}/cards/generate")
 
     def start_study_session(self) -> None:
         """Start a study session."""

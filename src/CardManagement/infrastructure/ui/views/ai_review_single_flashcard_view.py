@@ -254,8 +254,6 @@ class AIReviewSingleFlashcardView(ttk.Frame):
                     current_flashcard_index=self.current_flashcard_index,
                     ai_service=self.ai_service,
                     card_service=self.card_service,
-                    navigation_controller=self.navigation_controller,
-                    show_toast=self.show_toast,
                     available_llm_models=self.available_llm_models,
                     original_source_text=self.original_source_text,
                 )

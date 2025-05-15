@@ -91,9 +91,18 @@ class CardListView(ttk.Frame, ICardListView):
         )
         self.start_study_btn.pack(side=ttk.LEFT, padx=5)
 
+        # Ładuj karty po inicjalizacji UI
+        self.presenter.load_cards()
+
     def _bind_events(self) -> None:
         """Bind keyboard shortcuts and events"""
         self.bind("<BackSpace>", lambda e: self.presenter.navigate_back())
+        self.bind("<Visibility>", lambda e: self._on_visibility())
+
+    def _on_visibility(self) -> None:
+        """Handle visibility change event"""
+        if self.winfo_viewable():
+            self.presenter.load_cards()
 
     def _show_delete_confirmation(self, flashcard_id: int) -> None:
         """Show confirmation dialog for flashcard deletion"""

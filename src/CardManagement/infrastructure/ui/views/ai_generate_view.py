@@ -3,7 +3,7 @@ import threading
 from typing import Callable, Any, List, Optional
 
 import ttkbootstrap as ttk
-from ttkbootstrap.dialogs import MessageDialog
+from ttkbootstrap.dialogs import Messagebox
 from ttkbootstrap.scrolled import ScrolledText
 
 from CardManagement.application.services.ai_service import AIService
@@ -221,7 +221,7 @@ class AIGenerateView(ttk.Frame):
         """Handle back navigation"""
         if self.is_generating:
             # Confirm cancel
-            confirm = MessageDialog.yesno(
+            confirm = Messagebox.yesno(
                 title="Anulować generowanie?", message="Czy na pewno chcesz anulować generowanie fiszek?", parent=self
             )
             if not confirm:
@@ -233,7 +233,7 @@ class AIGenerateView(ttk.Frame):
 
     def _on_cancel_generation(self) -> None:
         """Handle cancellation of generation process."""
-        confirm = MessageDialog.yesno(
+        confirm = Messagebox.yesno(
             title="Anulować generowanie?", message="Czy na pewno chcesz anulować generowanie fiszek?", parent=self
         )
         if confirm:
@@ -316,8 +316,6 @@ class AIGenerateView(ttk.Frame):
                     current_flashcard_index=0,
                     ai_service=self.ai_service,
                     card_service=self.card_service,
-                    navigation_controller=self.navigation_controller,
-                    show_toast=self.show_toast,
                     available_llm_models=self.available_llm_models,
                     original_source_text=raw_text,
                 ),
