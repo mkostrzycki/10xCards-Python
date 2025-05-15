@@ -32,10 +32,10 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Lint with Flake8
-        run: flake8 . --ignore=C901
+        run: flake8 src tests --ignore=C901 # C901 - complexity, temporarily ignored
 
       - name: Type check with Mypy
-        run: mypy .
+        run: mypy src tests
 
       - name: Run unit tests with Pytest
         run: pytest tests/unit
