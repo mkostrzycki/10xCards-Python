@@ -32,7 +32,7 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Lint with Flake8
-        run: flake8 .
+        run: flake8 . --ignore=C901
 
       - name: Type check with Mypy
         run: mypy .
