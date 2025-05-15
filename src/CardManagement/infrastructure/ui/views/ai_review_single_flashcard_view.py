@@ -88,7 +88,7 @@ class AIReviewSingleFlashcardView(ttk.Frame):
         ttk.Label(self.content_frame, text="Przód:", font=("TkDefaultFont", 12)).grid(
             row=0, column=0, sticky="nw", pady=(0, 5)
         )
-        self.front_text = ScrolledText(self.content_frame, height=6, width=50)
+        self.front_text = ScrolledText(self.content_frame, height=6, width=50, padding=(0, 0, 5, 0))
         self.front_text.grid(row=0, column=1, sticky="ew", pady=(0, 10))
         self.front_text.insert("1.0", self.current_dto.front)
 
@@ -96,7 +96,7 @@ class AIReviewSingleFlashcardView(ttk.Frame):
         ttk.Label(self.content_frame, text="Tył:", font=("TkDefaultFont", 12)).grid(
             row=1, column=0, sticky="nw", pady=(0, 5)
         )
-        self.back_text = ScrolledText(self.content_frame, height=10, width=50)
+        self.back_text = ScrolledText(self.content_frame, height=10, width=50, padding=(0, 0, 5, 0))
         self.back_text.grid(row=1, column=1, sticky="ew", pady=(0, 10))
         self.back_text.insert("1.0", self.current_dto.back)
 
@@ -174,7 +174,10 @@ class AIReviewSingleFlashcardView(ttk.Frame):
             if self.save_button is not None:
                 self.save_button.configure(state="disabled")
         else:
-            count_label.configure(foreground="black")
+            # Get default foreground color from ttk style for the current theme
+            style = ttk.Style()
+            default_fg = style.lookup("TLabel", "foreground")
+            count_label.configure(foreground=default_fg)
             self._update_save_button()
 
         # Reset the modified flag
