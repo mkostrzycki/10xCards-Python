@@ -127,13 +127,10 @@ class UserRepositoryImpl(IUserRepository):
             logger.info(f"Adding new user with username: {user.username}")
             conn = self._db_provider.get_connection()
             conn.execute("PRAGMA foreign_keys = ON")
-            cursor = conn.execute(query, (
-                user.username, 
-                user.hashed_password, 
-                user.encrypted_api_key,
-                user.default_llm_model,
-                user.app_theme
-            ))
+            cursor = conn.execute(
+                query,
+                (user.username, user.hashed_password, user.encrypted_api_key, user.default_llm_model, user.app_theme),
+            )
             conn.commit()
 
             # Get the newly created user with timestamps
