@@ -417,6 +417,8 @@ class TenXCardsApp(ttk.Window):
                 deck_name=deck.name,
                 ai_service=ai_service,
                 card_service=card_service,
+                user_profile_service=profile_service,
+                session_service=session_service,
                 navigation_controller=navigation_controller,
                 show_toast=app_view.show_toast,
                 available_llm_models=AVAILABLE_LLM_MODELS,
