@@ -40,7 +40,7 @@ class FlashcardTable(ttk.Frame):
 
         # Create Treeview
         self.tree = ttk.Treeview(
-            self, columns=("front_text", "back_text", "source"), show="headings", selectmode="browse"
+            self, columns=("front_text", "back_text", "source"), show="headings", selectmode="browse", height=25
         )
 
         # Configure columns
@@ -93,8 +93,8 @@ class FlashcardTable(ttk.Frame):
         # Add new items
         for item in items:
             # Truncate text for display
-            front_preview = (item.front_text[:50] + "...") if len(item.front_text) > 50 else item.front_text
-            back_preview = (item.back_text[:50] + "...") if len(item.back_text) > 50 else item.back_text
+            front_preview = (item.front_text[:30] + "...") if len(item.front_text) > 30 else item.front_text
+            back_preview = (item.back_text[:30] + "...") if len(item.back_text) > 30 else item.back_text
             source_display = {"manual": "Ręcznie", "ai-generated": "AI", "ai-edited": "AI (edyt.)"}.get(
                 item.source, item.source
             )
