@@ -1,6 +1,6 @@
 import ttkbootstrap as ttk
 import logging
-from typing import Any, Dict, Optional, Protocol
+from typing import Any, Dict, Optional, Protocol, Callable, Type
 
 # --- Project Imports ---
 from Shared.infrastructure.logging import setup_logging
@@ -24,11 +24,13 @@ from CardManagement.infrastructure.api_clients.openrouter.client import OpenRout
 from CardManagement.infrastructure.ui.views.card_list_view import CardListView
 from CardManagement.infrastructure.ui.views.flashcard_edit_view import FlashcardEditView
 from CardManagement.infrastructure.ui.views.ai_generate_view import AIGenerateView
+from CardManagement.infrastructure.ui.views.ai_review_single_flashcard_view import AIReviewSingleFlashcardView
 from Study.application.services.study_service import StudyService
 from Study.application.presenters.study_presenter import StudyPresenter
 from Study.infrastructure.ui.views.study_session_view import StudySessionView
 from Study.infrastructure.persistence.sqlite.repositories.ReviewLogRepositoryImpl import ReviewLogRepositoryImpl
 from Shared.ui.widgets.toast_container import ToastContainer
+from Shared.application.navigation import NavigationControllerProtocol
 
 
 class NavigationProtocol(Protocol):
@@ -101,157 +103,162 @@ class AppView(ttk.Frame):
         self.toast_container.show_toast(title, message)
 
 
-class NavigationController:
-    """Controller managing view navigation and routing"""
+class NavigationController(NavigationControllerProtocol):
+    """Controller for navigating between different views in the application."""
 
     def __init__(self, app_view: AppView):
         self.app_view = app_view
         self.views: Dict[str, ttk.Frame] = {}
+        self.dynamic_view_factories: Dict[str, Callable] = {}
         self.current_view: Optional[ttk.Frame] = None
-        logging.info("NavigationController initialized")
 
-    def register_view(self, path: str, view_instance: ttk.Frame) -> None:
-        """Register a view instance for a static path."""
-        self.views[path] = view_instance
-        logging.info(f"View registered for path {path}")
-
-    def navigate_to_view(self, view_class: type, **kwargs) -> None:
-        """Create and navigate to a view instance directly with parameters.
+    def register_view(self, path: str, view: ttk.Frame) -> None:
+        """Register a static view.
 
         Args:
-            view_class: The view class to instantiate
-            **kwargs: Parameters to pass to the view constructor
+            path: The path to register the view at
+            view: The view to register
         """
-        if self.current_view:
-            self.current_view.grid_remove()
+        self.views[path] = view
 
-        try:
-            # Create the view instance
-            new_view = view_class(parent=self.app_view.main_content, **kwargs)
+    def register_dynamic_view(self, path_pattern: str, view_factory: Callable) -> None:
+        """Register a dynamic view factory.
 
-            # Sprawdź czy widok posiada wymagane atrybuty przed wyświetleniem
-            # (specjalnie dla AIReviewSingleFlashcardView)
-            if hasattr(view_class, "__name__") and view_class.__name__ == "AIReviewSingleFlashcardView":
-                if not hasattr(new_view, "save_button") or new_view.save_button is None:
-                    raise AttributeError("View initialization incomplete: missing save_button attribute")
-                if not hasattr(new_view, "_init_complete") or not new_view._init_complete:
-                    raise AttributeError("View initialization incomplete: _init_complete is False")
-
-            # Display the view
-            new_view.grid(row=0, column=0, sticky="nsew")
-            self.current_view = new_view
-            self.app_view._update_session_info()
-
-            # Trigger visibility event
-            self.current_view.event_generate("<Visibility>")
-            logging.info(f"Navigated to view {view_class.__name__} with params {kwargs}")
-
-        except Exception as e:
-            logging.error(f"Failed to create view {view_class.__name__}: {str(e)}")
-            self.app_view.show_toast("Błąd", str(e))
+        Args:
+            path_pattern: The path pattern to match against
+            view_factory: A function that creates the view
+        """
+        self.dynamic_view_factories[path_pattern] = view_factory
 
     def navigate(self, path: str) -> None:
-        """Navigate to a registered view."""
-        if self.current_view:
-            self.current_view.grid_remove()
-
-        # Extract dynamic path parameters
-        path_parts = path.split("/")
-        for registered_path, view in self.views.items():
-            registered_parts = registered_path.split("/")
-            if len(path_parts) == len(registered_parts):
-                params: Dict[str, Any] = {}
-                matches = True
-                for i, (path_part, registered_part) in enumerate(zip(path_parts, registered_parts)):
-                    if registered_part.startswith("{") and registered_part.endswith("}"):
-                        param_name = registered_part[1:-1]
-                        # Jeśli nazwa parametru sugeruje, że to ID, konwertujemy na int
-                        if param_name.endswith("_id"):
-                            try:
-                                params[param_name] = int(path_part)
-                            except ValueError:
-                                logging.error(f"Expected int for parameter {param_name}, got {path_part}")
-                                matches = False
-                                break
-                        else:
-                            params[param_name] = path_part
-                    elif path_part != registered_part:
-                        matches = False
-                        break
-
-                if matches:
-                    if callable(view):
-                        try:
-                            new_view = view(**params)
-                            self.views[path] = new_view
-                            new_view.grid(row=0, column=0, sticky="nsew")
-                            self.current_view = new_view
-                            self.app_view._update_session_info()
-                            # Wywołaj zdarzenie <Visibility> na widoku
-                            self.current_view.event_generate("<Visibility>")
-                            logging.info(f"Navigated to {path} with params {params}")
-                            return
-                        except Exception as e:
-                            logging.error(f"Failed to create view for {path}: {str(e)}")
-                            self.app_view.show_toast("Błąd", str(e))
-                            return
-                    else:
-                        view.grid(row=0, column=0, sticky="nsew")
-                        self.current_view = view
-                        self.app_view._update_session_info()
-                        # Wywołaj zdarzenie <Visibility> na widoku
-                        self.current_view.event_generate("<Visibility>")
-                        logging.info(f"Navigated to {path}")
-                        return
-
-        logging.error(f"No view registered for path {path}")
-
-    def show_deck_list(self) -> None:
-        """Navigate to the deck list view."""
-        self.navigate("/decks")
-
-    def show_profile_list(self) -> None:
-        """Navigate back to the profile list view."""
-        self.navigate("/profiles")
-
-    def show_settings(self) -> None:
-        """Navigate to the user settings view."""
-        self.navigate("/settings")
-
-    def show_login(self, profile) -> None:
-        """Navigate to the login view for a password-protected profile.
+        """Navigate to a specific path.
 
         Args:
-            profile: Profile to log into
+            path: The path to navigate to
         """
-        from UserProfile.infrastructure.ui.views.profile_login_view import ProfileLoginView
+        # If the path exists in static views, show it
+        if path in self.views:
+            self._show_view(self.views[path])
+            return
 
-        login_view = ProfileLoginView(
-            self.app_view.main_content,
-            profile,
-            self.app_view.session_service._profile_service,
-            self.app_view.session_service,
-            self,
-            self.app_view.show_toast,
-        )
+        # Check if any dynamic view pattern matches
+        for pattern, factory in self.dynamic_view_factories.items():
+            import re
 
-        # Temporarily register and navigate to the login view
-        temp_path = f"/login/{profile.id}"
-        self.views[temp_path] = login_view
+            if pattern.endswith("/:id") and re.match(f"^{pattern[:-4]}/\\d+$", path):
+                # Extract ID and create view
+                id_str = path.split("/")[-1]
+                try:
+                    id_val = int(id_str)
+                    view = factory(id_val)
+                    self._show_view(view)
+                    return
+                except (ValueError, Exception) as e:
+                    self.app_view.show_toast("Błąd", str(e))
+                    return
 
-        if self.current_view:
-            self.current_view.grid_remove()
+            # Pattern for card editing: /decks/:id/cards/:id/edit
+            if pattern.endswith("/:deck_id/cards/:card_id/edit") and re.match(
+                f"^{pattern.replace('/:deck_id', '/\\d+').replace('/:card_id', '/\\d+')}$", path
+            ):
+                parts = path.split("/")
+                try:
+                    deck_id = int(parts[-3])
+                    card_id = int(parts[-2])
+                    view = factory(deck_id=deck_id, card_id=card_id)
+                    self._show_view(view)
+                    return
+                except (ValueError, Exception) as e:
+                    self.app_view.show_toast("Błąd", str(e))
+                    return
 
-        login_view.grid(row=0, column=0, sticky="nsew")
-        self.current_view = login_view
-        self.app_view._update_session_info()
-        login_view.event_generate("<Visibility>")
-        logging.info(f"Navigated to login view for profile {profile.username}")
+            # Pattern for new card: /decks/:id/cards/new
+            if pattern.endswith("/:id/cards/new") and re.match(
+                f"^{pattern.replace('/:id', '/\\d+').replace('/new', '/new')}$", path
+            ):
+                parts = path.split("/")
+                try:
+                    deck_id = int(parts[-3])
+                    view = factory(deck_id=deck_id)
+                    self._show_view(view)
+                    return
+                except (ValueError, Exception) as e:
+                    self.app_view.show_toast("Błąd", str(e))
+                    return
 
-    def update_session_info(self) -> None:
-        """Update the session info in the app view."""
-        self.app_view._update_session_info()
-        logging.info("Session info updated in header")
+            # Pattern for AI generation: /decks/:id/cards/generate
+            if pattern.endswith("/:id/cards/generate") and re.match(
+                f"^{pattern.replace('/:id', '/\\d+').replace('/generate', '/generate')}$", path
+            ):
+                parts = path.split("/")
+                try:
+                    deck_id = int(parts[-3])
+                    view = factory(deck_id=deck_id)
+                    self._show_view(view)
+                    return
+                except (ValueError, Exception) as e:
+                    self.app_view.show_toast("Błąd", str(e))
+                    return
+
+            # Pattern for study session: /study/session/:id
+            if pattern.endswith("/study/session/:id") and re.match("^/study/session/\\d+$", path):
+                parts = path.split("/")
+                try:
+                    deck_id = int(parts[-1])
+                    view = factory(deck_id=deck_id)
+                    self._show_view(view)
+                    return
+                except (ValueError, Exception) as e:
+                    self.app_view.show_toast("Błąd", str(e))
+                    return
+
+        # If we get here, no matching view was found
+        self.app_view.show_toast("Błąd", f"Widok '{path}' nie został znaleziony")
+
+    def _show_view(self, view: ttk.Frame) -> None:
+        """Show the specified view.
+
+        Args:
+            view: The view to show
+        """
+        # Hide current view if it exists
+        if self.current_view is not None:
+            self.current_view.grid_forget()
+
+        # Show new view
+        view.grid(row=0, column=0, sticky="nsew")
+        self.app_view.main_content.grid_rowconfigure(0, weight=1)
+        self.app_view.main_content.grid_columnconfigure(0, weight=1)
+        self.current_view = view
+
+    def navigate_to_view(self, view_class: Type, **kwargs) -> None:
+        """Navigate to a view of specified class, passing keyword arguments.
+
+        Args:
+            view_class: The class of the view to navigate to
+            kwargs: Arguments to pass to the view constructor
+        """
+        # Find registered view of this class
+        for path, view in self.views.items():
+            if isinstance(view, view_class):
+                self._show_view(view)
+                return
+
+        # If not found, try to create a new instance
+        try:
+            parent = self.app_view.main_content
+            if issubclass(view_class, AIReviewSingleFlashcardView):
+                view = view_class(
+                    parent=parent,
+                    navigation_controller=self,
+                    show_toast=self.app_view.show_toast,
+                    **kwargs,
+                )
+                self._show_view(view)
+            else:
+                raise ValueError(f"Direct navigation to {view_class.__name__} not supported")
+        except Exception as e:
+            self.app_view.show_toast("Błąd", f"Nie udało się wyświetlić widoku: {str(e)}")
 
 
 # --- Main Application Class ---
@@ -331,12 +338,15 @@ class TenXCardsApp(ttk.Window):
             ),
         )
 
-        navigation_controller.register_view(
-            "/decks",
-            DeckListView(
-                app_view.main_content, deck_service, session_service, navigation_controller, app_view.show_toast
-            ),
+        # Create DeckListView with its presenter
+        deck_list_view = DeckListView(
+            app_view.main_content,
+            deck_service,
+            session_service,
+            navigation_controller,
+            app_view.show_toast,
         )
+        navigation_controller.register_view("/decks", deck_list_view)
 
         # Settings view
         navigation_controller.register_view(
