@@ -6,6 +6,7 @@ from typing import Optional, Protocol
 from CardManagement.domain.models.Flashcard import Flashcard
 from Study.application.services.study_service import StudyService
 from Shared.application.session_service import SessionService
+from Shared.application.navigation import NavigationControllerProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +25,6 @@ class StudySessionViewInterface(Protocol):
     def show_error_message(self, message: str) -> None: ...
 
 
-class NavigationControllerInterface(Protocol):
-    """Interface for the navigation controller."""
-
-    def navigate(self, route: str) -> None: ...
-
-
 class StudyPresenter:
     """Presenter for the study session view."""
 
@@ -37,7 +32,7 @@ class StudyPresenter:
         self,
         view: StudySessionViewInterface,
         study_service: StudyService,
-        navigation_controller: NavigationControllerInterface,
+        navigation: NavigationControllerProtocol,
         session_service: SessionService,
         deck_id: int,
         deck_name: str,
@@ -47,14 +42,14 @@ class StudyPresenter:
         Args:
             view: The study session view.
             study_service: The study service.
-            navigation_controller: The navigation controller.
+            navigation: The navigation controller.
             session_service: The session service.
             deck_id: The ID of the deck being studied.
             deck_name: The name of the deck being studied.
         """
         self.view = view
         self.study_service = study_service
-        self.navigation_controller = navigation_controller
+        self.navigation = navigation
         self.session_service = session_service
         self.deck_id = deck_id
         self.deck_name = deck_name
@@ -129,7 +124,7 @@ class StudyPresenter:
         """Handle ending the study session."""
         self.study_service.end_session()
         # Navigate back to the deck view
-        self.navigation_controller.navigate(f"/decks/{self.deck_id}/cards")
+        self.navigation.navigate(f"/decks/{self.deck_id}/cards")
         logger.info(f"Study session for deck {self.deck_id} ended")
 
     def _update_view_with_card(self, flashcard: Flashcard, show_answer: bool) -> None:
