@@ -51,4 +51,7 @@ Please generate flashcards in the following JSON format:
 Remember:
 - Focus on accuracy and clarity
 - Ensure all content is directly derived from the input text
-- Do not include any additional commentary or explanations outside the JSON structure"""
+- Do not include any additional commentary or explanations outside the JSON structure
+- CRITICAL: The output MUST be a valid JSON object. Ensure all strings are properly quoted and escaped (e.g., use \\" for a quote within a string). All brackets and braces must be correctly paired.
+- The entire response should be a single JSON object, starting with {{ and ending with }}.
+"""
