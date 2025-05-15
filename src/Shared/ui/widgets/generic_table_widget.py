@@ -124,6 +124,10 @@ class GenericTableWidget(ttk.Frame):
         selection = self.tree.selection()
         return selection[0] if selection else None
 
+    def clear_selection(self) -> None:
+        """Clear the current selection."""
+        self.tree.selection_remove(self.tree.selection())
+
     def _handle_select(self, event: tk.Event) -> None:
         """Handle selection change event."""
         if self._on_select:
