@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, Protocol, Callable
+from typing import List, Optional, Callable
 import tkinter as tk
 import ttkbootstrap as ttk
 import logging
@@ -9,6 +9,7 @@ from UserProfile.domain.repositories.exceptions import UsernameAlreadyExistsErro
 from Shared.application.session_service import SessionService
 from Shared.domain.errors import AuthenticationError
 from UserProfile.infrastructure.ui.views.create_profile_dialog import CreateProfileDialog
+from Shared.application.navigation import NavigationControllerProtocol
 
 
 @dataclass
@@ -19,12 +20,6 @@ class ProfileListViewState:
     error_message: Optional[str] = None
 
 
-class Router(Protocol):
-    def show_login(self, profile: UserProfileSummaryViewModel) -> None: ...
-    def show_deck_list(self) -> None: ...
-    def show_profile_list(self) -> None: ...
-
-
 class ProfileListView(ttk.Frame):
     """Main view displaying the list of user profiles."""
 
@@ -33,7 +28,7 @@ class ProfileListView(ttk.Frame):
         parent: tk.Widget,
         profile_service: UserProfileService,
         session_service: SessionService,
-        router: Router,
+        navigation_controller: NavigationControllerProtocol,
         toast_callback: Callable[[str, str], None],
     ):
         """Initialize the profile list view.
@@ -42,13 +37,13 @@ class ProfileListView(ttk.Frame):
             parent: Parent widget
             profile_service: Service for profile operations
             session_service: Service for session management
-            router: Navigation router
+            navigation_controller: Controller for navigation
             toast_callback: Callback for showing toast notifications
         """
         super().__init__(parent)
         self._profile_service = profile_service
         self._session_service = session_service
-        self._router = router
+        self._navigation = navigation_controller
         self._show_toast = toast_callback
         self._state = ProfileListViewState()
 
@@ -202,21 +197,25 @@ class ProfileListView(ttk.Frame):
 
         try:
             if profile.is_password_protected:
-                self._router.show_login(profile)
+                # TODO: Navigate to login view (implement login view first)
+                # self._navigation.navigate(f"/login/{profile.id}")
+                self._show_toast(
+                    "Info", f"Logowanie na hasło jeszcze nie zaimplementowane dla profilu: {profile.username}"
+                )
             else:
                 # For unprotected profiles, log in directly
                 self._session_service.login(profile.username)
-                self._router.show_deck_list()
+                self._navigation.navigate("/decks")
 
                 # Generate UserLoggedIn event to update theme
                 self.winfo_toplevel().event_generate("<<UserLoggedIn>>")
         except AuthenticationError as e:
             self._show_toast("Błąd", str(e))
-            self._router.show_profile_list()
+            self._navigation.navigate("/profiles")
         except Exception as e:
             self._show_toast("Błąd", "Wystąpił nieoczekiwany błąd podczas logowania.")
             logging.error(f"Unexpected error during login: {str(e)}")
-            self._router.show_profile_list()
+            self._navigation.navigate("/profiles")
 
     def _on_visibility(self, event: tk.Event) -> None:
         """Handle visibility event - refresh profiles when view becomes visible."""
