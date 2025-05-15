@@ -170,17 +170,70 @@ class AIGeneratePresenter:
 
     def _navigate_to_review(self, flashcards: List[FlashcardDTO], original_source_text: str) -> None:
         """Navigate to the flashcard review view."""
-        self._navigation.navigate(
-            "/decks/{deck_id}/cards/review".format(deck_id=self._deck_id),
-            deck_id=self._deck_id,
-            deck_name=self._deck_name,
-            generated_flashcards_dtos=flashcards,
-            current_flashcard_index=0,
-            ai_service=self._ai_service,
-            card_service=self._card_service,
-            available_llm_models=self._available_llm_models,
-            original_source_text=original_source_text,
-        )
+        try:
+            # Add debug logging
+            logger.debug(f"Attempting to navigate to review screen with {len(flashcards)} flashcards")
+
+            # Log the parameters being passed
+            logger.debug(
+                f"Navigation parameters: deck_id={self._deck_id}, deck_name={self._deck_name}, "
+                f"flashcards count={len(flashcards)}, current_index=0"
+            )
+
+            # Log the first flashcard content as a debug check
+            if flashcards:
+                logger.debug(f"First flashcard front: {flashcards[0].front[:50]}")
+                logger.debug(f"First flashcard back: {flashcards[0].back[:50]}")
+
+            # APPROACH 1: Try standard navigation first
+            try:
+                # Perform the navigation
+                self._navigation.navigate(
+                    "/decks/{deck_id}/cards/review".format(deck_id=self._deck_id),
+                    deck_id=self._deck_id,
+                    deck_name=self._deck_name,
+                    generated_flashcards_dtos=flashcards,
+                    current_flashcard_index=0,
+                    ai_service=self._ai_service,
+                    card_service=self._card_service,
+                    available_llm_models=self._available_llm_models,
+                    original_source_text=original_source_text,
+                )
+                logger.debug("Navigation call using path completed successfully")
+                return
+            except Exception as e:
+                logger.warning(f"Standard navigation to review failed: {str(e)}, trying alternate method")
+
+            # APPROACH 2: Fall back to direct navigation using view class (in case approach 1 fails)
+            try:
+                from CardManagement.infrastructure.ui.views.ai_review_single_flashcard_view import (
+                    AIReviewSingleFlashcardView,
+                )
+
+                logger.debug("Using direct navigate_to_view as fallback")
+                self._navigation.navigate_to_view(
+                    AIReviewSingleFlashcardView,
+                    deck_id=self._deck_id,
+                    deck_name=self._deck_name,
+                    generated_flashcards_dtos=flashcards,
+                    current_flashcard_index=0,
+                    ai_service=self._ai_service,
+                    card_service=self._card_service,
+                    available_llm_models=self._available_llm_models,
+                    original_source_text=original_source_text,
+                )
+                logger.debug("Direct navigation_to_view completed successfully")
+                return
+            except Exception as e:
+                logger.error(f"Both navigation methods failed: {str(e)}", exc_info=True)
+                raise
+
+        except Exception as e:
+            # Log any exception that occurs during navigation
+            logger.error(f"Exception during navigation to review screen: {str(e)}", exc_info=True)
+            self._view.show_toast("Błąd", f"Nie udało się przejść do ekranu przeglądu fiszek: {str(e)}")
+            # Ensure we clean up the UI state in case of error
+            self._after_generation()
 
     def navigate_back(self) -> None:
         """Navigate back to the card list."""

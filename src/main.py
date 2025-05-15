@@ -122,6 +122,8 @@ class NavigationController(NavigationControllerProtocol):
         self.views: Dict[str, ttk.Frame] = {}
         self.dynamic_view_factories: Dict[str, Callable] = {}
         self.current_view: Optional[ttk.Frame] = None
+        # Storage for the last navigate kwargs
+        self._last_navigate_kwargs: Dict[str, Any] = {}
 
     def show_login(self, profile: UserProfileSummaryViewModel) -> None:
         """Show the profile login view.
@@ -166,14 +168,25 @@ class NavigationController(NavigationControllerProtocol):
         if hasattr(self.app_view, "_update_session_info"):
             self.app_view._update_session_info()
 
-    def navigate(self, path: str) -> None:
+    def navigate(self, path: str, **kwargs) -> None:
         """Navigate to a specific path.
 
         Args:
             path: The path to navigate to
+            **kwargs: Additional arguments to pass to the view constructor
         """
+        # Set up logger
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        # Store the kwargs for potential use in dynamic view creation
+        self._last_navigate_kwargs = kwargs
+        logger.debug(f"Navigate called with path: {path}, kwargs keys: {list(kwargs.keys())}")
+
         # If the path exists in static views, show it
         if path in self.views:
+            logger.debug(f"Found static view for path: {path}")
             self._show_view(self.views[path])
             return
 
@@ -221,8 +234,31 @@ class NavigationController(NavigationControllerProtocol):
                 self.navigate("/profiles")
                 return
 
+        # Special handling for /decks/:id/cards/review
+        if re.match(r"^/decks/\d+/cards/review$", path):
+            logger.debug(f"Special handling for review path: {path}")
+            parts = path.split("/")
+            try:
+                deck_id = int(parts[2])
+                logger.debug(f"Review for deck_id: {deck_id}, kwargs: {list(kwargs.keys())}")
+
+                factory = self.dynamic_view_factories.get("/decks/:id/cards/review")
+                if factory:
+                    # Create view with all kwargs
+                    view = factory(**kwargs)
+                    self._show_view(view)
+                    return
+                else:
+                    logger.error("No factory found for /decks/:id/cards/review")
+            except Exception as e:
+                logger.error(f"Error handling review path: {str(e)}", exc_info=True)
+                self.app_view.show_toast("Błąd", f"Nie można utworzyć widoku przeglądu: {str(e)}")
+                return
+
         # Check if any dynamic view pattern matches
         for pattern, factory in self.dynamic_view_factories.items():
+            logger.debug(f"Checking pattern: {pattern} for path: {path}")
+
             if pattern.endswith("/:id") and re.match(f"^{pattern[:-4]}/\\d+$", path):
                 # Extract ID and create view
                 id_str = path.split("/")[-1]
@@ -303,6 +339,7 @@ class NavigationController(NavigationControllerProtocol):
                     return
 
         # If we get here, no matching view was found
+        logger.error(f"No view found for path: {path}")
         self.app_view.show_toast("Błąd", f"Widok '{path}' nie został znaleziony")
 
     def _show_view(self, view: ttk.Frame) -> None:
@@ -340,6 +377,11 @@ class NavigationController(NavigationControllerProtocol):
         # If not found, try to create a new instance
         try:
             parent = self.app_view.main_content
+            # Import here to avoid circular imports
+            from CardManagement.infrastructure.ui.views.ai_review_single_flashcard_view import (
+                AIReviewSingleFlashcardView,
+            )
+
             if issubclass(view_class, AIReviewSingleFlashcardView):
                 view = view_class(
                     parent=parent,
@@ -352,6 +394,10 @@ class NavigationController(NavigationControllerProtocol):
                 raise ValueError(f"Direct navigation to {view_class.__name__} not supported")
         except Exception as e:
             self.app_view.show_toast("Błąd", f"Nie udało się wyświetlić widoku: {str(e)}")
+            # Log the exception for debugging
+            import logging
+
+            logging.getLogger(__name__).error(f"Error in navigate_to_view: {str(e)}", exc_info=True)
 
 
 # --- Main Application Class ---
@@ -388,11 +434,12 @@ class TenXCardsApp(ttk.Window):
 
         # Configure AppHeader style
         style = ttk.Style()
-        header_bg = style.colors.primary
+        header_bg = style.colors.bg  # Changed from style.colors.primary
         header_fg = style.colors.info
 
         # Tworzenie bardziej wyraźnego stylu dla nagłówka
-        style.configure("AppHeader.TFrame", background=header_bg, relief="raised", borderwidth=1)
+        # Changed relief to "flat" and borderwidth to 0 for a less distinct look
+        style.configure("AppHeader.TFrame", background=header_bg, relief="flat", borderwidth=0)
         style.configure(
             "AppHeader.TLabel", background=header_bg, foreground=header_fg, font=("TkDefaultFont", 10, "bold")
         )
@@ -564,8 +611,49 @@ class TenXCardsApp(ttk.Window):
 
         def create_ai_review_flashcard_view(**kwargs) -> AIReviewSingleFlashcardView:
             """Create view for reviewing AI-generated flashcards."""
-            # All necessary parameters are passed via kwargs from AIGeneratePresenter._navigate_to_review
-            return AIReviewSingleFlashcardView(parent=app_view.main_content, **kwargs)
+            import logging
+
+            logger = logging.getLogger(__name__)
+
+            logger.debug(f"create_ai_review_flashcard_view called with kwargs: {list(kwargs.keys())}")
+
+            # Check required parameters
+            required_params = [
+                "deck_id",
+                "deck_name",
+                "generated_flashcards_dtos",
+                "current_flashcard_index",
+                "ai_service",
+                "card_service",
+                "available_llm_models",
+                "original_source_text",
+            ]
+
+            for param in required_params:
+                if param not in kwargs:
+                    error_msg = f"Missing required parameter: {param}"
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
+
+            # Explicitly handle the parameters
+            try:
+                view = AIReviewSingleFlashcardView(
+                    parent=app_view.main_content,
+                    deck_id=kwargs["deck_id"],
+                    deck_name=kwargs["deck_name"],
+                    generated_flashcards_dtos=kwargs["generated_flashcards_dtos"],
+                    current_flashcard_index=kwargs["current_flashcard_index"],
+                    ai_service=kwargs["ai_service"],
+                    card_service=kwargs["card_service"],
+                    navigation_controller=navigation_controller,
+                    available_llm_models=kwargs["available_llm_models"],
+                    original_source_text=kwargs["original_source_text"],
+                )
+                logger.debug("AIReviewSingleFlashcardView created successfully")
+                return view
+            except Exception as e:
+                logger.error(f"Error creating AIReviewSingleFlashcardView: {str(e)}", exc_info=True)
+                raise
 
         # Register dynamic routes
         navigation_controller.register_dynamic_view("/decks/:id/cards", create_card_list_view)

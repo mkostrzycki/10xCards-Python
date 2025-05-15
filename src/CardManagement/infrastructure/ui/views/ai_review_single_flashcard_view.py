@@ -2,6 +2,7 @@
 
 from typing import Any, List, Optional
 from tkinter.scrolledtext import ScrolledText
+import logging
 
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import RIGHT
@@ -16,6 +17,8 @@ from CardManagement.application.presenters.ai_review_single_flashcard_presenter 
 from CardManagement.infrastructure.api_clients.openrouter.types import FlashcardDTO
 from Shared.application.navigation import NavigationControllerProtocol
 from Shared.ui.widgets.header_bar import HeaderBar
+
+logger = logging.getLogger(__name__)
 
 
 class AIReviewSingleFlashcardView(ttk.Frame, IAIReviewSingleFlashcardView):
@@ -34,6 +37,10 @@ class AIReviewSingleFlashcardView(ttk.Frame, IAIReviewSingleFlashcardView):
         available_llm_models: List[str],
         original_source_text: str,
     ):
+        logger.debug(
+            f"Initializing AIReviewSingleFlashcardView: deck_id={deck_id}, "
+            f"index={current_flashcard_index}, flashcards={len(generated_flashcards_dtos)}"
+        )
         super().__init__(parent)
 
         # Create presenter
@@ -55,7 +62,9 @@ class AIReviewSingleFlashcardView(ttk.Frame, IAIReviewSingleFlashcardView):
         self._bind_events()
 
         # Initialize presenter
+        logger.debug("About to initialize presenter")
         self.presenter.initialize()
+        logger.debug("Presenter initialized successfully")
 
     def _init_ui(self) -> None:
         """Initialize the UI components"""
@@ -147,10 +156,12 @@ class AIReviewSingleFlashcardView(ttk.Frame, IAIReviewSingleFlashcardView):
     def show_toast(self, title: str, message: str) -> None:
         """Show a toast notification."""
         # This will be injected by the parent view/window
+        logger.debug(f"Toast requested: {title} - {message}")
         pass
 
     def show_saving(self, is_saving: bool) -> None:
         """Show/hide saving state."""
+        logger.debug(f"Showing saving state: {is_saving}")
         self.save_btn.configure(state="disabled" if is_saving else "normal")
         self.discard_btn.configure(state="disabled" if is_saving else "normal")
         self.front_text.configure(state="disabled" if is_saving else "normal")
@@ -158,6 +169,7 @@ class AIReviewSingleFlashcardView(ttk.Frame, IAIReviewSingleFlashcardView):
 
     def show_unsaved_changes_confirmation(self) -> bool:
         """Show unsaved changes confirmation dialog."""
+        logger.debug("Showing unsaved changes confirmation dialog")
         return bool(
             Messagebox.yesno(
                 title="Niezapisane zmiany",
@@ -168,6 +180,7 @@ class AIReviewSingleFlashcardView(ttk.Frame, IAIReviewSingleFlashcardView):
 
     def show_discard_confirmation(self) -> bool:
         """Show discard confirmation dialog."""
+        logger.debug("Showing discard confirmation dialog")
         return bool(
             Messagebox.yesno(
                 title="Potwierdź odrzucenie",
@@ -178,6 +191,7 @@ class AIReviewSingleFlashcardView(ttk.Frame, IAIReviewSingleFlashcardView):
 
     def update_save_button_state(self, is_enabled: bool) -> None:
         """Update save button state."""
+        logger.debug(f"Updating save button state: {is_enabled}")
         self.save_btn.configure(state="normal" if is_enabled else "disabled")
 
     def get_front_text(self) -> str:
@@ -190,6 +204,7 @@ class AIReviewSingleFlashcardView(ttk.Frame, IAIReviewSingleFlashcardView):
 
     def display_flashcard(self, front_text: str, back_text: str, tags: Optional[List[str]] = None) -> None:
         """Display flashcard data in the view."""
+        logger.debug(f"Displaying flashcard - front: {front_text[:20]}..., back: {back_text[:20]}...")
         self.front_text.delete("1.0", "end")
         self.front_text.insert("1.0", front_text)
         self.back_text.delete("1.0", "end")
