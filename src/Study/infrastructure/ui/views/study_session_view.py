@@ -75,7 +75,7 @@ class StudySessionView(ttk.Frame):
 
         self.rating_buttons[1] = ttk.Button(
             self.rating_buttons_frame,
-            text="Znowu (1)",
+            text="Nie pamiętam (Again)",
             command=lambda: self._on_rate(1),
             style="danger.TButton",
             width=15,
@@ -83,7 +83,7 @@ class StudySessionView(ttk.Frame):
 
         self.rating_buttons[2] = ttk.Button(
             self.rating_buttons_frame,
-            text="Trudne (2)",
+            text="Trudne (Hard)",
             command=lambda: self._on_rate(2),
             style="warning.TButton",
             width=15,
@@ -91,7 +91,7 @@ class StudySessionView(ttk.Frame):
 
         self.rating_buttons[3] = ttk.Button(
             self.rating_buttons_frame,
-            text="Dobre (3)",
+            text="Pamiętam (Good)",
             command=lambda: self._on_rate(3),
             style="success.TButton",
             width=15,
@@ -99,7 +99,7 @@ class StudySessionView(ttk.Frame):
 
         self.rating_buttons[4] = ttk.Button(
             self.rating_buttons_frame,
-            text="Łatwe (4)",
+            text="Łatwe (Easy)",
             command=lambda: self._on_rate(4),
             style="info.TButton",
             width=15,
