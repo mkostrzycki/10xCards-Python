@@ -87,8 +87,8 @@ def create_profile_with_password(context, username, password):
 
 @when('I click the "Dodaj nowy profil" button')
 def click_add_profile(context):
-    # Open create-profile dialog via helper and capture the returned dialog
-    context.dialog = context.app._show_create_profile_dialog()
+    # Wywołujemy bezpośrednio metodę widoku, która otworzy dialog tworzenia profilu
+    context.app._show_create_profile_dialog()
     # Process events so the dialog UI is fully initialized
     context.root.update_idletasks()
     context.root.update()
@@ -102,10 +102,10 @@ def enter_username(context, username):
 
 @when("I confirm creation")
 def confirm_creation(context):
-    # Directly invoke creation on the list view without dialog
-    context.app._handle_profile_creation(context.new_username)
-    # Refresh the profile list UI
-    context.app._load_profiles()
+    # Wywołujemy metodę prezentera zamiast bezpośrednio metody widoku
+    context.app._presenter.handle_profile_creation(context.new_username)
+    # Odświeżamy listę profili
+    context.app._presenter.load_profiles()
 
 
 @then('I should see a toast "{message}"')
@@ -126,9 +126,13 @@ def activate_profile(context, username):
     for iid in tv.get_children():
         if tv.item(iid)["values"][0] == username:
             tv.selection_set(iid)
-            # Trigger selection and activation handlers
-            context.app._on_profile_selected(None)
-            context.app._on_profile_activated(None)
+
+            # Pobierz id profilu z tagów treeview
+            profile_id = int(context.app._profile_list.item(iid)["tags"][0])
+
+            # Trigger selection and activation handlers używając prezentera
+            context.app._presenter.handle_profile_selected(profile_id)
+            context.app._presenter.handle_profile_activated()
             context.root.update()  # Process events before continuing
 
             # Update context.app to the new current view

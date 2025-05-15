@@ -1,26 +1,18 @@
-from dataclasses import dataclass, field
-from typing import List, Optional, Callable
+"""Profile list view implementation."""
+
+from typing import List, Callable
 import tkinter as tk
 import ttkbootstrap as ttk
-import logging
 
 from UserProfile.application.user_profile_service import UserProfileService, UserProfileSummaryViewModel
-from UserProfile.domain.repositories.exceptions import UsernameAlreadyExistsError, RepositoryError
+from UserProfile.application.presenters.profile_list_presenter import ProfileListPresenter
+from UserProfile.application.presenters.interfaces import IProfileListView
 from Shared.application.session_service import SessionService
-from Shared.domain.errors import AuthenticationError
-from UserProfile.infrastructure.ui.views.create_profile_dialog import CreateProfileDialog
 from Shared.application.navigation import NavigationControllerProtocol
+from UserProfile.infrastructure.ui.views.create_profile_dialog import CreateProfileDialog
 
 
-@dataclass
-class ProfileListViewState:
-    profiles: List[UserProfileSummaryViewModel] = field(default_factory=list)
-    selected_profile_id: Optional[int] = None
-    is_loading: bool = False
-    error_message: Optional[str] = None
-
-
-class ProfileListView(ttk.Frame):
+class ProfileListView(ttk.Frame, IProfileListView):
     """Main view displaying the list of user profiles."""
 
     def __init__(
@@ -41,14 +33,18 @@ class ProfileListView(ttk.Frame):
             toast_callback: Callback for showing toast notifications
         """
         super().__init__(parent)
-        self._profile_service = profile_service
-        self._session_service = session_service
-        self._navigation = navigation_controller
         self._show_toast = toast_callback
-        self._state = ProfileListViewState()
+
+        # Create presenter
+        self._presenter = ProfileListPresenter(
+            view=self,
+            profile_service=profile_service,
+            session_service=session_service,
+            navigation_controller=navigation_controller,
+        )
 
         self._setup_ui()
-        self._load_profiles()
+        self._presenter.load_profiles()
 
         # Bind visibility event to refresh the list when view becomes visible
         self.bind("<Visibility>", self._on_visibility)
@@ -94,7 +90,7 @@ class ProfileListView(ttk.Frame):
 
         # Login button (will be enabled when profile is selected)
         self._login_btn = ttk.Button(
-            button_bar, text="Zaloguj", command=self._handle_login, state="disabled", style="primary.TButton"
+            button_bar, text="Zaloguj", command=self._on_login_clicked, state="disabled", style="primary.TButton"
         )
         self._login_btn.pack(side=tk.RIGHT, padx=(10, 0))
 
@@ -109,27 +105,19 @@ class ProfileListView(ttk.Frame):
         self._profile_list.bind("<Double-1>", self._on_profile_activated)
         self._profile_list.bind("<Return>", self._on_profile_activated)
 
-    def _load_profiles(self) -> None:
-        """Load and display the list of profiles."""
-        try:
-            self._state.is_loading = True
-            self._state.profiles = self._profile_service.get_all_profiles_summary()
-            self._populate_profile_list()
-            self._state.error_message = None
-        except RepositoryError:
-            self._state.error_message = "Nie można załadować profili. Błąd bazy danych."
-            self._show_toast("Błąd", self._state.error_message)
-        finally:
-            self._state.is_loading = False
+    # IProfileListView implementation
+    def display_profiles(self, profiles: List[UserProfileSummaryViewModel]) -> None:
+        """Display the list of profiles in the view.
 
-    def _populate_profile_list(self) -> None:
-        """Populate the profile list with current data."""
+        Args:
+            profiles: List of profile summaries to display
+        """
         # Clear existing items
         for item in self._profile_list.get_children():
             self._profile_list.delete(item)
 
         # Add profiles
-        for profile in self._state.profiles:
+        for profile in profiles:
             self._profile_list.insert(
                 "",
                 tk.END,
@@ -137,31 +125,50 @@ class ProfileListView(ttk.Frame):
                 tags=(str(profile.id),),
             )
 
-    def _show_create_profile_dialog(self) -> None:
-        """Show the dialog for creating a new profile."""
-        dialog = CreateProfileDialog(self, on_create=self._handle_profile_creation)
-        self.wait_window(dialog)
-
-    def _handle_profile_creation(self, username: str) -> None:
-        """Handle the creation of a new profile.
+    def show_loading(self, is_loading: bool) -> None:
+        """Show or hide loading state.
 
         Args:
-            username: Username for the new profile
+            is_loading: Whether to show loading state
         """
-        try:
-            self._profile_service.create_profile(username)
-            self._show_toast("Sukces", f"Profil {username} został utworzony.")
-            self._load_profiles()  # Refresh the list
-        except UsernameAlreadyExistsError:
-            self._show_toast("Błąd", f"Nazwa profilu {username} już istnieje.")
-        except Exception:
-            self._show_toast("Błąd", "Wystąpił nieoczekiwany błąd podczas tworzenia profilu.")
+        # TODO: Implement loading indicator if needed
+        pass
 
-    def _handle_login(self) -> None:
-        """Handle login button click - same as double-clicking a profile."""
-        # Stworzenie sztucznego zdarzenia, które można przekazać do _on_profile_activated
-        dummy_event = type("Event", (), {"type": "ButtonClick"})()
-        self._on_profile_activated(dummy_event)
+    def show_error(self, message: str) -> None:
+        """Show an error message.
+
+        Args:
+            message: Error message to display
+        """
+        # Currently errors are shown via toast
+        self.show_toast("Błąd", message)
+
+    def enable_login_button(self, enabled: bool) -> None:
+        """Enable or disable the login button.
+
+        Args:
+            enabled: Whether to enable the button
+        """
+        self._login_btn.configure(state="normal" if enabled else "disabled")
+
+    def show_toast(self, title: str, message: str) -> None:
+        """Show a toast notification.
+
+        Args:
+            title: Toast title
+            message: Toast message
+        """
+        self._show_toast(title, message)
+
+    def trigger_user_logged_in_event(self) -> None:
+        """Trigger the UserLoggedIn event."""
+        self.winfo_toplevel().event_generate("<<UserLoggedIn>>")
+
+    # Event handlers
+    def _show_create_profile_dialog(self) -> None:
+        """Show the dialog for creating a new profile."""
+        dialog = CreateProfileDialog(self, on_create=self._presenter.handle_profile_creation)
+        self.wait_window(dialog)
 
     def _on_profile_selected(self, event: tk.Event) -> None:
         """Handle profile selection event.
@@ -171,15 +178,11 @@ class ProfileListView(ttk.Frame):
         """
         selection = self._profile_list.selection()
         if not selection:
-            self._state.selected_profile_id = None
-            self._login_btn.configure(state="disabled")
+            self._presenter.handle_profile_selected(None)
             return
 
         profile_id = int(self._profile_list.item(selection[0])["tags"][0])
-        self._state.selected_profile_id = profile_id
-
-        # Enable login button when profile is selected
-        self._login_btn.configure(state="normal")
+        self._presenter.handle_profile_selected(profile_id)
 
     def _on_profile_activated(self, event: tk.Event) -> None:
         """Handle profile activation (double click or Enter).
@@ -187,36 +190,16 @@ class ProfileListView(ttk.Frame):
         Args:
             event: The activation event
         """
-        if not self._state.selected_profile_id:
-            return
+        self._presenter.handle_profile_activated()
 
-        # Find the selected profile
-        profile = next((p for p in self._state.profiles if p.id == self._state.selected_profile_id), None)
-        if not profile:
-            return
-
-        try:
-            if profile.is_password_protected:
-                # TODO: Navigate to login view (implement login view first)
-                # self._navigation.navigate(f"/login/{profile.id}")
-                self._show_toast(
-                    "Info", f"Logowanie na hasło jeszcze nie zaimplementowane dla profilu: {profile.username}"
-                )
-            else:
-                # For unprotected profiles, log in directly
-                self._session_service.login(profile.username)
-                self._navigation.navigate("/decks")
-
-                # Generate UserLoggedIn event to update theme
-                self.winfo_toplevel().event_generate("<<UserLoggedIn>>")
-        except AuthenticationError as e:
-            self._show_toast("Błąd", str(e))
-            self._navigation.navigate("/profiles")
-        except Exception as e:
-            self._show_toast("Błąd", "Wystąpił nieoczekiwany błąd podczas logowania.")
-            logging.error(f"Unexpected error during login: {str(e)}")
-            self._navigation.navigate("/profiles")
+    def _on_login_clicked(self) -> None:
+        """Handle login button click."""
+        self._presenter.handle_profile_activated()
 
     def _on_visibility(self, event: tk.Event) -> None:
-        """Handle visibility event - refresh profiles when view becomes visible."""
-        self._load_profiles()
+        """Handle visibility event - refresh profiles when view becomes visible.
+
+        Args:
+            event: The visibility event
+        """
+        self._presenter.load_profiles()
