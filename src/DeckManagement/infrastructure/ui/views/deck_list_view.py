@@ -70,13 +70,6 @@ class DeckListView(ttk.Frame, IDeckListView):
         )
         self.create_deck_btn.pack(side=RIGHT, padx=5)
 
-        # Start Study button
-        self.start_study_btn = ttk.Button(
-            self.button_bar, text="Rozpocznij naukę", style="success.TButton", command=self._on_start_study_click
-        )
-        self.start_study_btn.pack(side=RIGHT, padx=5)
-        self.start_study_btn.configure(state="disabled")  # Initially disabled
-
         # Deck Table
         self.deck_table = DeckTable(
             self, on_select=self.presenter.handle_deck_selected, on_delete=self._show_delete_confirmation
@@ -133,14 +126,6 @@ class DeckListView(ttk.Frame, IDeckListView):
         self.dialog_open = False
         self.presenter.handle_deck_deletion_cancelled()
 
-    def _on_start_study_click(self) -> None:
-        """Handle start study button click"""
-        selected_deck_id = self.deck_table.get_selected_id()
-        if selected_deck_id is not None:
-            self.presenter.start_study_session(selected_deck_id)
-        else:
-            self.show_toast("Błąd", "Wybierz talię, aby rozpocząć naukę.")
-
     # IDeckListView implementation
     def display_decks(self, decks: List[DeckViewModel]) -> None:
         """Display the list of decks"""
@@ -158,12 +143,7 @@ class DeckListView(ttk.Frame, IDeckListView):
     def clear_deck_selection(self) -> None:
         """Clear the current deck selection"""
         self.deck_table.clear_selection()
-        self.enable_study_button(False)
 
     def show_toast(self, title: str, message: str) -> None:
         """Show toast notification"""
         self._show_toast_callback(title, message)
-
-    def enable_study_button(self, enabled: bool) -> None:
-        """Enable or disable the study button"""
-        self.start_study_btn.configure(state="normal" if enabled else "disabled")
