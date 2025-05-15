@@ -489,8 +489,11 @@ class TenXCardsApp(ttk.Window):
 # --- Main Entrypoint ---
 def main() -> None:
     """Main application entry point."""
-    # Set up logging first
-    setup_logging()
+    # Setup logging early
+    setup_logging(log_file="./data/app.log", log_level=logging.DEBUG)  # Ensure DEBUG level
+
+    # Initialize Tkinter and set theme
+    # Ensure the window is created *after* dependencies for AppView are ready
 
     # Dodaj handler do przechwytywania błędów tkinter
     tkinter_error_log = logging.getLogger("tkinter_errors")
