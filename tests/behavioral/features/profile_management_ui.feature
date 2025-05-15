@@ -39,11 +39,12 @@ Feature: Profile Management UI
     Then I should be navigated to the deck list for "passuser2"
 
   Scenario: Log in with incorrect password (US-004)
+    Given the application is started
     Given there is a profile "passuser3" with password "secret"
     When I activate the profile "passuser3"
     And I enter password "wrong"
     And I confirm login
-    Then I should see an error "Nieprawidłowe hasło."
+    Then I should see an error "Niepoprawne hasło"
     And the password input should be cleared
 
   # US-003: Setting or removing password for a profile

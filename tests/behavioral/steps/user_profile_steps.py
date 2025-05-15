@@ -24,6 +24,8 @@ class TestDbProvider:
                 username TEXT NOT NULL UNIQUE,
                 hashed_password TEXT,
                 encrypted_api_key BLOB,
+                default_llm_model TEXT,
+                app_theme TEXT,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
@@ -50,7 +52,14 @@ def setup_empty_database(context):
 
 @given('there is a user with username "{username}"')
 def create_initial_user(context, username):
-    user = User(id=None, username=username, hashed_password="dummyhash", encrypted_api_key=b"dummykey")
+    user = User(
+        id=None,
+        username=username,
+        hashed_password="dummyhash",
+        encrypted_api_key=b"dummykey",
+        default_llm_model=None,
+        app_theme=None,
+    )
     context.current_user = context.repository.add(user)
 
 
@@ -63,6 +72,8 @@ def create_user_profile(context):
         username=row["username"],
         hashed_password=row["password"],  # In real app this would be hashed
         encrypted_api_key=row["api_key"].encode() if row["api_key"] else None,  # In real app this would be encrypted
+        default_llm_model=None,
+        app_theme=None,
     )
     try:
         context.current_user = context.repository.add(user)
@@ -79,6 +90,8 @@ def update_user_profile(context):
         username=row["username"],
         hashed_password=row["password"],  # In real app this would be hashed
         encrypted_api_key=row["api_key"].encode() if row["api_key"] else None,  # In real app this would be encrypted
+        default_llm_model=None,
+        app_theme=None,
     )
     try:
         context.repository.update(user)
