@@ -1,6 +1,6 @@
 import logging
 import threading
-from typing import Callable, Any, List, Optional, Protocol
+from typing import Callable, Any, List, Optional
 
 import ttkbootstrap as ttk
 from ttkbootstrap.dialogs import MessageDialog
@@ -16,13 +16,7 @@ from CardManagement.infrastructure.ui.views.ai_review_single_flashcard_view impo
 from Shared.application.session_service import SessionService
 from UserProfile.application.user_profile_service import UserProfileService
 from Shared.ui.widgets.header_bar import HeaderBar
-
-
-class NavigationControllerProtocol(Protocol):
-    """Protocol defining the navigation interface required by views."""
-
-    def navigate(self, path: str) -> None: ...
-    def navigate_to_view(self, view_class: type, **kwargs) -> None: ...
+from Shared.application.navigation import NavigationControllerProtocol
 
 
 class AIGenerateView(ttk.Frame):

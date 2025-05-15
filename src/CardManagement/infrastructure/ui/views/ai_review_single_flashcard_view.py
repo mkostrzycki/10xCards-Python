@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, List, Any, Protocol, Optional
+from typing import Callable, List, Any, Optional
 from tkinter.scrolledtext import ScrolledText
 
 import ttkbootstrap as ttk
@@ -9,13 +9,7 @@ from CardManagement.application.services.ai_service import AIService
 from CardManagement.application.card_service import CardService
 from CardManagement.infrastructure.api_clients.openrouter.types import FlashcardDTO
 from Shared.ui.widgets.header_bar import HeaderBar
-
-
-class NavigationControllerProtocol(Protocol):
-    """Protocol defining the navigation interface required by views."""
-
-    def navigate(self, path: str) -> None: ...
-    def navigate_to_view(self, view_class: type, **kwargs) -> None: ...
+from Shared.application.navigation import NavigationControllerProtocol
 
 
 class AIReviewSingleFlashcardView(ttk.Frame):

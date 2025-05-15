@@ -1,37 +1,22 @@
-import logging
-from typing import Callable, List, Optional, Any
+from typing import Callable, List, Any
 
 import ttkbootstrap as ttk
 
-from CardManagement.domain.models.Flashcard import Flashcard
 from CardManagement.application.card_service import CardService
+from CardManagement.application.presenters.card_list_presenter import (
+    CardListPresenter,
+    FlashcardViewModel,
+    ICardListView,
+)
 from Shared.application.session_service import SessionService
+from Shared.application.navigation import NavigationControllerProtocol
 from Shared.ui.widgets.header_bar import HeaderBar
 from Shared.ui.widgets.confirmation_dialog import ConfirmationDialog
 from CardManagement.infrastructure.ui.widgets.flashcard_table import FlashcardTable
 from CardManagement.infrastructure.ui.widgets.button_panel import ButtonPanel
 
 
-class FlashcardViewModel:
-    """Data transfer object for flashcard display"""
-
-    def __init__(self, id: int, front_text: str, back_text: str, source: str):
-        self.id = id
-        self.front_text = front_text
-        self.back_text = back_text
-        self.source = source
-
-    @classmethod
-    def from_flashcard(cls, flashcard: Flashcard) -> "FlashcardViewModel":
-        """Creates a ViewModel from a domain Flashcard model"""
-        if flashcard.id is None:
-            raise ValueError("Cannot create FlashcardViewModel from Flashcard with None id")
-        return cls(
-            id=flashcard.id, front_text=flashcard.front_text, back_text=flashcard.back_text, source=flashcard.source
-        )
-
-
-class CardListView(ttk.Frame):
+class CardListView(ttk.Frame, ICardListView):
     """View for displaying and managing the list of flashcards in a deck"""
 
     def __init__(
@@ -41,30 +26,38 @@ class CardListView(ttk.Frame):
         deck_name: str,
         card_service: CardService,
         session_service: SessionService,
-        navigation_controller,
+        navigation_controller: NavigationControllerProtocol,
         show_toast: Callable[[str, str], None],
     ):
+        """Initialize the card list view.
+
+        Args:
+            parent: Parent widget
+            deck_id: ID of the deck to display cards for
+            deck_name: Name of the deck
+            card_service: Service for card operations
+            session_service: Service for session management
+            navigation_controller: Controller for navigation
+            show_toast: Callback for showing toast notifications
+        """
         super().__init__(parent)
+        self._show_toast_callback = show_toast
         self.deck_id = deck_id
         self.deck_name = deck_name
-        self.card_service = card_service
-        self.session_service = session_service
-        self.navigation_controller = navigation_controller
-        self.show_toast = show_toast
 
-        # State
-        self.flashcards: List[FlashcardViewModel] = []
-        self.loading: bool = False
-        self.error: Optional[str] = None
-        self.deleting_id: Optional[int] = None
-        self.dialog_open: bool = False
+        # Create presenter
+        self.presenter = CardListPresenter(
+            view=self,
+            card_service=card_service,
+            session_service=session_service,
+            navigation_controller=navigation_controller,
+            deck_id=deck_id,
+            deck_name=deck_name,
+        )
 
         # Initialize UI
         self._init_ui()
         self._bind_events()
-
-        # Load flashcards
-        self.load_flashcards()
 
     def _init_ui(self) -> None:
         """Initialize the UI components"""
@@ -75,145 +68,63 @@ class CardListView(ttk.Frame):
         # Header
         self.header = HeaderBar(self, f"Fiszki - {self.deck_name}", show_back_button=True)
         self.header.grid(row=0, column=0, sticky="ew", padx=5, pady=(5, 0))
-        self.header.set_back_command(self._on_back)
+        self.header.set_back_command(self.presenter.navigate_back)
 
         # Flashcard Table
         self.flashcard_table = FlashcardTable(
-            self, on_edit=self._on_edit_flashcard, on_delete=self._on_delete_flashcard
+            self, on_edit=self.presenter.edit_flashcard, on_delete=self._show_delete_confirmation
         )
         self.flashcard_table.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
 
         # Button Panel
         self.button_panel = ButtonPanel(
-            self, on_add=self._on_add_flashcard, on_generate_ai=self._on_generate_ai, disabled=self.loading
+            self, on_add=self.presenter.add_flashcard, on_generate_ai=self.presenter.generate_with_ai, disabled=False
         )
         self.button_panel.grid(row=2, column=0, sticky="ew", padx=5, pady=(0, 5))
 
         # Start Study Button
         self.start_study_btn = ttk.Button(
-            self.button_panel, text="Rozpocznij naukę", style="success.TButton", command=self._on_start_study_click
+            self.button_panel,
+            text="Rozpocznij naukę",
+            style="success.TButton",
+            command=self.presenter.start_study_session,
         )
         self.start_study_btn.pack(side=ttk.LEFT, padx=5)
 
     def _bind_events(self) -> None:
         """Bind keyboard shortcuts and events"""
-        self.bind("<BackSpace>", lambda e: self._on_back())
+        self.bind("<BackSpace>", lambda e: self.presenter.navigate_back())
 
-    def _on_back(self) -> None:
-        """Handle back navigation"""
-        self.navigation_controller.navigate("/decks")
-
-    def _on_add_flashcard(self) -> None:
-        """Handle add flashcard button click"""
-        self.navigation_controller.navigate(f"/decks/{self.deck_id}/cards/new")
-
-    def _on_generate_ai(self) -> None:
-        """Handle generate with AI button click"""
-        self.navigation_controller.navigate(f"/decks/{self.deck_id}/cards/generate-ai")
-
-    def _on_start_study_click(self) -> None:
-        """Handle start study button click"""
-        try:
-            self.navigation_controller.navigate(f"/study/session/{self.deck_id}")
-        except Exception as e:
-            self.show_toast("Błąd", f"Nie udało się rozpocząć nauki: {str(e)}")
-            logging.error(f"Error starting study session: {str(e)}", exc_info=True)
-
-    def _on_edit_flashcard(self, flashcard_id: int) -> None:
-        """Handle flashcard edit request"""
-        if self.dialog_open:
-            return
-
-        self.navigation_controller.navigate(f"/decks/{self.deck_id}/cards/{flashcard_id}/edit")
-
-    def _on_delete_flashcard(self, flashcard_id: int) -> None:
-        """Handle flashcard deletion request"""
-        if self.dialog_open or self.deleting_id:
-            return
-
-        # Find flashcard
-        flashcard = self._find_flashcard_by_id(flashcard_id)
-        if not flashcard:
-            return
-
-        self.dialog_open = True
-        self.deleting_id = flashcard_id
-
-        # Create preview of flashcard text
-        preview = (flashcard.front_text[:30] + "...") if len(flashcard.front_text) > 30 else flashcard.front_text
-        message = f"Czy na pewno usunąć fiszkę '{preview}'?"
-
-        dialog = ConfirmationDialog(
+    def _show_delete_confirmation(self, flashcard_id: int) -> None:
+        """Show confirmation dialog for flashcard deletion"""
+        ConfirmationDialog(
             self,
-            "Usuń fiszkę",
-            message,
-            confirm_text="Usuń",
-            confirm_style="danger.TButton",
-            cancel_text="Anuluj",
-            on_confirm=self._handle_flashcard_deletion,
-            on_cancel=self._handle_deletion_cancel,
+            "Usuń Fiszkę",
+            "Czy na pewno chcesz usunąć tę fiszkę? Tej operacji nie można cofnąć.",
+            "Usuń",
+            "danger.TButton",
+            "Anuluj",
+            lambda: self.presenter.delete_flashcard(flashcard_id),
+            lambda: None,
         )
-        dialog.show()
 
-    def _find_flashcard_by_id(self, flashcard_id: int) -> Optional[FlashcardViewModel]:
-        """Find a flashcard by its ID
+    # ICardListView implementation
+    def display_cards(self, cards: List[FlashcardViewModel]) -> None:
+        """Display the list of cards"""
+        self.flashcard_table.set_items(cards)
 
-        Args:
-            flashcard_id: ID of the flashcard to find
+    def show_loading(self, is_loading: bool) -> None:
+        """Show or hide loading state"""
+        self.button_panel.set_disabled(is_loading)
 
-        Returns:
-            Optional[FlashcardViewModel]: The flashcard if found, None otherwise
-        """
-        for flashcard in self.flashcards:
-            if flashcard.id == flashcard_id:
-                return flashcard
-        return None
+    def show_error(self, message: str) -> None:
+        """Show error message"""
+        self.show_toast("Błąd", message)
 
-    def _handle_flashcard_deletion(self) -> None:
-        """Handle confirmed flashcard deletion"""
-        try:
-            if self.deleting_id is None:
-                logging.error("Attempting to delete a flashcard but deleting_id is None")
-                self.show_toast("Błąd", "Nieprawidłowe ID fiszki")
-                return
+    def show_toast(self, title: str, message: str) -> None:
+        """Show toast notification"""
+        self._show_toast_callback(title, message)
 
-            self.card_service.delete_flashcard(self.deleting_id)
-            self.show_toast("Sukces", "Fiszka została usunięta")
-            self.load_flashcards()  # Refresh list
-        except ValueError as e:
-            self.show_toast("Błąd", str(e))
-        except Exception as e:
-            self.show_toast("Błąd", f"Nie udało się usunąć fiszki: {str(e)}")
-            logging.error(f"Failed to delete flashcard: {str(e)}")
-        finally:
-            self._reset_deletion_state()
-
-    def _handle_deletion_cancel(self) -> None:
-        """Handle cancellation of flashcard deletion"""
-        self._reset_deletion_state()
-
-    def _reset_deletion_state(self) -> None:
-        """Reset the state related to flashcard deletion"""
-        self.dialog_open = False
-        self.deleting_id = None
-
-    def load_flashcards(self) -> None:
-        """Load flashcards for the current deck"""
-        self.loading = True
-        self.button_panel.set_disabled(True)
-        try:
-            # Fetch flashcards
-            flashcards = self.card_service.list_by_deck_id(self.deck_id)
-
-            # Convert to view models
-            self.flashcards = [FlashcardViewModel.from_flashcard(card) for card in flashcards]
-
-            # Update table
-            self.flashcard_table.set_items(self.flashcards)
-        except Exception as e:
-            self.error = str(e)
-            self.show_toast("Błąd", f"Wystąpił błąd podczas ładowania fiszek: {str(e)}")
-            logging.error(f"Error loading flashcards: {str(e)}")
-        finally:
-            self.loading = False
-            self.button_panel.set_disabled(False)
+    def clear_card_selection(self) -> None:
+        """Clear the current card selection"""
+        self.flashcard_table.clear_selection()
