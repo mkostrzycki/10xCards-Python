@@ -72,28 +72,26 @@ The application aims to solve the time-consuming problem of manually creating hi
 
 5.  **Configure AI Provider:**
     *   Obtain an API key from [Openrouter.ai](https://openrouter.ai/).
-    *   Set the API key as an environment variable:
-        ```bash
-        export OPENROUTER_API_KEY='your_api_key_here'
-        # On Windows use `set OPENROUTER_API_KEY=your_api_key_here` or set it system-wide
-        ```
-    *   *(Note: The exact method for providing the API key might differ; check the application's configuration.)*
+    *   The API key is configured within the application after creating a user profile and logging in.
+    *   Navigate to the user settings panel to enter or update your OpenRouter API key.
+    *   *(Detailed instructions on accessing the settings panel and managing the API key can be found within the application after login.)*
 
 6.  **Run the application:**
     ```bash
-    python src/main.py # Assuming src/main.py is the entry point
+    python src/main.py
     ```
-    *(Note: The exact run command might differ.)*
 
 ## Available Scripts
 
-*   **Run the application:** `python src/main.py` *(Assumption)*
-*   **Run unit/integration tests:** `pytest`
-*   **Run behavioral tests:** `behave`
-*   **Check code formatting:** `black --check .`
-*   **Format code:** `black .`
-*   **Lint code:** `flake8 .`
-*   **Run static type checking:** `mypy src` *(Assumption: main source code is in `src`)*
+*   **Run the application:** `python src/main.py`
+*   **Format code (using black):** `make format` (formats `src/` and `tests/`)
+*   **Lint code (using flake8):** `make lint` (lints `src/` and `tests/`)
+*   **Run static type checking (using mypy):** `make check` (type checks `src/` and `tests/`)
+*   **Run unit tests (pytest):** `make test` (runs tests in `tests/unit/`)
+*   **Run unit tests with coverage (pytest-cov):** `make test-coverage` (HTML report in `htmlcov/`)
+*   **Run behavioral tests (behave):** `make test-bdd` (runs tests in `tests/behavioral/`)
+*   **Clean up temporary files:** `make clean`
+*   **Run all formatting, linting, type checking, unit and behavioral tests:** `make all`
 
 ## Project Scope (MVP)
 
