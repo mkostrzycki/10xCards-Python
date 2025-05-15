@@ -30,6 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
+          sudo apt-get update && sudo apt-get install -y xvfb # Install xvfb
 
       - name: Lint with Flake8
         run: flake8 src tests --ignore=C901 # C901 - complexity, temporarily ignored
@@ -41,5 +42,5 @@ jobs:
         run: pytest tests/unit
 
       - name: Run behavioral tests with Behave
-        run: behave tests/behavioral/features
+        run: xvfb-run -a behave tests/behavioral/features
   
