@@ -157,15 +157,27 @@ class NavigationController(NavigationControllerProtocol):
                     self.app_view.show_toast("Błąd", str(e))
                     return
 
+            # Pattern for cards: /decks/:id/cards
+            if pattern == "/decks/:id/cards" and re.match(r"^/decks/\d+/cards$", path):
+                parts = path.split("/")
+                try:
+                    deck_id = int(parts[2])  # Extract deck ID from /decks/{id}/cards
+                    view = factory(deck_id)
+                    self._show_view(view)
+                    return
+                except (ValueError, Exception) as e:
+                    self.app_view.show_toast("Błąd", str(e))
+                    return
+
             # Pattern for card editing: /decks/:id/cards/:id/edit
-            if pattern.endswith("/:deck_id/cards/:card_id/edit") and re.match(
-                f"^{pattern.replace('/:deck_id', '/\\d+').replace('/:card_id', '/\\d+')}$", path
+            if pattern.endswith("/:id/cards/:card_id/edit") and re.match(
+                f"^{pattern.replace('/:id', '/\\d+').replace('/:card_id', '/\\d+')}$", path
             ):
                 parts = path.split("/")
                 try:
-                    deck_id = int(parts[-3])
-                    card_id = int(parts[-2])
-                    view = factory(deck_id=deck_id, card_id=card_id)
+                    deck_id = int(parts[2])  # Extract deck ID from /decks/{id}/cards/{card_id}/edit
+                    card_id = int(parts[4])  # Extract card ID
+                    view = factory(deck_id=deck_id, flashcard_id=card_id)
                     self._show_view(view)
                     return
                 except (ValueError, Exception) as e:
@@ -446,7 +458,7 @@ class TenXCardsApp(ttk.Window):
             presenter = StudyPresenter(
                 view=None,  # Will be set after view creation
                 study_service=study_service,
-                navigation_controller=navigation_controller,
+                navigation=navigation_controller,
                 session_service=session_service,
                 deck_id=deck_id,
                 deck_name=deck.name,
@@ -461,11 +473,11 @@ class TenXCardsApp(ttk.Window):
             return view
 
         # Register dynamic routes
-        navigation_controller.register_view("/decks/{deck_id}/cards", create_card_list_view)
-        navigation_controller.register_view("/decks/{deck_id}/cards/new", create_new_card_view)
-        navigation_controller.register_view("/decks/{deck_id}/cards/{flashcard_id}/edit", create_edit_card_view)
-        navigation_controller.register_view("/decks/{deck_id}/cards/generate-ai", create_ai_generate_view)
-        navigation_controller.register_view("/study/session/{deck_id}", create_study_session_view)
+        navigation_controller.register_dynamic_view("/decks/:id/cards", create_card_list_view)
+        navigation_controller.register_dynamic_view("/decks/:id/cards/new", create_new_card_view)
+        navigation_controller.register_dynamic_view("/decks/:id/cards/:card_id/edit", create_edit_card_view)
+        navigation_controller.register_dynamic_view("/decks/:id/cards/generate", create_ai_generate_view)
+        navigation_controller.register_dynamic_view("/study/session/:id", create_study_session_view)
 
         # --- Bind Events ---
         self.bind("<<NavigateToDeckList>>", lambda e: navigation_controller.navigate("/decks"))
