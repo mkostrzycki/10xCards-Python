@@ -54,29 +54,49 @@ The application aims to solve the time-consuming problem of manually creating hi
     cd 10xCards_Python # Or your project directory name
     ```
 
-2.  **Set up a virtual environment (Recommended):**
+2.  **Upewnij się, że używasz Pythona 3.13:**
     ```bash
-    python3 -m venv venv
-    source venv/bin/activate # On Windows use `venv\Scripts\activate`
+    # Sprawdź aktualną wersję
+    python3 --version
+    
+    # Jeśli wersja jest inna niż 3.13, upewnij się że masz zainstalowaną wersję 3.13
+    # i użyj pełnej ścieżki do Pythona 3.13, np:
+    # /usr/local/bin/python3.13 lub python3.13
     ```
 
-3.  **Install dependencies:**
+3.  **Zainstaluj tkinter (jeśli nie jest zainstalowany):**
+    ```bash
+    # Na macOS z Homebrew
+    brew install python-tk
+    ```
+
+4.  **Set up a virtual environment (Recommended):**
+    ```bash
+    # Użyj konkretnej wersji Pythona 3.13
+    python3.13 -m venv 10xCards
+    source 10xCards/bin/activate # On Windows use `10xCards\Scripts\activate`
+    
+    # Sprawdź, czy w środowisku wirtualnym używany jest Python 3.13
+    python --version
+    ```
+
+5.  **Install dependencies:**
     ```bash
     pip install -r requirements.txt
     ```
 
-4.  **Install development dependencies (Optional, for contributing/testing):**
+6.  **Install development dependencies (Optional, for contributing/testing):**
     ```bash
     pip install -r requirements-dev.txt
     ```
 
-5.  **Configure AI Provider:**
+7.  **Configure AI Provider:**
     *   Obtain an API key from [Openrouter.ai](https://openrouter.ai/).
     *   The API key is configured within the application after creating a user profile and logging in.
     *   Navigate to the user settings panel to enter or update your OpenRouter API key.
     *   *(Detailed instructions on accessing the settings panel and managing the API key can be found within the application after login.)*
 
-6.  **Run the application:**
+8.  **Run the application:**
     ```bash
     python src/main.py
     ```
