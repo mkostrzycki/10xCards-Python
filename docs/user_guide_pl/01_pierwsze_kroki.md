@@ -10,7 +10,7 @@ Po pobraniu i zainstalowaniu aplikacji 10xCards, uruchom ją zgodnie z instrukcj
 
 Aby rozpocząć korzystanie z 10xCards, musisz stworzyć swój profil użytkownika. Profil przechowuje wszystkie Twoje talie fiszek, postępy w nauce i indywidualne ustawienia.
 
-1.  Na ekranie startowym aplikacji kliknij przycisk "Dodaj nowy profil" lub podobny.
+1.  Na ekranie startowym aplikacji kliknij przycisk "Dodaj nowy profil".
     ![Przycisk dodawania nowego profilu](images/pl_01_przycisk_dodaj_profil.png)
 2.  Pojawi się okno, w którym zostaniesz poproszony o podanie nazwy dla swojego profilu. Pamiętaj, że nazwa profilu:
     *   może mieć maksymalnie 30 znaków,
