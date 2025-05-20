@@ -35,16 +35,16 @@ Zazwyczaj AI wygeneruje od 3 do 15 fiszek, każda składająca się z:
 *   **przodu (pytanie):** Maksymalnie 200 znaków,
 *   **tyłu (odpowiedź):** Maksymalnie 500 znaków.
 
-![Propozycja fiszki wygenerowanej przez AI](images/pl_03_AI_lista_propozycji_fiszek.png)
+![Propozycja fiszki wygenerowanej przez AI](images/pl_03_ai_lista_propozycji_fiszek.png)
 
 Dla każdej zaproponowanej fiszki będziesz miał dostępne następujące opcje:
 
 *   **Zapisz i kontynuuj:** Kliknięcie tego przycisku spowoduje zapisanie fiszki w aktualnie wybranej talii. Fiszka zostanie oznaczona jako "ai-generated". Po zaakceptowaniu, przejdziesz do widoku następnej fiszki.
-    ![Przycisk 'Zapisz i kontynuuj' dla fiszki AI](images/pl_03_AI_przycisk_zapisz.png)
+    ![Przycisk 'Zapisz i kontynuuj' dla fiszki AI](images/pl_03_ai_przycisk_zapisz.png)
 *   **Możliwość edycji:** Jeśli chcesz coś zmienić w zaproponowanej fiszce przed jej zapisaniem, możesz swobodnie edytować pola "Przód" i "Tył", które są wypełnione treścią od AI. Po dokonaniu zmian i zapisaniu (przycisk "Zapisz i kontynuuj"), edytowana fiszka trafi do Twojej talii (oznaczona jako "ai-edited") i przejdziesz do widoku następnej fiszki.
-    ![Możliwość edycji fiszki generowanej przez AI](images/pl_03_AI_mozliwosc_edycji.png)
+    ![Możliwość edycji fiszki generowanej przez AI](images/pl_03_ai_mozliwosc_edycji.png)
 *   **Odrzuć:** Jeśli uznasz, że dana propozycja jest nieprzydatna, kliknij "Odrzuć". Fiszka nie zostanie zapisana i przejdziesz do widoku następnej fiszki.
-    ![Przycisk 'Odrzuć' dla fiszki AI](images/pl_03_AI_przycisk_odrzuc.png)
+    ![Przycisk 'Odrzuć' dla fiszki AI](images/pl_03_ai_przycisk_odrzuc.png)
 
 Możesz przejrzeć wszystkie propozycje i podjąć decyzję dla każdej z nich. Po przetworzeniu wszystkich fiszek lub gdy zdecydujesz się zakończyć przegląd (np. poprzez kliknięcie przycisku wstecz (<-)), wrócisz do widoku listy fiszek w talii.
 
