@@ -62,29 +62,29 @@ The application aims to solve the time-consuming problem of manually creating hi
     cd 10xCards_Python # Or your project directory name
     ```
 
-2.  **Upewnij się, że używasz Pythona 3.13:**
+2.  **Ensure you are using Python 3.13:**
     ```bash
-    # Sprawdź aktualną wersję
+    # Check current version
     python3 --version
     
-    # Jeśli wersja jest inna niż 3.13, upewnij się że masz zainstalowaną wersję 3.13
-    # i użyj pełnej ścieżki do Pythona 3.13, np:
-    # /usr/local/bin/python3.13 lub python3.13
+    # If the version is different from 3.13, make sure you have version 3.13 installed
+    # and use the full path to Python 3.13, e.g.:
+    # /usr/local/bin/python3.13 or python3.13
     ```
 
-3.  **Zainstaluj tkinter (jeśli nie jest zainstalowany):**
+3.  **Install tkinter (if not already installed):**
     ```bash
-    # Na macOS z Homebrew
+    # On macOS with Homebrew
     brew install python-tk
     ```
 
 4.  **Set up a virtual environment (Recommended):**
     ```bash
-    # Użyj konkretnej wersji Pythona 3.13
+    # Use the specific Python 3.13 version
     python3.13 -m venv 10xCards
     source 10xCards/bin/activate # On Windows use `10xCards\Scripts\activate`
     
-    # Sprawdź, czy w środowisku wirtualnym używany jest Python 3.13
+    # Check if Python 3.13 is used in the virtual environment
     python --version
     ```
 
