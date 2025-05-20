@@ -37,3 +37,8 @@ Czy zdarzyło Ci się spędzać godziny na manualnym tworzeniu fiszek? Wiemy, ja
 *   **Prostota i wygoda:** Oferujemy intuicyjny interfejs i łatwość obsługi.
 
 Z 10xCards nauka staje się prostsza, szybsza i przyjemniejsza! Zapraszamy do dalszej lektury, aby dowiedzieć się, jak w pełni wykorzystać możliwości aplikacji.
+
+---
+➡️ [Następny rozdział: Pierwsze Kroki](01_pierwsze_kroki.md)
+
+↩️ [Powrót do Spisu Treści](index.md)

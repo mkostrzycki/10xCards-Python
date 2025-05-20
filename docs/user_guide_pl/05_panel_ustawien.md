@@ -115,3 +115,8 @@ Aby dostosować wygląd aplikacji do swoich upodobań, możesz wybrać jeden z p
 6.  Okno dialogowe zamknie się, a Ty wrócisz do Panelu Ustawień, który również powinien już odzwierciedlać nowo wybrany schemat kolorystyczny.
     ![Panel ustawień z zastosowanym innym schematem kolorystycznym](images/pl_05_inny_schemat_kolorystyczny.png)
 7.  Pozostałe, nieaktywne lub zamknięte wcześniej okna aplikacji zaktualizują swój wygląd po ich ponownym otwarciu.
+
+---
+⬅️ [Poprzedni rozdział: Sesja Nauki](04_sesja_nauki.md)
+
+↩️ [Powrót do Spisu Treści](index.md)

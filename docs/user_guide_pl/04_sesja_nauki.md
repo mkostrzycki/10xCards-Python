@@ -54,3 +54,9 @@ Sesja nauki trwa tak długo, jak długo algorytm FSRS dostarcza kolejne fiszki d
 *   Kliknij przycisk "Zakończ sesję" aby wrócić do listy wszystkich fiszek w bieżącej talii.
 
 Możesz również przerwać sesję nauki w dowolnym momencie, poprzez przycisk "Zakończ sesję". Pamiętaj jednak, że regularne kończenie pełnych sesji jest kluczowe dla efektywności metody spaced repetition.
+
+---
+⬅️ [Poprzedni rozdział: Zarządzanie Fiszkami](03_zarzadzanie_fiszkami.md)
+➡️ [Następny rozdział: Panel Ustawień](05_panel_ustawien.md)
+
+↩️ [Powrót do Spisu Treści](index.md)

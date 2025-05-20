@@ -108,3 +108,9 @@ Jeśli dana fiszka nie jest Ci już potrzebna, możesz ją usunąć z talii.
 5.  Jeśli jesteś pewien, potwierdź usunięcie.
 6.  Fiszka oraz jej stan w systemie FSRS zostaną trwale usunięte z bazy danych.
 7.  Usunięta fiszka zniknie z listy fiszek w talii.
+
+---
+⬅️ [Poprzedni rozdział: Zarządzanie Taliami](02_zarzadzanie_taliami.md)
+➡️ [Następny rozdział: Sesja Nauki](04_sesja_nauki.md)
+
+↩️ [Powrót do Spisu Treści](index.md)

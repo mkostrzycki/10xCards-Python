@@ -39,3 +39,9 @@ Jeśli jakaś talia nie jest Ci już potrzebna, możesz ją usunąć wraz ze wsz
 3.  Jeśli jesteś pewien, potwierdź usunięcie.
 4.  Talia wraz ze wszystkimi powiązanymi z nią fiszkami i ich stanami FSRS zostanie trwale usunięta z bazy danych.
 5.  Usunięta talia zniknie z Twojej listy talii.
+
+---
+⬅️ [Poprzedni rozdział: Pierwsze Kroki](01_pierwsze_kroki.md)
+➡️ [Następny rozdział: Zarządzanie Fiszkami](03_zarzadzanie_fiszkami.md)
+
+↩️ [Powrót do Spisu Treści](index.md)

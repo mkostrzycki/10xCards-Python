@@ -39,3 +39,9 @@ Jeśli masz już utworzony profil (lub kilka profili), przy każdym uruchomieniu
     *   Jeśli hasło jest niepoprawne, zobaczysz komunikat o błędzie i pozostaniesz na ekranie logowania/wyboru profilu. Możesz spróbować ponownie.
 
 Pamiętaj, że hasła są przechowywane w bezpieczny sposób (zaszyfrowane za pomocą bcrypt), a dane każdego użytkownika są odizolowane od innych profili.
+
+---
+⬅️ [Poprzedni rozdział: Wprowadzenie](00_wstep.md)
+➡️ [Następny rozdział: Zarządzanie Taliami](02_zarzadzanie_taliami.md)
+
+↩️ [Powrót do Spisu Treści](index.md)
