@@ -528,6 +528,7 @@ class TenXCardsApp(ttk.Window):
                 deck_id=deck_id,
                 deck_name=deck.name,
                 card_service=card_service,
+                deck_service=deck_service,
                 session_service=session_service,
                 navigation_controller=navigation_controller,
                 show_toast=app_view.show_toast,
