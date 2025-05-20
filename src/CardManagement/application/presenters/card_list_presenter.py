@@ -5,6 +5,7 @@ from typing import Protocol, List, Optional
 
 from CardManagement.domain.models.Flashcard import Flashcard
 from CardManagement.application.card_service import CardService
+from DeckManagement.application.deck_service import DeckService
 from Shared.application.session_service import SessionService
 from Shared.application.navigation import NavigationControllerProtocol
 
@@ -47,6 +48,7 @@ class CardListPresenter:
         self,
         view: ICardListView,
         card_service: CardService,
+        deck_service: DeckService,
         session_service: SessionService,
         navigation_controller: NavigationControllerProtocol,
         deck_id: int,
@@ -57,6 +59,7 @@ class CardListPresenter:
         Args:
             view: The view implementing ICardListView
             card_service: Service for card operations
+            deck_service: Service for deck operations
             session_service: Service for session management
             navigation_controller: Controller for navigation
             deck_id: ID of the deck to manage cards for
@@ -64,6 +67,7 @@ class CardListPresenter:
         """
         self.view = view
         self.card_service = card_service
+        self.deck_service = deck_service
         self.session_service = session_service
         self.navigation = navigation_controller
         self.deck_id = deck_id
@@ -157,3 +161,46 @@ class CardListPresenter:
         """Reset the state related to flashcard deletion."""
         self.dialog_open = False
         self.deleting_id = None
+
+    def request_delete_current_deck(self) -> None:
+        """Request deletion of the current deck."""
+        if not self.session_service.is_authenticated():
+            self.view.show_toast("Błąd", "Musisz być zalogowany, aby usunąć talię.")
+            self.navigation.navigate("/profiles")
+            return
+
+        if self.dialog_open:  # Zapobieganie wielokrotnemu otwarciu dialogu
+            return
+
+        self.dialog_open = True
+        # Note: The view will handle showing the confirmation dialog and calling _handle_deck_deletion_confirmed
+
+    def _handle_deck_deletion_confirmed(self) -> None:
+        """Handle confirmed deck deletion."""
+        try:
+            user_profile = self.session_service.get_current_user()
+            if not user_profile or user_profile.id is None:
+                self.view.show_error("Nie udało się zidentyfikować użytkownika.")
+                return
+
+            self.view.show_loading(True)
+            self.deck_service.delete_deck(self.deck_id, user_profile.id)
+            self.view.show_toast("Sukces", f"Talia '{self.deck_name}' została pomyślnie usunięta.")
+            self.navigation.navigate("/decks")
+        except ValueError as ve:
+            logger.warning(f"Validation error while deleting deck {self.deck_id}: {str(ve)}")
+            self.view.show_error(str(ve))
+        except Exception as e:
+            logger.error(f"Error deleting deck {self.deck_id}: {str(e)}", exc_info=True)
+            self.view.show_error("Wystąpił nieoczekiwany błąd podczas usuwania talii.")
+        finally:
+            self.view.show_loading(False)
+            self._reset_deck_deletion_state()
+
+    def _handle_deck_deletion_cancelled(self) -> None:
+        """Handle cancellation of deck deletion."""
+        self._reset_deck_deletion_state()
+
+    def _reset_deck_deletion_state(self) -> None:
+        """Reset state related to deck deletion."""
+        self.dialog_open = False
