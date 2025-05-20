@@ -29,6 +29,14 @@ def mock_card_service():
 
 
 @pytest.fixture
+def mock_deck_service():
+    """Create a mock DeckService."""
+    service = Mock()
+    service.delete_deck = Mock()
+    return service
+
+
+@pytest.fixture
 def mock_session_service():
     """Create a mock SessionService."""
     service = Mock()
@@ -46,11 +54,12 @@ def mock_navigation():
 
 
 @pytest.fixture
-def presenter(mock_view, mock_card_service, mock_session_service, mock_navigation):
+def presenter(mock_view, mock_card_service, mock_deck_service, mock_session_service, mock_navigation):
     """Create a CardListPresenter instance with mock dependencies."""
     return CardListPresenter(
         view=mock_view,
         card_service=mock_card_service,
+        deck_service=mock_deck_service,
         session_service=mock_session_service,
         navigation_controller=mock_navigation,
         deck_id=1,
@@ -188,3 +197,94 @@ def test_start_study_session(presenter, mock_navigation):
 
     # Assert
     mock_navigation.navigate.assert_called_once_with("/study/session/1")
+
+
+def test_request_delete_current_deck_not_authenticated(presenter, mock_view, mock_session_service, mock_navigation):
+    """Test requesting deck deletion when not authenticated."""
+    # Arrange
+    mock_session_service.is_authenticated.return_value = False
+
+    # Act
+    presenter.request_delete_current_deck()
+
+    # Assert
+    mock_view.show_toast.assert_called_once_with("Błąd", "Musisz być zalogowany, aby usunąć talię.")
+    mock_navigation.navigate.assert_called_once_with("/profiles")
+
+
+def test_request_delete_current_deck_dialog_already_open(presenter, mock_view):
+    """Test requesting deck deletion when dialog is already open."""
+    # Arrange
+    presenter.dialog_open = True
+
+    # Act
+    presenter.request_delete_current_deck()
+
+    # Assert
+    mock_view.show_toast.assert_not_called()
+
+
+def test_handle_deck_deletion_confirmed_success(presenter, mock_view, mock_deck_service, mock_navigation):
+    """Test successful deck deletion."""
+    # Act
+    presenter._handle_deck_deletion_confirmed()
+
+    # Assert
+    mock_deck_service.delete_deck.assert_called_once_with(1, 1)
+    mock_view.show_toast.assert_called_once_with("Sukces", "Talia 'Test Deck' została pomyślnie usunięta.")
+    mock_navigation.navigate.assert_called_once_with("/decks")
+    assert not presenter.dialog_open
+
+
+def test_handle_deck_deletion_confirmed_no_user(presenter, mock_view, mock_session_service, mock_deck_service):
+    """Test deck deletion when user is not available."""
+    # Arrange
+    mock_session_service.get_current_user.return_value = None
+
+    # Act
+    presenter._handle_deck_deletion_confirmed()
+
+    # Assert
+    mock_deck_service.delete_deck.assert_not_called()
+    mock_view.show_error.assert_called_once_with("Nie udało się zidentyfikować użytkownika.")
+    assert not presenter.dialog_open
+
+
+def test_handle_deck_deletion_confirmed_validation_error(presenter, mock_view, mock_deck_service):
+    """Test deck deletion with validation error."""
+    # Arrange
+    mock_deck_service.delete_deck.side_effect = ValueError("Test validation error")
+
+    # Act
+    presenter._handle_deck_deletion_confirmed()
+
+    # Assert
+    mock_deck_service.delete_deck.assert_called_once_with(1, 1)
+    mock_view.show_error.assert_called_once_with("Test validation error")
+    assert not presenter.dialog_open
+
+
+def test_handle_deck_deletion_confirmed_unexpected_error(presenter, mock_view, mock_deck_service):
+    """Test deck deletion with unexpected error."""
+    # Arrange
+    mock_deck_service.delete_deck.side_effect = Exception("Test error")
+
+    # Act
+    presenter._handle_deck_deletion_confirmed()
+
+    # Assert
+    mock_deck_service.delete_deck.assert_called_once_with(1, 1)
+    mock_view.show_error.assert_called_once_with("Wystąpił nieoczekiwany błąd podczas usuwania talii.")
+    assert not presenter.dialog_open
+
+
+def test_handle_deck_deletion_cancelled(presenter):
+    """Test cancellation of deck deletion."""
+    # Arrange
+    presenter.dialog_open = True
+
+    # Act
+    presenter._handle_deck_deletion_cancelled()
+
+    # Assert
+    assert not presenter.dialog_open

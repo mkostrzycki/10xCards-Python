@@ -1,5 +1,7 @@
 import sys
 import os
+from unittest.mock import MagicMock, patch
+import logging
 
 # Determine the project root directory.
 # __file__ in environment.py is tests/behavioral/environment.py
@@ -14,9 +16,47 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-# You can add further global setup for your tests here, for example:
-# def before_all(context):
-#     print("Starting Behave tests...")
-#
-# def after_all(context):
-#     print("Finished Behave tests.")
+# Konfiguracja loggera
+logger = logging.getLogger(__name__)
+
+# Patchowanie modułów tkinter i ttkbootstrap
+# Zamiast mockować całe moduły, użyjemy patcha w testach
+tkinter_patch = patch("tkinter.Misc.wait_window", lambda self, win: None)
+toplevel_grab_patch = patch("tkinter.Toplevel.grab_set", lambda self: None)
+toplevel_wait_patch = patch("tkinter.Toplevel.wait_window", lambda self, win: None)
+
+# Rozpocznij wszystkie patche
+tkinter_patch.start()
+toplevel_grab_patch.start()
+toplevel_wait_patch.start()
+
+
+def before_all(context):
+    """Inicjalizacja przed wszystkimi testami"""
+    logger.info("Starting Behave tests with mocked UI")
+
+
+def after_all(context):
+    """Sprzątanie po wszystkich testach"""
+    logger.info("Finished Behave tests")
+
+    # Zatrzymaj wszystkie patche
+    tkinter_patch.stop()
+    toplevel_grab_patch.stop()
+    toplevel_wait_patch.stop()
+
+
+def before_scenario(context, scenario):
+    """Inicjalizuje kontekst przed wykonaniem scenariusza."""
+    # Inicjalizacja mocków dla testów zarządzania taliami
+    if "Zarządzanie taliami fiszek" in scenario.feature.name:
+        # Inicjalizacja serwisów
+        context.session_service = MagicMock()
+        context.deck_service = MagicMock()
+        context.card_service = MagicMock()
+        context.navigation_controller = MagicMock()
+
+        # Utwórz mock dla widoku z poprawnym show_toast
+        context.current_view = MagicMock()
+        # Upewnij się, że show_toast jest osobnym MagicMock, a nie tylko metodą mocka
+        context.current_view.show_toast = MagicMock()
