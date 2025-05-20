@@ -9,9 +9,10 @@
 2.  [Tech Stack](#tech-stack)
 3.  [Getting Started Locally](#getting-started-locally)
 4.  [Available Scripts](#available-scripts)
-5.  [Project Scope (MVP)](#project-scope-mvp)
-6.  [Project Status](#project-status)
-7.  [License](#license)
+5.  [User Guide](#user-guide)
+6.  [Project Scope (MVP)](#project-scope-mvp)
+7.  [Project Status](#project-status)
+8.  [License](#license)
 
 ## Project Description
 
@@ -112,6 +113,15 @@ The application aims to solve the time-consuming problem of manually creating hi
 *   **Run behavioral tests (behave):** `make test-bdd` (runs tests in `tests/behavioral/`)
 *   **Clean up temporary files:** `make clean`
 *   **Run all formatting, linting, type checking, unit and behavioral tests:** `make all`
+
+## User Guide
+
+A detailed user guide to help you make the most of 10xCards is available here:
+
+*   🇵🇱 **[User Guide (Polish)](docs/user_guide_pl/index.md)**
+*   🇬🇧 *User Guide (English) - in progress...*
+
+We encourage you to read it to learn more about all the features!
 
 ## Project Scope (MVP)
 
