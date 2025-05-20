@@ -5,14 +5,21 @@
 
 ## Table of Contents
 
-1.  [Project Description](#project-description)
-2.  [Tech Stack](#tech-stack)
-3.  [Getting Started Locally](#getting-started-locally)
-4.  [Available Scripts](#available-scripts)
-5.  [User Guide](#user-guide)
-6.  [Project Scope (MVP)](#project-scope-mvp)
-7.  [Project Status](#project-status)
-8.  [License](#license)
+1.  [Project Background](#project-background)
+2.  [Project Description](#project-description)
+3.  [Tech Stack](#tech-stack)
+4.  [Getting Started Locally](#getting-started-locally)
+5.  [Available Scripts](#available-scripts)
+6.  [User Guide](#user-guide)
+7.  [Project Scope (MVP)](#project-scope-mvp)
+8.  [Project Status](#project-status)
+9.  [License](#license)
+
+## Project Background
+
+This project was developed by a PHP programmer, primarily experienced with the Symfony framework. It was created entirely with the assistance of AI as part of the "10xDevs" course.
+
+The choice of Python, Tkinter, and ttkbootstrap for the technology stack was deliberate. The primary goal was to serve as a proof of concept: to demonstrate that it's possible to build a functional desktop application using Large Language Models (LLMs) even without extensive prior experience in the specific programming language (having only written simple Python scripts before) or the UI frameworks (with no prior experience in Tkinter or ttkbootstrap, and coming from a web development background).
 
 ## Project Description
 
