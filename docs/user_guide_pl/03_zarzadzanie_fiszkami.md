@@ -12,12 +12,12 @@ Jedną z najpotężniejszych funkcji 10xCards jest możliwość automatycznego g
 
 1.  Upewnij się, że jesteś w widoku konkretnej talii, do której chcesz dodać fiszki.
 2.  Kliknij w przycisk "Generuj z AI" znajdujący się na dole okna po prawej.
-    ![Przycisk 'Generuj z AI'](images/pl_03_przycisk_generuj_AI.png)
+    ![Przycisk 'Generuj z AI'](images/pl_03_przycisk_generuj_z_ai.png)
 
 ### Wklejanie tekstu i inicjowanie procesu
 
 1.  Po wybraniu opcji generowania fiszek AI, pojawi się interfejs z dedykowanym polem tekstowym.
-    ![Okno generowania fiszek przez AI](images/pl_03_okno_generowania_AI.png)
+    ![Okno generowania fiszek przez AI](images/pl_03_okno_generowania_z_ai.png)
 2.  Wklej w to pole tekst, z którego chcesz wygenerować fiszki. Pamiętaj o kilku zasadach:
     *   tekst powinien mieć **minimum 1000 znaków**,
     *   tekst nie powinien przekraczać **maksimum 10000 znaków**,
@@ -25,7 +25,7 @@ Jedną z najpotężniejszych funkcji 10xCards jest możliwość automatycznego g
 3.  Po wklejeniu tekstu i upewnieniu się, że jest poprawny, kliknij przycisk "Generuj fiszki".
 4.  Aplikacja wyśle Twój tekst (wraz ze specjalnie przygotowanym promptem) do API usługi OpenRouter.
 5.  Podczas gdy AI pracuje nad Twoimi fiszkami, na ekranie powinien być widoczny wskaźnik postępu oraz informacja typu "Trwa generowanie fiszek...".
-    ![Wskaźnik postępu generowania fiszek przez AI](images/pl_03_AI_wskaznik_postepu.png)
+    ![Wskaźnik postępu generowania fiszek przez AI](images/pl_03_ai_wskaznik_postepu.png)
 
 ### Przeglądanie, akceptowanie, edytowanie i odrzucanie fiszek od AI
 
