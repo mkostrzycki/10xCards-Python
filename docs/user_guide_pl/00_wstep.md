@@ -8,7 +8,7 @@ Witamy w świecie 10xCards! Ta sekcja pomoże Ci zrozumieć, czym jest nasza apl
 
 Kluczowe cechy 10xCards:
 
-*   **Automatyczne generowanie fiszek:** Dzięki integracji ze sztuczną inteligencją (różne modele LLM), możesz błyskawicznie tworzyć fiszki z dostarczonego przez Ciebie tekstu. Koniec z żmudnym przepisywaniem! [SCREENSHOT_PL_00_AI_generowanie_przyklad_PNG]
+*   **Automatyczne generowanie fiszek:** Dzięki integracji ze sztuczną inteligencją (różne modele LLM), możesz błyskawicznie tworzyć fiszki z dostarczonego przez Ciebie tekstu. Koniec z żmudnym przepisywaniem! ![Przykład generowania fiszek przez AI](images/pl_00_ai_generowanie_przyklad.png)
 *   **Manualne tworzenie fiszek:** Jeśli wolisz, zawsze masz możliwość samodzielnego dodawania i edytowania fiszek.
 *   **Nauka oparta na nauce (FSRS):** Korzystamy z algorytmu powtórek rozłożonych w czasie FSRS, który optymalizuje Twój proces nauki, prezentując Ci materiał w najbardziej odpowiednich momentach.
 *   **Wsparcie dla wielu użytkowników:** Aplikacja pozwala na tworzenie osobnych profili dla różnych użytkowników na jednym komputerze, z opcjonalną ochroną hasłem.
