@@ -3,6 +3,7 @@ from typing import Callable, List, Any
 import ttkbootstrap as ttk
 
 from CardManagement.application.card_service import CardService
+from DeckManagement.application.deck_service import DeckService
 from CardManagement.application.presenters.card_list_presenter import (
     CardListPresenter,
     FlashcardViewModel,
@@ -25,6 +26,7 @@ class CardListView(ttk.Frame, ICardListView):
         deck_id: int,
         deck_name: str,
         card_service: CardService,
+        deck_service: DeckService,
         session_service: SessionService,
         navigation_controller: NavigationControllerProtocol,
         show_toast: Callable[[str, str], None],
@@ -36,6 +38,7 @@ class CardListView(ttk.Frame, ICardListView):
             deck_id: ID of the deck to display cards for
             deck_name: Name of the deck
             card_service: Service for card operations
+            deck_service: Service for deck operations
             session_service: Service for session management
             navigation_controller: Controller for navigation
             show_toast: Callback for showing toast notifications
@@ -49,6 +52,7 @@ class CardListView(ttk.Frame, ICardListView):
         self.presenter = CardListPresenter(
             view=self,
             card_service=card_service,
+            deck_service=deck_service,
             session_service=session_service,
             navigation_controller=navigation_controller,
             deck_id=deck_id,
@@ -91,6 +95,15 @@ class CardListView(ttk.Frame, ICardListView):
         )
         self.start_study_btn.pack(side=ttk.LEFT, padx=5)
 
+        # Delete Deck Button
+        self.delete_deck_btn = ttk.Button(
+            self.button_panel,
+            text="Usuń Tę Talię",
+            style="danger.TButton",
+            command=self._show_delete_deck_confirmation,
+        )
+        self.delete_deck_btn.pack(side=ttk.LEFT, padx=5)
+
         # Ładuj karty po inicjalizacji UI
         self.presenter.load_cards()
 
@@ -115,6 +128,19 @@ class CardListView(ttk.Frame, ICardListView):
             "Anuluj",
             lambda: self.presenter.delete_flashcard(flashcard_id),
             lambda: None,
+        )
+
+    def _show_delete_deck_confirmation(self) -> None:
+        """Show confirmation dialog for deck deletion"""
+        ConfirmationDialog(
+            self,
+            "Usuń Tę Talię",
+            f"Czy na pewno chcesz usunąć talię '{self.deck_name}' wraz ze wszystkimi jej fiszkami? Tej operacji nie można cofnąć.",
+            "Usuń Talię",
+            "danger.TButton",
+            "Anuluj",
+            self.presenter._handle_deck_deletion_confirmed,
+            self.presenter._handle_deck_deletion_cancelled,
         )
 
     # ICardListView implementation
