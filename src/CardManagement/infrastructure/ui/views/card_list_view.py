@@ -98,7 +98,7 @@ class CardListView(ttk.Frame, ICardListView):
         # Delete Deck Button
         self.delete_deck_btn = ttk.Button(
             self.button_panel,
-            text="Usuń Tę Talię",
+            text="Usuń tę talię",
             style="danger.TButton",
             command=self._show_delete_deck_confirmation,
         )
